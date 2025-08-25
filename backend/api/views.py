@@ -11,7 +11,7 @@ from .permissions import AdminOnlyEdit
 class SpecialityListCreateView(generics.ListCreateAPIView):
     queryset = Speciality.objects.all()
     serializer_class = SpecialitySerializer
-    # permission_classes = [AdminOnlyEdit]
+    # permission_classes = [AdminOnlyEdit] 
     
     def perform_create(self, serializer):
         """
@@ -24,14 +24,14 @@ class SpecialityListCreateView(generics.ListCreateAPIView):
         Raises:
             PermissionDenied: If request comes from non-admin user
         """
-        # if self.request.user.is_anonymous or not self.request.user.is_admin:
-        #     raise PermissionDenied("Only admins can edit Speciality.")
+        if self.request.user.is_anonymous or not self.request.user.is_admin:
+            raise PermissionDenied("Only admins can edit Speciality.")
         serializer.save()
         
 class DoctorListCreateView(generics.ListCreateAPIView):
     queryset = Doctor.objects.all()
     serializer_class = DoctorSerializer
-    permission_classes = [AdminOnlyEdit]
+    # permission_classes = [AdminOnlyEdit] 
     
     def perform_create(self, serializer):
         """
@@ -50,7 +50,7 @@ class DoctorListCreateView(generics.ListCreateAPIView):
         
 class DoctorBySpecialityView(generics.ListAPIView):
     serializer_class = DoctorSerializer
-    permission_classes = [AdminOnlyEdit] 
+    # permission_classes = [AdminOnlyEdit] 
     
     def get_queryset(self):
         speciality = self.kwargs['speciality']

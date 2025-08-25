@@ -103,6 +103,9 @@ class Doctor(models.Model):
     fees = models.DecimalField(max_digits=9, decimal_places=2)
     address_line1 = models.CharField("Address line 1", max_length=1024)
     address_line2 = models.CharField("Address line 2", max_length=1024, blank=True)
+    city = models.CharField(max_length=50)
+    state = models.CharField(max_length=2)
+    zip_code = models.CharField(max_length=5)
     
     class Meta:
         constraints = [

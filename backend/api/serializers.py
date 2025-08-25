@@ -44,6 +44,11 @@ class CamelCaseMixin:
 
 class DoctorSerializer(CamelCaseMixin, serializers.ModelSerializer):
     speciality = SpecialitySerializer(read_only=True)
+    speciality_id = serializers.PrimaryKeyRelatedField(
+        queryset=Speciality.objects.all(),
+        source="speciality",
+        write_only=True
+    )
     
     class Meta:
         model = Doctor
@@ -53,10 +58,14 @@ class DoctorSerializer(CamelCaseMixin, serializers.ModelSerializer):
             "last_name",
             "image",
             "speciality",
+            "speciality_id",
             "degree",
             "experience",
             "about",
             "fees",
             "address_line1",
             "address_line2",
+            "city",
+            "state",
+            "zip_code"
         ]
