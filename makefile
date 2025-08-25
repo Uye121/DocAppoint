@@ -1,0 +1,73 @@
+# Variables
+BACKEND_DIR = backend
+FRONTEND_DIR = frontend
+PYTHON = python
+PIP = pip
+NPM = npm
+
+dev:
+	docker compose up --build
+
+stop:
+	docker compose down
+
+restart: stop dev
+
+clean:
+	docker compose down -v
+	rm -rf $(FRONTEND_DIR)/node_modules
+	rm -rf $(BACKEND_DIR)/__pycache__
+	rm -rf $(BACKEND_DIR)/*.pyc
+
+# Backend commands
+backend-dev:
+	cd $(BACKEND_DIR) && $(PYTHON) manage.py runserver
+
+backend-migrate:
+	cd $(BACKEND_DIR) && $(PYTHON) manage.py makemigrations
+	cd $(BACKEND_DIR) && $(PYTHON) manage.py migrate
+
+backend-createsuperuser:
+	cd $(BACKEND_DIR) && $(PYTHON) manage.py createsuperuser
+
+backend-test:
+	cd $(BACKEND_DIR) && $(PYTHON) manage.py test
+
+# Frontend commands
+frontend-install:
+	cd $(FRONTEND_DIR) && $(NPM) install
+
+frontend-dev:
+	cd $(FRONTEND_DIR) && $(NPM) run dev
+
+frontend-test:
+	cd $(FRONTEND_DIR) && $(NPM) run test
+
+# Database commands
+db-down:
+	docker compose down -v
+
+db-up:
+	docker compose up -d db
+
+db-restart: db-down db-up
+
+db-shell:
+	docker compose exec db psql -U postgres -d docappoint
+
+db-backup:
+	docker compose exec db pg_dump -U postgres docappoint > backup_$(shell date +%Y%m%d_%H%M%S).sql
+
+docker-build:
+	docker compose build
+
+# Utility Commands
+status:
+	docker compose ps
+
+# Database migration targets
+db-makemigrations:
+	cd $(BACKEND_DIR) && $(PYTHON) manage.py makemigrations
+
+db-migrate:
+	cd $(BACKEND_DIR) && $(PYTHON) manage.py migrate
