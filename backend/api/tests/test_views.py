@@ -134,3 +134,107 @@ class DoctorViewTest(APITestCase):
         response = self.client.get(reverse('doctor-list-create'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
+        
+class DoctorDeleteViewTest(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        
+        self.admin_user = User.objects.create_superuser(
+            email='admin@test.com',
+            password='testpass123',
+            first_name='Admin',
+            last_name='User',
+            date_of_birth='1990-01-01',
+        )
+        
+        self.iamge_file = SimpleUploadedFile(
+            "test.svg",
+            b"file_content",
+            content_type="image/svg+xml"
+        )
+        self.speciality = Speciality.objects.create(
+            name="Gynecologist",
+            image=self.iamge_file
+        )
+        
+        self.doctor_image_file = SimpleUploadedFile(
+            "test.jpg",
+            create_test_image(),
+            content_type="image/jpeg"
+        )
+        self.doctor_data = {
+            "speciality_id": self.speciality.id,
+            "first_name": "John",
+            "last_name": "Doe",
+            "image": self.doctor_image_file,
+            "degree": "MD",
+            "experience": 10.,
+            "about": "Experienced cardiologist",
+            "fees": 50.00,
+            "address_line1": "123 Main St",
+            "city": "New York",
+            "state": "NY",
+            "zip_code": "10001"
+        }
+        
+        self.client.force_authenticate(user=self.admin_user)
+        
+    def test_delete_doctor(self):
+        response = self.client.post(reverse('doctor-list-create'), self.doctor_data)
+        self.client.delete(reverse('doctor-delete', kwargs={"pk": response.data["id"]}))
+        self.assertEqual(Doctor.objects.count(), 0)
+        
+class DoctorBySspecialityViewTest(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        
+        self.admin_user = User.objects.create_superuser(
+            email='admin@test.com',
+            password='testpass123',
+            first_name='Admin',
+            last_name='User',
+            date_of_birth='1990-01-01',
+        )
+        
+        self.iamge_file = SimpleUploadedFile(
+            "test.svg",
+            b"file_content",
+            content_type="image/svg+xml"
+        )
+        self.speciality = Speciality.objects.create(
+            name="Gynecologist",
+            image=self.iamge_file
+        )
+        
+        self.doctor_image_file = SimpleUploadedFile(
+            "test.jpg",
+            create_test_image(),
+            content_type="image/jpeg"
+        )
+        self.doctor_data = {
+            "speciality_id": self.speciality.id,
+            "first_name": "John",
+            "last_name": "Doe",
+            "image": self.doctor_image_file,
+            "degree": "MD",
+            "experience": 10.,
+            "about": "Experienced cardiologist",
+            "fees": 50.00,
+            "address_line1": "123 Main St",
+            "city": "New York",
+            "state": "NY",
+            "zip_code": "10001"
+        }
+        
+        self.client.force_authenticate(user=self.admin_user)
+        self.client.post(reverse('doctor-list-create'), self.doctor_data)
+
+    def test_get_query_set(self):
+        response = self.client.get(reverse('doctors-by-speciality', kwargs={"speciality": "Gynecologist"}))
+        res_data = response.data[0]
+        doc_data = self.doctor_data
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_data['firstName'], doc_data['first_name'])
+        self.assertEqual(res_data['lastName'], doc_data['last_name'])
+        self.assertEqual(res_data['id'], doc_data['speciality_id'])
+        

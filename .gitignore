@@ -209,5 +209,8 @@ next-env.d.ts
 # media files
 media
 
+# backups
+backups
+
 # vscode files
 .vscode

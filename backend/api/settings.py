@@ -80,7 +80,7 @@ DATABASES = {
         'NAME': 'docappoint',
         'USER': 'postgres',
         'PASSWORD': 'password',
-        'HOST': 'localhost',  # Or 'db' if Django is also in Docker
+        'HOST': 'db',  # Or 'db' if Django is also in Docker
         'PORT': '5432',
     }
 }

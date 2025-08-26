@@ -19,7 +19,24 @@ clean:
 	rm -rf $(BACKEND_DIR)/__pycache__
 	rm -rf $(BACKEND_DIR)/*.pyc
 
+# General command
+docker-down:
+	docker compose down
+
+docker-down-backup:
+	docker compose exec db pg_dump -U postgres docappoint > backups/backup_$(shell date +%Y%m%d_%H%M%S).sql
+	docker compose down
+
+docker-up-detached:
+	docker compose up -d
+
+docker-up:
+	docker compose up
+
 # Backend commands
+docker-backend-dev:
+	docker compose up -d backend
+
 backend-dev:
 	cd $(BACKEND_DIR) && $(PYTHON) manage.py runserver
 
@@ -34,6 +51,9 @@ backend-test:
 	cd $(BACKEND_DIR) && $(PYTHON) manage.py test
 
 # Frontend commands
+docker-frontend-dev:
+	docker compose up frontend
+
 frontend-install:
 	cd $(FRONTEND_DIR) && $(NPM) install
 
@@ -44,13 +64,16 @@ frontend-test:
 	cd $(FRONTEND_DIR) && $(NPM) run test
 
 # Database commands
+db-restore:
+	docker compose exec db dropdb -U postgres --if-exists docappoint
+	docker compose exec db createdb -U postgres docappoint
+	docker compose exec -T db psql -U postgres docappoint < $(file)
+
 db-down:
 	docker compose down -v
 
 db-up:
 	docker compose up -d db
-
-db-restart: db-down db-up
 
 db-shell:
 	docker compose exec db psql -U postgres -d docappoint

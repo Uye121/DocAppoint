@@ -24,7 +24,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('specialities/', SpecialityListCreateView.as_view(), name='speciality-list-create'),
     path('doctors/', DoctorListCreateView.as_view(), name='doctor-list-create'),
-    path('doctors/speciality/<str:speciality>', DoctorBySpecialityView.as_view(), name='doctor-speciality'),
+    path('doctors/speciality/<str:speciality>', DoctorBySpecialityView.as_view(), name='doctors-by-speciality'),
     path('doctors/<int:pk>/delete', DoctorDeleteView.as_view(), name='doctor-delete')
 ]
 
