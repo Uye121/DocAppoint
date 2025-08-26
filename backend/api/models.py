@@ -1,6 +1,6 @@
 from django.db import models
 from django.utils import timezone
-from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
+from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, PermissionsMixin
 
 class BaseModel(models.Model):
     created_at = models.DateTimeField(db_index=True, default=timezone.now)
@@ -65,7 +65,7 @@ class CustomUserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-class CustomUser(AbstractBaseUser, BaseModel):
+class CustomUser(AbstractBaseUser, BaseModel, PermissionsMixin):
     email = models.EmailField(max_length=255, unique=True)
     date_of_birth = models.DateField()
     first_name = models.CharField(max_length=1024)
@@ -76,7 +76,7 @@ class CustomUser(AbstractBaseUser, BaseModel):
     objects = CustomUserManager()
 
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["name"]
+    REQUIRED_FIELDS = ["date_of_birth", "first_name", "last_name"]
     
     def __str__(self):
         return self.email
@@ -128,5 +128,5 @@ class Doctor(models.Model):
     
     @property
     def formatted_name(self):
-        return f"{self.first_name} {self.last_name}"
+        return f"Dr. {self.first_name} {self.last_name}"
     

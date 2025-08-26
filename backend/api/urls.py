@@ -18,13 +18,14 @@ from django.contrib import admin
 from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
-from .views import SpecialityListCreateView, DoctorListCreateView, DoctorBySpecialityView
+from .views import SpecialityListCreateView, DoctorListCreateView, DoctorBySpecialityView, DoctorDeleteView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('specialities/', SpecialityListCreateView.as_view(), name='speciality-list-create'),
     path('doctors/', DoctorListCreateView.as_view(), name='doctor-list-create'),
-    path('doctors/speciality/<str:speciality>', DoctorBySpecialityView.as_view(), name='doctor-speciality')
+    path('doctors/speciality/<str:speciality>', DoctorBySpecialityView.as_view(), name='doctor-speciality'),
+    path('doctors/<int:pk>/delete', DoctorDeleteView.as_view(), name='doctor-delete')
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
