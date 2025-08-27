@@ -1,9 +1,18 @@
-import React from "react";
-import { specialityData } from "../assets/assets_frontend/assets";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import type { ISpeciality } from "../types/app";
+import { apiClient } from "../api/client";
 
 const SpecialtyMenu = (): React.JSX.Element => {
+  const [specialityData, setSpecialityData] = useState([]);
+
+  useEffect(() => {
+    apiClient
+      .get("/specialities")
+      .then((data) => setSpecialityData(data))
+      .catch((error) => console.error("API Error: ", error));
+  }, []);
+
   return (
     <div
       className="flex flex-col items-center ggap-4 py-16 text-gray-800"
@@ -20,10 +29,10 @@ const SpecialtyMenu = (): React.JSX.Element => {
             onClick={() => scrollTo(0, 0)}
             className="flex flex-col items-center text-xs cursor-pointer flex-shrink-0 hover:translate-y-[-10px] transition-all duration-500"
             key={index}
-            to={`/doctors/${item.speciality}`}
+            to={`/doctors/${item.name}`}
           >
             <img className="w-16 sm:w-24 mb-2" src={item.image} alt="" />
-            <p>{item.speciality}</p>
+            <p>{item.name}</p>
           </Link>
         ))}
       </div>

@@ -1,5 +1,5 @@
 export interface ISpeciality {
-  speciality: string;
+  name: string;
   image: string;
 }
 
@@ -26,4 +26,7 @@ export interface TimeSlotType {
 export interface AppContextValue {
   currencySymbol: string;
   doctors: IDoctor[];
+  loading?: boolean;
+  error?: string | null;
+  refetchDoctors?: () => void;
 }

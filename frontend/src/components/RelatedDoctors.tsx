@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AppContext } from "../context/app-context";
+import { AppContext } from "../context/AppContext";
 import type { IDoctor } from "../types/app";
 
 interface RelatedDoctorsProps {

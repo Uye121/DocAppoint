@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { AppContext } from "../context/app-context";
+import { AppContext } from "../context/AppContext";
 import { assets } from "../assets/assets_frontend/assets";
 import type { IDoctor, TimeSlotType } from "../types/app";
 import { RelatedDoctors } from "../components";
