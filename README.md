@@ -2,10 +2,6 @@
 
 **DocAppoint** is a fullstack web application with RESTful routing. This app is work in-progress and will be updated reguarly.
 
-### Notes
-
-The front-end and the backend are currently not connected. Part of the front-end is completed, and the backend is work-in-progress.
-
 ## Getting Started
 
 ### Setup
