@@ -214,3 +214,6 @@ backups
 
 # vscode files
 .vscode
+
+# misc
+notes.md

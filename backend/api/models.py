@@ -8,6 +8,30 @@ class BaseModel(models.Model):
     
     class Meta:
         abstract = True
+        
+class RoleName:
+    PATIENT = "Patient"
+    HEALTHCARE_PROVIDER = "Healthcare Provider"
+    ADMINISTRATIVE_STAFF = "Administrative Staff"
+    SYSTEM_ADMIN = "System Admin"
+        
+class Role(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    description = models.TextField(blank=True)
+    
+    def __str__(self):
+        return self.name
+    
+    @classmethod
+    def create_core_roles(cls):
+        core_roles = [
+            (RoleName.PATIENT, "A patient user who can schedule appointments with healthcare providers."),
+            (RoleName.HEALTHCARE_PROVIDER, "A doctor or specialist who can consult with patients."),
+            (RoleName.ADMINISTRATIVE_STAFF, "Staff who manages the appointment schedules but have limited interaction and access to patient data."),
+            (RoleName.SYSTEM_ADMIN, "Technical admin with full system access, but not clinical data access.")
+        ]
+        for name, desc in core_roles:
+            cls.objects.get_or_create(name=name, defaults={'description': desc})
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password, first_name, last_name, date_of_birth):
@@ -118,15 +142,3 @@ class Doctor(models.Model):
                 check=models.Q(fees__gt=0)
             )
         ]
-    
-    def __str__(self):
-        return f"Dr {self.formatted_name} {self.speciality}"
-    
-    @property
-    def formatted_experience(self):
-        return f"{self.experience} Years"
-    
-    @property
-    def formatted_name(self):
-        return f"Dr. {self.first_name} {self.last_name}"
-    

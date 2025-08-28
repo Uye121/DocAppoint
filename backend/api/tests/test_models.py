@@ -77,8 +77,6 @@ class DoctorModelTest(TestCase):
     
     def test_create_doctor(self):
         doctor = Doctor.objects.create(**self.doctor)
-        self.assertEqual(doctor.formatted_experience, "3.0 Years")
-        self.assertEqual(doctor.formatted_name, "Dr. Emily Larson")
         self.assertEqual(doctor.speciality, self.gynecologist)
         self.assertEqual(doctor.degree, "MD")
         self.assertEqual(doctor.about, self.doctor["about"])

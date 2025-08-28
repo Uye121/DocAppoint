@@ -44,11 +44,18 @@ backend-migrate:
 	cd $(BACKEND_DIR) && $(PYTHON) manage.py makemigrations
 	cd $(BACKEND_DIR) && $(PYTHON) manage.py migrate
 
+docker-backend-migrate:
+	docker compose exec backend python manage.py makemigrations
+	docker compose exec backend python manage.py migrate
+
 backend-createsuperuser:
 	cd $(BACKEND_DIR) && $(PYTHON) manage.py createsuperuser
 
 backend-test:
 	cd $(BACKEND_DIR) && $(PYTHON) manage.py test
+
+backend-shell:
+	docker compose exec backend python manage.py shell
 
 # Frontend commands
 docker-frontend-dev:
@@ -67,6 +74,7 @@ frontend-test:
 db-restore:
 	docker compose exec db dropdb -U postgres --if-exists docappoint
 	docker compose exec db createdb -U postgres docappoint
+# 	cat $(file) | docker compose exec -T db psql -U postgres docappoint
 	docker compose exec -T db psql -U postgres docappoint < $(file)
 
 db-down:
