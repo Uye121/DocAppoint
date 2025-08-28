@@ -4,7 +4,7 @@ export interface ISpeciality {
 }
 
 export interface IDoctor {
-  _id: string;
+  id: string;
   name: string;
   image: string;
   speciality: string;

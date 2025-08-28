@@ -19,7 +19,7 @@ const RelatedDoctors = ({
   useEffect(() => {
     if (doctors.length && speciality) {
       const doctorsData = doctors.filter(
-        (doc) => doc.speciality == speciality && doc._id != docId,
+        (doc) => doc.speciality == speciality && doc.id != docId,
       );
       setRelDoc(doctorsData);
     }
@@ -35,7 +35,7 @@ const RelatedDoctors = ({
         {relDoc.slice(0, 5).map((item: IDoctor, index: number) => (
           <div
             onClick={() => {
-              navigate(`/appointment/${item._id}`);
+              navigate(`/appointment/${item.id}`);
               scrollTo(0, 0);
             }}
             className="border border-blue-200 rounded-xl overflow-hidden cursor-pointer hover:translate-y-[-10px] transition-all duration-500"

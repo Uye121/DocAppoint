@@ -101,7 +101,7 @@ const Doctors = (): React.JSX.Element => {
         <div className="w-full grid grid-cols-fluid gap-4 gap-y-6">
           {filteredDoc.map((item: IDoctor, index: number) => (
             <div
-              onClick={() => navigate(`/appointment/${item._id}`)}
+              onClick={() => navigate(`/appointment/${item.id}`)}
               className="border border-blue-200 rounded-xl overflow-hidden cursor-pointer hover:translate-y-[-10px] transition-all duration-500"
               key={index}
             >

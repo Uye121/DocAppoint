@@ -17,7 +17,7 @@ const Appointments = (): React.JSX.Element | null => {
 
   useEffect(() => {
     const fetchDocInfo = async () => {
-      const doc = doctors.find((doc) => doc._id == docId);
+      const doc = doctors.find((doc) => doc.id == docId);
       setDocInfo(doc || null);
     };
 

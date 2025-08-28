@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-// import { doctors } from "../assets/assets_frontend/assets";
 import type { AppContextValue } from "../types/app";
 import { AppContext } from "./AppContext";
 import { apiClient } from "../api/client";
