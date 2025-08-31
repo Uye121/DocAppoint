@@ -1,74 +1,69 @@
+from typing import Any, Dict, List
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Speciality, Doctor
-from .utils.case import to_camelcase_data, to_snake_case_data
-
-User = get_user_model()
-
-class CustomUserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ["email", "date_of_birth", "first_name",
-                  "last_name", "password"]
-        extra_kwargs = { "password": {"write_only": True} }
-        
-    def create(self, validated_data):
-        user = User.objects.create_user(
-            email=validated_data["email"],
-            date_of_birth=validated_data["date_of_birth"],
-            first_name=validated_data["first_name"],
-            last_name=validated_data["last_name"],
-            password=validated_data["password"],
-        )
-        return user
-
-class SpecialitySerializer(serializers.ModelSerializer):
-    def validate_name(self, value):
-        """
-        Check if speicality with the same name already exist
-
-        Args:
-            value (str): name of the speciality
-        """
-        if Speciality.objects.filter(name__iexact=value).exists():
-            raise serializers.ValidationError(f"A speciality with the name {value} already exists.")
-        return value
-    
-    class Meta:
-        model = Speciality
-        fields = ["id", "name", "image"]
+from .models import (
+    User, Patient, HealthcareProvider, Appointment, 
+    MedicalRecord, Message, Speciality, Hospital
+)
+from .utils.case import to_camelcase_data, to_snake_case_data, JsonValue
 
 class CamelCaseMixin:
-    def to_representation(self, *args, **kwargs):
-        return to_camelcase_data(super().to_representation(*args, **kwargs))
+    def to_representation(self, instance: Any) -> Dict[str, Any]:
+        representation = super().to_representation(instance) # type: ignore
+        return to_camelcase_data(representation) # type: ignore
 
-    def to_internal_value(self, data):
-        return super().to_internal_value(to_snake_case_data(data))
+    def to_internal_value(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        return super().to_internal_value(to_snake_case_data(data)) # type: ignore
 
-class DoctorSerializer(CamelCaseMixin, serializers.ModelSerializer):
-    speciality = SpecialitySerializer(read_only=True)
-    speciality_id = serializers.PrimaryKeyRelatedField(
-        queryset=Speciality.objects.all(),
-        source="speciality",
-        write_only=True
-    )
+class UserSerializer(CamelCaseMixin, serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'type', 
+                 'date_of_birth', 'phone_number', 'address']
+        extra_kwargs = {'password': {'write_only': True}}
+        
+class PatientSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
     
     class Meta:
-        model = Doctor
-        fields = [
-            "id",
-            "first_name", 
-            "last_name",
-            "image",
-            "speciality",
-            "speciality_id",
-            "degree",
-            "experience",
-            "about",
-            "fees",
-            "address_line1",
-            "address_line2",
-            "city",
-            "state",
-            "zip_code"
-        ]
+        model = Patient
+        fields = '__all__'
+        
+class HealthcareProviderSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    speciality = serializers.StringRelatedField()
+    
+    class Meta:
+        model = HealthcareProvider
+        fields = '__all__'
+
+class AppointmentSerializer(serializers.ModelSerializer):
+    patient = PatientSerializer(read_only=True)
+    healthcare_provider = HealthcareProviderSerializer(read_only=True)
+    
+    class Meta:
+        model = Appointment
+        fields = '__all__'
+
+class MedicalRecordSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MedicalRecord
+        fields = '__all__'
+
+class MessageSerializer(serializers.ModelSerializer):
+    sender = UserSerializer(read_only=True)
+    recipient = UserSerializer(read_only=True)
+    
+    class Meta:
+        model = Message
+        fields = '__all__'
+        
+class SpecialitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Speciality
+        fields = '__all__'
+
+class HospitalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Hospital
+        fields = '__all__'

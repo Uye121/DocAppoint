@@ -5,5 +5,4 @@ class ApiConfig(AppConfig):
     name = 'api'
     
     def ready(self):
-        # Import models to ensure they're registered
         from . import models
