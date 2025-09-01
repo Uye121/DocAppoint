@@ -1,8 +1,8 @@
-from typing import List, Optional
+from typing import List
 from datetime import datetime, timedelta
 from django.db import models
 from django.utils import timezone
-from django.contrib.auth.models import UserManager, AbstractUser, PermissionsMixin, Group
+from django.contrib.auth.models import AbstractUser, Group
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
@@ -42,11 +42,6 @@ class User(BaseModel, AbstractUser):
     phone_number = models.CharField(_("Phone Number"), max_length=20, blank=True)
     address = models.TextField(_("Address"), blank=True)
     
-    def save(self, *args, **kwargs):
-        if self._state.adding: # Check if it's a new object
-            self.type = self.base_type
-        return super().save(*args, **kwargs)
-    
     def __str__(self):
         return f"{self.username}: {self.get_type_display()}" # type: ignore
     
@@ -58,7 +53,7 @@ class PatientProfile(models.Model):
     chronic_conditions = models.TextField(_("Chronic Conditions"), blank=True)
     current_medications = models.TextField(_("Current Medications"), blank=True)
     insurance = models.CharField(_("Insurance"), max_length=255, blank=True)
-    weight = models.PositiveIntegerField(_("Weight (grams)"), blank=True, null=True, help_text="Weight in grams")
+    weight = models.PositiveIntegerField(_("Weight (kg)"), blank=True, null=True, help_text="Weight in grams")
     height = models.PositiveIntegerField(_("Height (cm)"), blank=True, null=True, help_text="Height in centimeters")
     
     def __str__(self):
@@ -66,8 +61,8 @@ class PatientProfile(models.Model):
     
 class HealthcareProviderProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="healthcare_provider_profile")
-    speciality = models.ForeignKey(Speciality, on_delete=models.CASCADE, related_name='doctors')
-    image = models.ImageField(upload_to='doctors')
+    speciality = models.ForeignKey(Speciality, on_delete=models.CASCADE, related_name='provider_speciality')
+    image = models.ImageField(upload_to='healthcare_providers')
     education = models.TextField(_("Education"), blank=True)
     years_of_experience = models.PositiveIntegerField(_("Years of Experience"), default=0)
     about = models.TextField()
@@ -100,6 +95,19 @@ class HealthcareProviderProfile(models.Model):
             )
         ]
         
+    def __str__(self):
+        return f"Healthcare Provider Profile: {self.user.username} - {self.speciality.name}"
+    
+class ProviderHospitalAssignment(models.Model):
+    provider = models.ForeignKey(HealthcareProviderProfile, on_delete=models.CASCADE)
+    hospital = models.ForeignKey(Hospital, on_delete=models.CASCADE)
+    is_active = models.BooleanField(default=True)
+    start_datetime_utc = models.DateTimeField(default=timezone.now)
+    end_datetime_utc = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        unique_together = ['provider', 'hospital']
+        
 class AdminStaffProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="admin_staff_profile")
     
@@ -125,22 +133,27 @@ class AdminStaffManager(models.Manager):
 class SystemAdminManager(models.Manager):
     def get_queryset(self, *args, **kwargs):
         return super().get_queryset(*args, **kwargs).filter(type=User.UserType.SYSTEM_ADMIN)
-    
+
+# Proxy models
 class Patient(User):
-    base_type = User.UserType.PATIENT
     objects = PatientManager() # type: ignore
     
     class Meta: # type: ignore
         proxy = True
+        
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            self.type = User.UserType.PATIENT
+        super().save(*args, **kwargs)
     
     @property
     def profile(self):
         return self.patient_profile # type: ignore
     
-    def view_doctors(self):
+    def view_healthcare_providers(self):
         return HealthcareProvider.objects.all()
     
-    def search_doctors(self, speciality:'Speciality | None'=None):
+    def search_healthcare_providers(self, speciality:'Speciality | None'=None):
         queryset = HealthcareProvider.objects.all()
         
         if speciality:
@@ -149,15 +162,26 @@ class Patient(User):
             )
         return queryset
     
-    def schedule_appointment(self, doctor:'HealthcareProvider', date_time:datetime, reason:str):
+    def schedule_appointment(self, healthcare_providers:'HealthcareProvider',
+                             start_datetime_utc: datetime, end_datetime_utc: datetime,
+                             reason:str, location:None | str=None):
         try:
-            return Appointment.objects.create(
+            if location is None:
+                profile = healthcare_providers.healthcare_provider_profile # type: ignore
+                location = profile.primary_hospital.address
+            appointment = Appointment.objects.create(
                 patient=self,
-                healthcare_provider=doctor,
-                appointment_date=date_time,
+                healthcare_provider=healthcare_providers,
+                appointment_start_datetime_utc=start_datetime_utc,
+                appointment_end_datetime_utc=end_datetime_utc,
+                location=location,
                 reason=reason,
                 status=Appointment.Status.REQUESTED,
             )
+            appointment.full_clean()
+            appointment.save()
+            
+            return appointment
         except (ValidationError, ValueError) as e:
             raise e
     
@@ -216,11 +240,15 @@ class Patient(User):
         )
     
 class HealthcareProvider(User):
-    base_type = User.UserType.HEALTHCARE_PROVIDER
     objects = HealthcareProviderManager() # type: ignore
     
     class Meta: # type: ignore
         proxy = True
+        
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            self.type = User.UserType.HEALTHCARE_PROVIDER
+        super().save(*args, **kwargs)
         
     @property
     def profile(self):
@@ -228,6 +256,9 @@ class HealthcareProvider(User):
     
     def set_availability(self, start_time: datetime, end_time: datetime, days_of_week: str | List[str]):
         self.availability_slots.filter(days_of_week__in=days_of_week) # type: ignore
+        
+        if isinstance(days_of_week, str):
+            days_of_week = [days_of_week]
         
         for day in days_of_week:
             Availability.objects.create(
@@ -237,16 +268,19 @@ class HealthcareProvider(User):
                 end_time=end_time
             )
             
-    def set_timeoff(self, start_datetime: datetime, end_datetime: datetime):
+    def set_timeoff(self, start_datetime_utc: datetime, end_datetime_utc: datetime):
         now = timezone.now()
         
-        if now < start_datetime or now < end_datetime:
-            raise ValueError("Cannot set time off at a past datetime")
+        if end_datetime_utc < now:
+            raise ValueError("Cannot set time off for a past time")
+        
+        if start_datetime_utc >= end_datetime_utc:
+            raise ValueError("Start time must be before end datetime")
         
         return TimeOff.objects.create(
             healthcare_provider=self,
-            start_datetime=start_datetime,
-            end_datetime=end_datetime
+            start_datetime_utc=start_datetime_utc,
+            end_datetime_utc=end_datetime_utc
         )
     
     def view_appointment_schedule(self, view_type: str='day'):
@@ -289,8 +323,8 @@ class HealthcareProvider(User):
 
         Your appointment with Dr. {self.last_name} has been confirmed.
 
-        📅 Date: {appointment.appointment_date.strftime('%A, %B %d, %Y')}
-        ⏰ Time: {appointment.appointment_date.strftime('%I:%M %p')}
+        📅 Date: {appointment.appointment_start_datetime_utc.strftime('%A, %B %d, %Y')}
+        ⏰ Time: {appointment.appointment_start_datetime_utc.strftime('%I:%M %p')}
         📍 Location: {appointment.location or 'Our Medical Center'}
 
         Please arrive 15 minutes early for your appointment. If you need to reschedule or cancel, please contact us at least 24 hours in advance.
@@ -338,6 +372,11 @@ class AdminStaff(User):
     class Meta: # type: ignore
         proxy = True
         
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            self.type = User.UserType.ADMIN_STAFF
+        super().save(*args, **kwargs)
+        
     def manage_appointment(self, appointment: 'Appointment', action: str, **kwargs): 
         # Check if appointment is with healthcare provider the admin staff
         # manages.
@@ -352,13 +391,15 @@ class AdminStaff(User):
             raise PermissionError("Cannot manage appointments from another hospital.")
         
         if action == 'reschedule':
-            new_date = kwargs.get('new_date')
-            if new_date is None:
-                raise ValueError("new_date parameter is required for rescheduling.")
-            if not isinstance(new_date, datetime):
+            new_start_datetime = kwargs.get('new_start_datetime')
+            new_end_datetime = kwargs.get('new_end_datetime')
+            if new_start_datetime is None or new_end_datetime is None:
+                raise ValueError("new_start_datetime and new_end_datetime parameter is required for rescheduling.")
+            if not isinstance(new_start_datetime, datetime) or not isinstance(new_end_datetime, datetime):
                 raise TypeError("new_date must be a datetime object.")
 
-            appointment.appointment_date = new_date
+            appointment.appointment_start_datetime_utc = new_start_datetime
+            appointment.appointment_end_datetime_utc = new_end_datetime
             appointment.status = Appointment.Status.RESCHEDULED
         elif action == 'cancel':
             appointment.status = Appointment.Status.CANCELLED
@@ -374,11 +415,15 @@ class AdminStaff(User):
         return Patient.objects.all()
     
 class SystemAdmin(User):
-    base_type = User.UserType.SYSTEM_ADMIN
     objects = SystemAdminManager() # type: ignore
     
     class Meta: # type: ignore
         proxy = True
+        
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            self.type = User.UserType.SYSTEM_ADMIN
+        super().save(*args, **kwargs)
         
     def create_user_account(self, username: str, password: str, email: str, user_type: User.UserType, **extra_fields):
         user = User.objects.create_user(
@@ -414,6 +459,7 @@ class SystemAdmin(User):
         user.save()
         return user
     
+# Misc tables
 class Appointment(BaseModel, models.Model):
     class Status(models.TextChoices):
         REQUESTED = "REQUESTED", "Requested"
@@ -424,28 +470,32 @@ class Appointment(BaseModel, models.Model):
         
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name="patient_appointments")
     healthcare_provider = models.ForeignKey(HealthcareProvider, on_delete=models.CASCADE, related_name="provider_appointments")
-    appointment_date = models.DateTimeField()
-    location = models.CharField(max_length=255)
-    comment = models.TextField()
+    appointment_start_datetime_utc= models.DateTimeField()
+    appointment_end_datetime_utc= models.DateTimeField()
+    location = models.CharField(max_length=255) # storing location as string in case of hospital data modification
+    reason = models.TextField()
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.REQUESTED)
+    
+    class Meta: # type: ignore
+        unique_together = ('patient', 'healthcare_provider', 'appointment_start_datetime_utc')
+        constraints = [
+            models.CheckConstraint(
+                name='appointment_end_datetime_utc_gt_start_datetime',
+                check=models.Q(appointment_end_datetime_utc__gt=models.F('appointment_start_datetime_utc'))
+            )
+        ]
     
     def clean(self):
         super().clean()
         
-        if self.appointment_date and self.appointment_date < timezone.now():
-            raise ValidationError({'appointment_date': 'Cannot schedule an appointment for a past date.'})
-        
-    class Meta: # type: ignore
-        constraints = [
-            models.CheckConstraint(
-                name='appointment_date_cannot_be_in_the_past',
-                check=models.Q(appointment_date__gte=timezone.now()),
-                violation_error_message='Appointment date must be in the future.'
-            )
-        ]
+        if self.appointment_start_datetime_utc and self.appointment_start_datetime_utc < timezone.now():
+            raise ValidationError({'message': 'Cannot schedule an appointment with a past start time.'})
+
+        if self.appointment_end_datetime_utc and self.appointment_end_datetime_utc < timezone.now():
+            raise ValidationError({'message': 'Cannot schedule an appointment with a past end time.'})
     
     def __str__(self):
-        return f"Appointment: {self.patient} with {self.healthcare_provider} on {self.appointment_date}"
+        return f"Appointment: {self.patient} with {self.healthcare_provider} at {self.appointment_start_datetime_utc}"
     
 class MedicalRecord(BaseModel, models.Model):
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name="medical_records")
@@ -491,16 +541,17 @@ class Availability(models.Model):
     
 class TimeOff(models.Model):
     healthcare_provider = models.ForeignKey(HealthcareProvider, on_delete=models.CASCADE, related_name="time_off")
-    start_datetime = models.DateTimeField()
-    end_datetime = models.DateTimeField()
+    start_datetime_utc = models.DateTimeField()
+    end_datetime_utc = models.DateTimeField()
     
     class Meta:
+        unique_together = ('healthcare_provider', 'start_datetime_utc')
         constraints = [
             models.CheckConstraint(
-                name='end_date_after_start_date',
-                check=models.Q(end_date__gte=models.F('start_date'))
+                name='timeoff_start_datetime_utc',
+                check=models.Q(end_datetime_utc__gte=models.F('start_datetime_utc'))
             )
         ]
         
     def __str__(self):
-        return f"{self.healthcare_provider} off: {self.start_datetime} to {self.end_datetime}"
+        return f"{self.healthcare_provider} off: {self.start_datetime_utc} to {self.end_datetime_utc}"
