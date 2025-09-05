@@ -1,7 +1,8 @@
-from typing import List
+from typing import List, Dict, Optional, Union
 from datetime import datetime, timedelta
 from django.db import models
 from django.utils import timezone
+from django.db.models.query import QuerySet
 from django.contrib.auth.models import AbstractUser, Group
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
@@ -41,6 +42,66 @@ class User(BaseModel, AbstractUser):
     date_of_birth = models.DateField(_("Date of Birth"), null=True, blank=True)
     phone_number = models.CharField(_("Phone Number"), max_length=20, blank=True)
     address = models.TextField(_("Address"), blank=True)
+    
+    def send_message(self, recipient: 'User', content: str) -> 'Message':
+        if not recipient.is_active:
+            raise ValueError("Cannot send message to inactivate user")
+        
+        if not content.strip():
+            raise ValueError("Message cannot be empty")
+
+        return Message.objects.create(
+            sender=self,
+            recipient=recipient,
+            content=content
+        )
+        
+    def view_message(self,
+                     other_user: Optional['User'] = None,
+                     limit:int = 50,
+                     unread_only: bool = False) -> List['Message']:
+        
+        sent = self.sent_messages.all() # type: ignore
+        received = self.received_messages.all() # type: ignore
+        
+        if other_user:
+            sent = sent.filter(
+                models.Q(sender=other_user) | models.Q(recipient=other_user) # type: ignore
+            )
+            received = received.filter(
+                models.Q(sender=other_user) | models.Q(recipient=other_user) # type: ignore
+            )
+            
+        if unread_only:
+            sent = sent.filter(read=False)
+            received = received.filter(read=False)
+        
+        queryset = sent.union(received)
+        queryset = queryset.order_by('-sent_at')
+        
+        return queryset.all()[:limit]
+    
+    def get_conversation(self, other_user: 'User', limit: int = 50) -> List['Message']:
+        return self.view_message(other_user=other_user, limit=limit)
+    
+    def get_unread_count(self, other_user: Optional['User'] = None) -> int:
+        queryset = self.received_messages.filter(read=False) # type: ignore
+        
+        if other_user:
+            queryset = queryset.filter(sender=other_user)
+        
+        return queryset.count()
+    
+    def mark_as_read(self, messages: Optional[List['Message']] = None,
+                     other_user: Optional['User'] = None):
+        if messages:
+            for message in messages:
+                if message.recipient != self:
+                    raise PermissionError("Cannot mark other user's message as read")
+                message.read = True
+                message.save()
+        elif other_user:
+            self.received_messages.filter(sender=other_user, read=False).update(read=True) # type: ignore
     
     def __str__(self):
         return f"{self.username}: {self.get_type_display()}" # type: ignore
@@ -150,10 +211,10 @@ class Patient(User):
     def profile(self):
         return self.patient_profile # type: ignore
     
-    def view_healthcare_providers(self):
+    def view_healthcare_providers(self) -> QuerySet:
         return HealthcareProvider.objects.all()
     
-    def search_healthcare_providers(self, speciality:'Speciality | None'=None):
+    def search_healthcare_providers(self, speciality: Optional[Speciality]=None) -> QuerySet:
         queryset = HealthcareProvider.objects.all()
         
         if speciality:
@@ -164,7 +225,7 @@ class Patient(User):
     
     def schedule_appointment(self, healthcare_providers:'HealthcareProvider',
                              start_datetime_utc: datetime, end_datetime_utc: datetime,
-                             reason:str, location:None | str=None):
+                             reason:str, location: Optional[str]=None) -> 'Appointment':
         try:
             if location is None:
                 profile = healthcare_providers.healthcare_provider_profile # type: ignore
@@ -185,14 +246,16 @@ class Patient(User):
         except (ValidationError, ValueError) as e:
             raise e
     
-    def view_appointments(self, upcoming:bool=True, status:str | list | None=None, limit:int | None=None):
+    def view_appointments(self, upcoming: Optional[bool]=None,
+                          status: Union[str, list, None]=None,
+                          limit: Optional[int]=None) -> QuerySet:
         now = timezone.now()
         queryset = self.patient_appointments.all() # type: ignore
 
         if upcoming:
-            queryset = queryset.filter(appointment_date__gte=now)
-        else:
-            queryset = queryset.filter(appointment_date__lt=now)
+            queryset = queryset.filter(appointment_end_datetime_utc__gte=now)
+        elif upcoming == False:
+            queryset = queryset.filter(appointment_end_datetime_utc__lt=now)
             
         if status:
             if isinstance(status, str):
@@ -200,7 +263,7 @@ class Patient(User):
             elif isinstance(status, list):
                 queryset = queryset.filter(status__in=status)
         
-        order = 'appointment_date' if upcoming else '-appointment_date'
+        order = 'appointment_start_datetime_utc' if upcoming else '-appointment_start_datetime_utc'
         queryset = queryset.order_by(order)
         
         if limit:
@@ -208,7 +271,9 @@ class Patient(User):
             
         return queryset
     
-    def view_medical_records(self, date_range:List[datetime] | None=None, provider:'HealthcareProvider | None'=None, limit:int | None=None):
+    def view_medical_records(self, date_range: Optional[List[datetime]]=None,
+                             provider:Optional['HealthcareProvider']=None,
+                             limit: Optional[int]=None) -> QuerySet:
         queryset = self.medical_records.all() # type: ignore
         
         if date_range: # [start_date, end_date]
@@ -221,23 +286,6 @@ class Patient(User):
             queryset = queryset[:limit]
         
         return queryset
-    
-    def send_message(self, recipient: 'User', subject:str, message:str):
-        if not recipient.is_active:
-            raise ValueError("Cannot send message to inactivate user")
-        
-        if not subject.strip():
-            raise ValueError("Subject cannot be empty")
-        
-        if not message.strip():
-            raise ValueError("Message cannot be empty")
-
-        return Message.objects.create(
-            sender=self,
-            recipient=recipient,
-            subject=subject,
-            message=message
-        )
     
 class HealthcareProvider(User):
     objects = HealthcareProviderManager() # type: ignore
@@ -254,21 +302,43 @@ class HealthcareProvider(User):
     def profile(self):
         return self.healthcare_provider_profile # type: ignore
     
-    def set_availability(self, start_time: datetime, end_time: datetime, days_of_week: str | List[str]):
-        self.availability_slots.filter(days_of_week__in=days_of_week) # type: ignore
+    def _validate_day(self, day: str):
+        valid_days = [choice[0] for choice in Availability.DaysOfWeek.choices]
+        if day not in valid_days:
+            raise ValueError(f"Invalid day of week: {day}. Must be one of {valid_days}")
         
-        if isinstance(days_of_week, str):
-            days_of_week = [days_of_week]
-        
-        for day in days_of_week:
-            Availability.objects.create(
+    def _validate_time(self, start_time: datetime, end_time: datetime):
+        if start_time >= end_time:
+            raise ValueError("Start time must be before end time")
+    
+    def set_availability(self, slots: Dict[str, tuple[datetime, ...]]) -> List['Availability']:
+        # validate time slots
+        for day, (start_time, end_time) in slots.items():
+            self._validate_day(day)
+            self._validate_time(start_time, end_time)
+                
+        for day, (start_time, end_time) in slots.items():
+            Availability.objects.update_or_create(
                 healthcare_provider=self,
-                days_of_week=day,
+                day_of_week=day,
                 start_time=start_time,
                 end_time=end_time
             )
             
-    def set_timeoff(self, start_datetime_utc: datetime, end_datetime_utc: datetime):
+        valid_days = {choice[0] for choice in Availability.DaysOfWeek.choices}
+        remaining_days = valid_days - set(slots.keys()) # type: ignore
+        self.remove_availability(list(remaining_days))
+
+        return self.availability_slots.all() # type: ignore
+    
+    def remove_availability(self, days_of_week: List[str]) -> int:
+        for day in days_of_week:
+            self._validate_day(day)
+            
+        count, _ = self.availability_slots.filter(day_of_week__in=days_of_week).delete() # type: ignore
+        return count
+            
+    def set_timeoff(self, start_datetime_utc: datetime, end_datetime_utc: datetime) -> 'TimeOff':
         now = timezone.now()
         
         if end_datetime_utc < now:
@@ -282,8 +352,19 @@ class HealthcareProvider(User):
             start_datetime_utc=start_datetime_utc,
             end_datetime_utc=end_datetime_utc
         )
+        
+    def view_timeoff(self, upcoming: Optional[bool] = None) -> QuerySet:
+        now = timezone.now()
+        queryset = self.provider_timeoff.all() # type: ignore
+        
+        if upcoming is True:
+            return queryset.filter(start_datetime_utc__gt=now)
+        elif upcoming is False:
+            return queryset.filter(start_datetime_utc__lt=now)
+        else:
+            return queryset
     
-    def view_appointment_schedule(self, view_type: str='day'):
+    def view_appointment_schedule(self, view_type: str='day') -> QuerySet:
         now = timezone.now()
         
         if view_type not in ['day', 'week', 'month']:
@@ -304,10 +385,10 @@ class HealthcareProvider(User):
                 end_date = next_month - timedelta(days=next_month.day)
                 
         return self.provider_appointments.filter( # type: ignore
-            appointment_date__date__range=[start_date, end_date]
+            appointment_start_datetime_utc__date__range=[start_date, end_date]
         )
     
-    def accept_appointment(self, appointment: 'Appointment'):
+    def accept_appointment(self, appointment: 'Appointment') -> 'Appointment':
         if appointment.healthcare_provider != self:
             raise PermissionError("Cannot accept appointments scheduled for other providers.")
         
@@ -334,39 +415,30 @@ class HealthcareProvider(User):
         Best regards,
         Dr. {self.last_name}'s Office
         """
-        self.send_message(appointment.patient, "Confirmation " + str(appointment), msg)
+        self.send_message(appointment.patient, msg)
         
         return appointment
     
     def add_medical_record(self, patient: Patient, diagnosis: str, notes: str,
-                           prescriptions: str):
-        return MedicalRecord(
+                           prescriptions: str) -> 'MedicalRecord':
+        if not diagnosis.strip():
+            raise ValueError("Cannot have empty diagnosis")
+        if not notes.strip():
+            raise ValueError("Cannot have empty notes")
+        if not prescriptions.strip():
+            raise ValueError("Cannot have empty prescriptions")
+        
+        medical_record = MedicalRecord(
             patient=patient,
             healthcare_provider=self,
             diagnosis=diagnosis,
             notes=notes,
             prescriptions=prescriptions
         )
+        medical_record.save()
+        return medical_record
     
-    def send_message(self, recipient: User, subject: str, message:str):
-        if not recipient.is_active:
-            raise ValueError("Cannot send message to inactivate user")
-        
-        if not subject.strip():
-            raise ValueError("Subject cannot be empty")
-        
-        if not message.strip():
-            raise ValueError("Message cannot be empty")
-
-        return Message.objects.create(
-            sender=self,
-            recipient=recipient,
-            subject=subject,
-            message=message
-        )
-    
-class AdminStaff(User):
-    base_type = User.UserType.ADMIN_STAFF
+class AdminStaffProvider(User):
     objects = AdminStaffManager() # type: ignore
     
     class Meta: # type: ignore
@@ -377,15 +449,20 @@ class AdminStaff(User):
             self.type = User.UserType.ADMIN_STAFF
         super().save(*args, **kwargs)
         
-    def manage_appointment(self, appointment: 'Appointment', action: str, **kwargs): 
+    def manage_appointment(self, appointment: 'Appointment', action: str, **kwargs) -> 'Appointment':
         # Check if appointment is with healthcare provider the admin staff
         # manages.
         admin_hospital = self.admin_staff_profile.hospital # type: ignore
         healthcare_provider = appointment.healthcare_provider
-        is_affiliated = (
-            healthcare_provider.hospitals.filter(id=admin_hospital.id).exists() or # type: ignore
-            healthcare_provider.primary_hospital == admin_hospital # type: ignore
-        )
+
+        is_affiliated = False
+        if healthcare_provider and healthcare_provider.healthcare_provider_profile: # type: ignore
+            profile = healthcare_provider.healthcare_provider_profile # type: ignore
+            
+            if profile.hospitals.filter(id=admin_hospital.id).exists():
+                is_affiliated = True
+            elif profile.primary_hospital and profile.primary_hospital.id == admin_hospital.id:
+                is_affiliated = True
         
         if not is_affiliated:
             raise PermissionError("Cannot manage appointments from another hospital.")
@@ -411,7 +488,7 @@ class AdminStaff(User):
         appointment.save()
         return appointment
     
-    def view_all_patients(self):
+    def view_all_patients(self) -> QuerySet:
         return Patient.objects.all()
     
 class SystemAdmin(User):
@@ -425,7 +502,8 @@ class SystemAdmin(User):
             self.type = User.UserType.SYSTEM_ADMIN
         super().save(*args, **kwargs)
         
-    def create_user_account(self, username: str, password: str, email: str, user_type: User.UserType, **extra_fields):
+    def create_user_account(self, username: str, password: str, email: str,
+                            user_type: User.UserType, **extra_fields) -> User:
         user = User.objects.create_user(
             username=username,
             password=password,
@@ -444,17 +522,17 @@ class SystemAdmin(User):
 
         return user
     
-    def disable_user_account(self, user: User):
+    def disable_user_account(self, user: User) -> User:
         user.is_active = False
         user.save()
         return user
     
-    def assign_role(self, user: User, group_name: str):
+    def assign_role(self, user: User, group_name: str) -> User:
         group, created = Group.objects.get_or_create(name=group_name)
         user.groups.add(group)
         return user
     
-    def reset_password(self, user: User, new_password: str):
+    def reset_password(self, user: User, new_password: str) -> User:
         user.set_password(new_password)
         user.save()
         return user
@@ -510,13 +588,18 @@ class MedicalRecord(BaseModel, models.Model):
 class Message(models.Model):
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sent_messages")
     recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name="received_messages")
-    subject = models.CharField(max_length=255)
-    message = models.TextField()
+    content = models.TextField()
     sent_at = models.DateTimeField(auto_now_add=True)
     read = models.BooleanField(default=False)
     
+    def clean(self):
+        super().clean()
+        
+        if not self.content.strip():
+            raise ValueError("Cannot send message without content")    
+    
     def __str__(self):
-        return f"Message from {self.sender} to {self.recipient} on {self.subject}"
+        return f"Message from {self.sender} to {self.recipient}"
     
 class Availability(models.Model):
     class DaysOfWeek(models.TextChoices):
@@ -540,7 +623,7 @@ class Availability(models.Model):
         return f"{self.healthcare_provider} Availability: {self.get_day_of_week_display()} {self.start_time}-{self.end_time}" # type: ignore
     
 class TimeOff(models.Model):
-    healthcare_provider = models.ForeignKey(HealthcareProvider, on_delete=models.CASCADE, related_name="time_off")
+    healthcare_provider = models.ForeignKey(HealthcareProvider, on_delete=models.CASCADE, related_name="provider_timeoff")
     start_datetime_utc = models.DateTimeField()
     end_datetime_utc = models.DateTimeField()
     

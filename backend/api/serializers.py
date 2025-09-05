@@ -29,14 +29,14 @@ class UserSerializer(CamelCaseMixin, serializers.ModelSerializer):
         user.save()
         return user    
     
-class PatientSerializer(serializers.ModelSerializer):
+class PatientSerializer(CamelCaseMixin, serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     
     class Meta:
         model = Patient
         fields = '__all__'
         
-class HealthcareProviderSerializer(serializers.ModelSerializer):
+class HealthcareProviderSerializer(CamelCaseMixin, serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     speciality = serializers.StringRelatedField()
     
@@ -44,7 +44,7 @@ class HealthcareProviderSerializer(serializers.ModelSerializer):
         model = HealthcareProvider
         fields = '__all__'
 
-class AppointmentSerializer(serializers.ModelSerializer):
+class AppointmentSerializer(CamelCaseMixin, serializers.ModelSerializer):
     patient = PatientSerializer(read_only=True)
     healthcare_provider = HealthcareProviderSerializer(read_only=True)
     
@@ -52,12 +52,12 @@ class AppointmentSerializer(serializers.ModelSerializer):
         model = Appointment
         fields = '__all__'
 
-class MedicalRecordSerializer(serializers.ModelSerializer):
+class MedicalRecordSerializer(CamelCaseMixin, serializers.ModelSerializer):
     class Meta:
         model = MedicalRecord
         fields = '__all__'
 
-class MessageSerializer(serializers.ModelSerializer):
+class MessageSerializer(CamelCaseMixin, serializers.ModelSerializer):
     sender = UserSerializer(read_only=True)
     recipient = UserSerializer(read_only=True)
     
@@ -65,12 +65,12 @@ class MessageSerializer(serializers.ModelSerializer):
         model = Message
         fields = '__all__'
         
-class SpecialitySerializer(serializers.ModelSerializer):
+class SpecialitySerializer(CamelCaseMixin, serializers.ModelSerializer):
     class Meta:
         model = Speciality
         fields = '__all__'
 
-class HospitalSerializer(serializers.ModelSerializer):
+class HospitalSerializer(CamelCaseMixin, serializers.ModelSerializer):
     class Meta:
         model = Hospital
         fields = '__all__'

@@ -71,6 +71,22 @@ files = [
 Django = ">=4.2"
 
 [[package]]
+name = "django-stubs-ext"
+version = "5.2.2"
+description = "Monkey-patching and extensions for django-stubs"
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "django_stubs_ext-5.2.2-py3-none-any.whl", hash = "sha256:8833bbe32405a2a0ce168d3f75a87168f61bd16939caf0e8bf173bccbd8a44c5"},
+    {file = "django_stubs_ext-5.2.2.tar.gz", hash = "sha256:d9d151b919fe2438760f5bd938f03e1cb08c84d0651f9e5917f1313907e42683"},
+]
+
+[package.dependencies]
+django = "*"
+typing-extensions = "*"
+
+[[package]]
 name = "djangorestframework"
 version = "3.16.1"
 description = "Web APIs for Django, made easy."
@@ -332,4 +348,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10"
-content-hash = "770207f337041b1d6f00cd941cdb682e36263c1f502404b66a41bfffa208f62c"
+content-hash = "8f4a679536f75fa5afcdae8b427b59b70c0ada98247a25bc9db7f0d635a5c196"

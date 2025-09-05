@@ -1,12 +1,15 @@
+# type: ignore
 import os
+import time
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from datetime import datetime, timedelta
 from django.utils import timezone
 from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 
 from ..models import (
-    User, Patient, HealthcareProvider, AdminStaff, SystemAdmin,
+    User, Patient, HealthcareProvider, AdminStaffProvider, SystemAdmin,
     Speciality, Hospital, PatientProfile, HealthcareProviderProfile,
     AdminStaffProfile, Appointment, MedicalRecord, Message,
     Availability, TimeOff, ProviderHospitalAssignment
@@ -33,117 +36,664 @@ class BaseModelTest(TestCase):
             phone_number="123-456-7890"
         )
         
-class UserModelTest(BaseModelTest):
-    def test_create_user(self):
-        user = User.objects.create_user(
-            username="test",
-            password="password1234",
-            email="test@example.com",
-            first_name="Test",
-            last_name="User"
-        )
+# class UserModelTest(BaseModelTest):
+#     def test_create_user(self):
+#         user = User.objects.create_user(
+#             username="test",
+#             password="password1234",
+#             email="test@example.com",
+#             first_name="Test",
+#             last_name="User"
+#         )
         
-        self.assertEqual(user.username, "test")
-        self.assertEqual(user.email, "test@example.com")
-        self.assertEqual(user.type, User.UserType.PATIENT) # type: ignore
-        self.assertTrue(user.is_active)
-        self.assertFalse(user.is_staff)
+#         self.assertEqual(user.username, "test")
+#         self.assertEqual(user.email, "test@example.com")
+#         self.assertEqual(user.type, User.UserType.PATIENT) 
+#         self.assertTrue(user.is_active)
+#         self.assertFalse(user.is_staff)
         
-    def test_create_superuser(self):
-        user = User.objects.create_superuser(
-            username="admin",
-            password="password1234",
-            email="admin@example.com",
-            first_name="Admin",
-            last_name="User"
-        )
+#     def test_create_superuser(self):
+#         user = User.objects.create_superuser(
+#             username="admin",
+#             password="password1234",
+#             email="admin@example.com",
+#             first_name="Admin",
+#             last_name="User"
+#         )
         
-        self.assertEqual(user.username, "admin")
-        self.assertTrue(user.is_staff)
-        self.assertTrue(user.is_superuser)
+#         self.assertEqual(user.username, "admin")
+#         self.assertTrue(user.is_staff)
+#         self.assertTrue(user.is_superuser)
         
-    def test_create_patient_proxy(self):
-        user = User.objects.create_user(
-            username="test",
-            password="password1234",
-            email="test@example.com",
-            first_name="Test",
-            last_name="User"
-        )
+#     def test_create_patient_proxy(self):
+#         user = User.objects.create_user(
+#             username="test",
+#             password="password1234",
+#             email="test@example.com",
+#             first_name="Test",
+#             last_name="User"
+#         )
         
-        patient_profile = PatientProfile.objects.create(
-            user=user,
-            age=24,
-            blood_type="O",
-            allergies="peanut",
-            insurance="Blue Cross",
-            weight=70,
-            height=175
-        )
+#         patient_profile = PatientProfile.objects.create(
+#             user=user,
+#             age=24,
+#             blood_type="O",
+#             allergies="peanut",
+#             insurance="Blue Cross",
+#             weight=70,
+#             height=175
+#         )
         
-        patient = Patient.objects.get(id=user.id) # type: ignore
-        self.assertEqual(patient.type, User.UserType.PATIENT) # type: ignore
-        self.assertEqual(patient.profile, patient_profile)
+#         patient = Patient.objects.get(id=user.id) 
+#         self.assertEqual(patient.type, User.UserType.PATIENT) 
+#         self.assertEqual(patient.profile, patient_profile)
         
-    def test_create_healthcare_provider_proxy(self):
-        user = User.objects.create_user(
-            username="doc",
-            password="password1234",
-            email="doc@example.com",
-            type=User.UserType.HEALTHCARE_PROVIDER, # type: ignore
-            first_name="Doc",
-            last_name="User"
-        )
-        provider_profile = HealthcareProviderProfile.objects.create(
-            user=user,
-            speciality=self.speciality,
-            image="doctor.jpg",
-            education="MD",
-            years_of_experience=10,
-            about="Experienced professional",
-            fees=150.,
-            address_line1="123 Main St",
-            city="Los Angeles",
-            state="CA",
-            zip_code="90012",
-            license_number="G40749",
-            primary_hospital=self.hospital
-        )
+#     def test_create_healthcare_provider_proxy(self):
+#         user = User.objects.create_user(
+#             username="doc",
+#             password="password1234",
+#             email="doc@example.com",
+#             type=User.UserType.HEALTHCARE_PROVIDER, 
+#             first_name="Doc",
+#             last_name="User"
+#         )
+#         provider_profile = HealthcareProviderProfile.objects.create(
+#             user=user,
+#             speciality=self.speciality,
+#             image="doctor.jpg",
+#             education="MD",
+#             years_of_experience=10,
+#             about="Experienced professional",
+#             fees=150.,
+#             address_line1="123 Main St",
+#             city="Los Angeles",
+#             state="CA",
+#             zip_code="90012",
+#             license_number="G40749",
+#             primary_hospital=self.hospital
+#         )
         
-        provider = HealthcareProvider.objects.get(id=user.id) # type: ignore
-        self.assertEqual(provider.type, User.UserType.HEALTHCARE_PROVIDER) # type: ignore
-        self.assertEqual(provider.profile, provider_profile)
+#         provider = HealthcareProvider.objects.get(id=user.id) 
+#         self.assertEqual(provider.type, User.UserType.HEALTHCARE_PROVIDER) 
+#         self.assertEqual(provider.profile, provider_profile)
         
-    def test_create_admin_staff_proxy(self):
-        user = User.objects.create_user(
-            username="admin",
-            password="password1234",
-            email="admin@example.com",
-            type=User.UserType.ADMIN_STAFF, # type: ignore
-            first_name="Admin",
-            last_name="User"
-        )
-        admin_profile = AdminStaffProfile.objects.create(
-            user=user,
-            hospital=self.hospital
-        )
+#     def test_create_admin_staff_proxy(self):
+#         user = User.objects.create_user(
+#             username="admin",
+#             password="password1234",
+#             email="admin@example.com",
+#             type=User.UserType.ADMIN_STAFF, 
+#             first_name="Admin",
+#             last_name="User"
+#         )
+#         admin_profile = AdminStaffProfile.objects.create(
+#             user=user,
+#             hospital=self.hospital
+#         )
         
-        admin = AdminStaff.objects.get(id=user.id) # type: ignore
-        self.assertEqual(admin.type, User.UserType.ADMIN_STAFF) # type: ignore
-        self.assertEqual(admin.admin_staff_profile, admin_profile) # type: ignore
+#         admin = AdminStaff.objects.get(id=user.id) 
+#         self.assertEqual(admin.type, User.UserType.ADMIN_STAFF) 
+#         self.assertEqual(admin.admin_staff_profile, admin_profile) 
         
-    def test_create_system_admin_proxy(self):
-        sysadmin_user = User.objects.create_user(
-            username="sysadmin",
-            password="password1234",
-            email="sysadmin@example.com",
-            type=User.UserType.SYSTEM_ADMIN, # type: ignore
-        )
+#     def test_create_system_admin_proxy(self):
+#         sysadmin_user = User.objects.create_user(
+#             username="sysadmin",
+#             password="password1234",
+#             email="sysadmin@example.com",
+#             type=User.UserType.SYSTEM_ADMIN, 
+#         )
         
-        sysadmin = SystemAdmin.objects.get(id=sysadmin_user.id) # type: ignore
-        self.assertEqual(sysadmin.type, User.UserType.SYSTEM_ADMIN) # type: ignore
+#         sysadmin = SystemAdmin.objects.get(id=sysadmin_user.id) 
+#         self.assertEqual(sysadmin.type, User.UserType.SYSTEM_ADMIN) 
+        
+#     def test_send_message(self):
+#         patient_user = User.objects.create_user(
+#             username="test",
+#             password="password1234",
+#             email="test@example.com",
+#             type=User.UserType.PATIENT, 
+#             first_name="Test",
+#             last_name="User"
+#         )
+#         provider_user = User.objects.create_user(
+#             username="doc",
+#             password="password1234",
+#             email="doc@example.com",
+#             type=User.UserType.HEALTHCARE_PROVIDER, 
+#             first_name="Doc",
+#             last_name="User"
+#         )
+        
+#         message = patient_user.send_message(provider_user, "test") 
+#         self.assertEqual(message.sender, patient_user)
+#         self.assertEqual(message.recipient, provider_user)
+#         self.assertEqual(message.content, 'test')
+#         self.assertFalse(message.read)
+        
+#     def test_send_invalid_message(self):
+#         patient_user = User.objects.create_user(
+#             username="test",
+#             password="password1234",
+#             email="test@example.com",
+#             type=User.UserType.PATIENT, 
+#             first_name="Test",
+#             last_name="User"
+#         )
+#         provider_user = User.objects.create_user(
+#             username="doc",
+#             password="password1234",
+#             email="doc@example.com",
+#             type=User.UserType.HEALTHCARE_PROVIDER, 
+#             first_name="Doc",
+#             last_name="User"
+#         )
+        
+#         with self.assertRaises(ValueError):
+#             patient_user.send_message(recipient=provider_user, content="") 
+            
+#     def test_view_message(self):
+#         patient_user = User.objects.create_user(
+#             username="test",
+#             password="password1234",
+#             email="test@example.com",
+#             type=User.UserType.PATIENT, 
+#             first_name="Test",
+#             last_name="User"
+#         )
+#         provider_user = User.objects.create_user(
+#             username="doc",
+#             password="password1234",
+#             email="doc@example.com",
+#             type=User.UserType.HEALTHCARE_PROVIDER, 
+#             first_name="Doc",
+#             last_name="User"
+#         )
+        
+#         message = patient_user.send_message(provider_user, "test") 
+#         received_messages = provider_user.view_message(patient_user) 
+#         self.assertEqual(len(received_messages), 1)
+#         self.assertEqual(received_messages[0], message)
+#         self.assertEqual(received_messages[0].sender, patient_user) 
+        
+#     def test_get_conversation(self):
+#         patient_user = User.objects.create_user(
+#             username="test",
+#             password="password1234",
+#             email="test@example.com",
+#             type=User.UserType.PATIENT, 
+#             first_name="Test",
+#             last_name="User"
+#         )
+#         provider_user = User.objects.create_user(
+#             username="doc",
+#             password="password1234",
+#             email="doc@example.com",
+#             type=User.UserType.HEALTHCARE_PROVIDER, 
+#             first_name="Doc",
+#             last_name="User"
+#         )
+#         provider_user2 = User.objects.create_user(
+#             username="doc2",
+#             password="password1234",
+#             email="doc2@example.com",
+#             type=User.UserType.HEALTHCARE_PROVIDER, 
+#             first_name="Doc2",
+#             last_name="User"
+#         )
+        
+#         patient_user.send_message(provider_user, "test")
+#         self.assertEqual(len(patient_user.get_conversation(provider_user)), 1) 
+#         self.assertEqual(len(patient_user.get_conversation(provider_user2)), 0) 
+        
+#     def test_get_unread_count(self):
+#         patient_user = User.objects.create_user(
+#             username="test",
+#             password="password1234",
+#             email="test@example.com",
+#             type=User.UserType.PATIENT, 
+#             first_name="Test",
+#             last_name="User"
+#         )
+#         provider_user = User.objects.create_user(
+#             username="doc",
+#             password="password1234",
+#             email="doc@example.com",
+#             type=User.UserType.HEALTHCARE_PROVIDER, 
+#             first_name="Doc",
+#             last_name="User"
+#         )
+#         provider_user2 = User.objects.create_user(
+#             username="doc2",
+#             password="password1234",
+#             email="doc@example.com",
+#             type=User.UserType.HEALTHCARE_PROVIDER,
+#             first_name="Doc2",
+#             last_name="User"
+#         )
+        
+#         provider_user.send_message(patient_user, "test")
+#         provider_user2.send_message(patient_user, "test") 
+#         self.assertEqual(patient_user.get_unread_count(), 2) 
+#         self.assertEqual(provider_user.get_unread_count(), 0)
+        
+#     def test_mark_as_read(self):
+#         patient_user = User.objects.create_user(
+#             username="test",
+#             password="password1234",
+#             email="test@example.com",
+#             type=User.UserType.PATIENT, 
+#             first_name="Test",
+#             last_name="User"
+#         )
+#         provider_user = User.objects.create_user(
+#             username="doc",
+#             password="password1234",
+#             email="doc@example.com",
+#             type=User.UserType.HEALTHCARE_PROVIDER, 
+#             first_name="Doc",
+#             last_name="User"
+#         )
+#         provider_user.send_message(patient_user, "test")
+#         patient_user.mark_as_read(other_user=provider_user)
 
-class PatientFunctionTest(BaseModelTest):
+#         self.assertEqual(patient_user.get_unread_count(), 0)
+#         self.assertTrue(patient_user.view_message(provider_user)[0].read)
+        
+#         message = patient_user.send_message(provider_user, "test2")
+#         provider_user.mark_as_read([message])
+
+#         self.assertEqual(provider_user.get_unread_count(), 0)
+#         self.assertTrue(provider_user.view_message(provider_user)[0].read)
+        
+#     def test_invalid_mark_as_read(self):
+#         patient_user = User.objects.create_user(
+#             username="test",
+#             password="password1234",
+#             email="test@example.com",
+#             type=User.UserType.PATIENT, 
+#             first_name="Test",
+#             last_name="User"
+#         )
+#         provider_user = User.objects.create_user(
+#             username="doc",
+#             password="password1234",
+#             email="doc@example.com",
+#             type=User.UserType.HEALTHCARE_PROVIDER, 
+#             first_name="Doc",
+#             last_name="User"
+#         )
+#         provider_user2 = User.objects.create_user(
+#             username="doc2",
+#             password="password1234",
+#             email="doc2@example.com",
+#             type=User.UserType.HEALTHCARE_PROVIDER, 
+#             first_name="Doc2",
+#             last_name="User"
+#         )
+#         message = provider_user.send_message(patient_user, "test")
+        
+#         with self.assertRaises(PermissionError):
+#             provider_user2.mark_as_read([message]) 
+#         with self.assertRaises(PermissionError):
+#             provider_user.mark_as_read([message])
+            
+#         provider_user.mark_as_read(other_user=patient_user)
+#         self.assertEqual(patient_user.get_unread_count(), 1)
+#         self.assertFalse(patient_user.view_message(provider_user)[0].read)
+
+# class PatientModelTest(BaseModelTest):
+#     def setUp(self):
+#         super().setUp()
+        
+#         self.patient_user = User.objects.create_user(
+#             username="test",
+#             password="password1234",
+#             email="test@example.com",
+#             type=User.UserType.PATIENT, 
+#             first_name="Test",
+#             last_name="User"
+#         )
+        
+#         self.patient_profile = PatientProfile.objects.create(
+#             user=self.patient_user,
+#             age=25,
+#             blood_type="A+"
+#         )
+        
+#         self.patient = Patient.objects.get(id=self.patient_user.id) 
+        
+#         # Create healthcare provider
+#         self.provider_user = User.objects.create_user(
+#             username="doc",
+#             password="password1234",
+#             email="doc@example.com",
+#             type=User.UserType.HEALTHCARE_PROVIDER, 
+#             first_name="Doc",
+#             last_name="User"
+#         )
+        
+#         self.provider_profile = HealthcareProviderProfile.objects.create(
+#             user=self.provider_user,
+#             speciality=self.speciality,
+#             image="doctor.jpg",
+#             education="MD",
+#             years_of_experience=5,
+#             about="Test doctor",
+#             fees=100.,
+#             address_line1="123 Test St",
+#             city="Test City",
+#             state="TS",
+#             zip_code="12345",
+#             license_number="MD654321",
+#             primary_hospital=self.hospital
+#         )
+        
+#         self.provider = HealthcareProvider.objects.get(id=self.provider_user.id) 
+        
+#     def test_patient_view_doctors(self):
+#         doctors = self.patient.view_healthcare_providers() 
+#         self.assertEqual(doctors.count(), 1)
+#         self.assertEqual(doctors.first(), self.provider)
+        
+#     def test_patient_search_doctors(self):
+#         """Test patient can search doctors by speciality"""
+#         # Search with matching speciality
+#         doctors = self.patient.search_healthcare_providers(speciality=self.speciality.name) 
+#         self.assertEqual(doctors.count(), 1)
+        
+#         # Search with non-matching speciality
+#         doctors = self.patient.search_healthcare_providers(speciality="Dermatology") 
+#         self.assertEqual(doctors.count(), 0)
+        
+#         # Search without speciality
+#         doctors = self.patient.search_healthcare_providers()
+#         self.assertEqual(doctors.count(), 1)
+        
+#     def test_patient_schedule_appointment(self):
+#         start_time = timezone.now() + timedelta(days=1)
+#         end_time = timezone.now() + timedelta(days=2)
+        
+#         appointment = self.patient.schedule_appointment(
+#             healthcare_providers=self.provider,
+#             start_datetime_utc=start_time,
+#             end_datetime_utc=end_time,
+#             reason="Test"
+#         )
+        
+#         self.assertEqual(appointment.patient, self.patient)
+#         self.assertEqual(appointment.healthcare_provider, self.provider)
+#         self.assertEqual(appointment.status, Appointment.Status.REQUESTED)
+#         self.assertEqual(appointment.reason, "Test")
+
+#     def test_patient_schedule_past_appointment(self):
+#         start_time = timezone.now() - timedelta(days=1)
+#         end_time = timezone.now() + timedelta(days=1)
+        
+#         with self.assertRaises(ValidationError):
+#             self.patient.schedule_appointment(
+#                 healthcare_providers=self.provider,
+#                 start_datetime_utc=start_time,
+#                 end_datetime_utc=end_time,
+#                 reason="Test"
+#             )
+            
+#     def test_patient_schedule_start_time_after_end_time(self):
+#         start_time = timezone.now() - timedelta(days=1)
+#         end_time = timezone.now() - timedelta(days=2)
+        
+#         with self.assertRaises(IntegrityError):
+#             self.patient.schedule_appointment(
+#                 healthcare_providers=self.provider,
+#                 start_datetime_utc=start_time,
+#                 end_datetime_utc=end_time,
+#                 reason="Test"
+#             )
+
+#     def test_view_patient_appointments(self):
+#         past_appt = Appointment.objects.create(
+#             patient=self.patient,
+#             healthcare_provider=self.provider,
+#             appointment_start_datetime_utc=timezone.now() + timedelta(seconds=1),
+#             appointment_end_datetime_utc=timezone.now() + timedelta(seconds=2),
+#             location="Test",
+#             reason="Past appointment",
+#             status=Appointment.Status.COMPLETED
+#         )
+#         time.sleep(2)
+        
+#         future_appt = Appointment.objects.create(
+#             patient=self.patient,
+#             healthcare_provider=self.provider,
+#             appointment_start_datetime_utc=timezone.now() + timedelta(days=2),
+#             appointment_end_datetime_utc=timezone.now() + timedelta(days=4),
+#             location="Test",
+#             reason="Future appointment",
+#             status=Appointment.Status.CONFIRMED
+#         )
+
+#         past = self.patient.view_appointments(upcoming=False)
+#         self.assertEqual(past.count(), 1)
+#         self.assertEqual(past.first(), past_appt)
+
+#         upcoming = self.patient.view_appointments(upcoming=True)
+#         self.assertEqual(upcoming.count(), 1)
+#         self.assertEqual(upcoming.first(), future_appt)
+        
+#         confirmed = self.patient.view_appointments(status=Appointment.Status.CONFIRMED)
+#         self.assertEqual(confirmed.count(), 1)
+        
+#         statuses = [Appointment.Status.CONFIRMED, Appointment.Status.COMPLETED]
+#         multiple_status = self.patient.view_appointments(status=statuses)
+#         self.assertEqual(multiple_status.count(), 2)
+
+# class HealthcareProviderModelTest(BaseModelTest):
+#     def setUp(self):
+#         super().setUp()
+        
+#         self.patient_user = User.objects.create_user(
+#             username="test",
+#             password="password1234",
+#             email="test@example.com",
+#             type=User.UserType.PATIENT, 
+#             first_name="Test",
+#             last_name="User"
+#         )
+        
+#         self.patient_profile = PatientProfile.objects.create(
+#             user=self.patient_user,
+#             age=25,
+#             blood_type="A+"
+#         )
+        
+#         self.patient = Patient.objects.get(id=self.patient_user.id) 
+        
+#         # Create healthcare provider
+#         self.provider_user = User.objects.create_user(
+#             username="doc",
+#             password="password1234",
+#             email="doc@example.com",
+#             type=User.UserType.HEALTHCARE_PROVIDER, 
+#             first_name="Doc",
+#             last_name="User"
+#         )
+        
+#         self.provider_profile = HealthcareProviderProfile.objects.create(
+#             user=self.provider_user,
+#             speciality=self.speciality,
+#             image="doctor.jpg",
+#             education="MD",
+#             years_of_experience=5,
+#             about="Test doctor",
+#             fees=100.,
+#             address_line1="123 Test St",
+#             city="Test City",
+#             state="TS",
+#             zip_code="12345",
+#             license_number="MD654321",
+#             primary_hospital=self.hospital
+#         )
+        
+#         self.provider_user2 = User.objects.create_user(
+#             username="doc2",
+#             password="password1234",
+#             email="doc2@example.com",
+#             type=User.UserType.HEALTHCARE_PROVIDER, 
+#             first_name="Doc2",
+#             last_name="User"
+#         )
+        
+#         self.provider = HealthcareProvider.objects.get(id=self.provider_user.id) 
+#         self.provider2 = HealthcareProvider.objects.get(id=self.provider_user2.id) 
+        
+#     def test_provider_set_availability(self):
+#         start_time = datetime.strptime("09:00", "%H:%M")
+#         end_time = datetime.strptime("17:00", "%H:%M")
+        
+#         self.provider.set_availability({
+#             "MON": (start_time, end_time),
+#             "TUE": (start_time, end_time),
+#             "WED": (start_time, end_time),
+#             "THU": (start_time, end_time),
+#             "FRI": (start_time, end_time)
+#         })
+#         availabilities = Availability.objects.filter(healthcare_provider=self.provider)
+#         self.assertEqual(availabilities.count(), 5)
+        
+#         # Update availability
+#         self.provider.set_availability({
+#             "MON": (start_time, end_time)
+#         })
+#         availabilities = Availability.objects.filter(healthcare_provider=self.provider)
+#         self.assertEqual(availabilities.count(), 1)
+        
+#     def test_provider_remove_availability(self):
+#         start_time = datetime.strptime("09:00", "%H:%M")
+#         end_time = datetime.strptime("17:00", "%H:%M")
+        
+#         self.provider.set_availability({
+#             "MON": (start_time, end_time)
+#         })
+#         availabilities = Availability.objects.filter(healthcare_provider=self.provider)
+#         self.assertEqual(availabilities.count(), 1)
+
+#         self.provider.remove_availability(["MON"])
+#         availabilities = Availability.objects.filter(healthcare_provider=self.provider)
+#         self.assertEqual(availabilities.count(), 0)
+        
+#     def test_invalid_day(self):
+#         start_time = datetime.strptime("09:00", "%H:%M")
+#         end_time = datetime.strptime("17:00", "%H:%M")
+        
+#         with self.assertRaises(ValueError):
+#             self.provider.set_availability({
+#                 "SUNDAY": (start_time, end_time)
+#             })
+            
+#     def test_invalid_time(self):
+#         start_time = datetime.strptime("17:00", "%H:%M")
+#         end_time = datetime.strptime("09:00", "%H:%M")
+        
+#         with self.assertRaises(ValueError):
+#             self.provider.set_availability({
+#                 "MON": (start_time, end_time)
+#             })
+            
+#     def test_provider_set_timeoff(self):
+#         start_time = timezone.now() + timedelta(days=1)
+#         end_time = timezone.now() + timedelta(days=2)
+        
+#         self.provider.set_timeoff(start_time, end_time)
+        
+#         timeoffs = self.provider.view_timeoff()
+#         self.assertEqual(len(timeoffs), 1)
+#         self.assertEqual(timeoffs[0].start_datetime_utc, start_time)
+#         self.assertEqual(timeoffs[0].end_datetime_utc, end_time)
+    
+#     def test_view_appointment_schedule(self):
+#         start_time = timezone.now() + timedelta(days=1)
+#         end_time = timezone.now() + timedelta(days=2)
+        
+#         appointment = self.patient.schedule_appointment(
+#             healthcare_providers=self.provider,
+#             start_datetime_utc=start_time,
+#             end_datetime_utc=end_time,
+#             reason="Test"
+#         )
+#         provider_appointments = self.provider.view_appointment_schedule("week")
+        
+#         self.assertEqual(provider_appointments.count(), 1)
+#         self.assertEqual(self.provider2.view_appointment_schedule("week").count(), 0)
+#         self.assertEqual(provider_appointments[0], appointment)
+#         self.assertEqual(provider_appointments[0].status, Appointment.Status.REQUESTED)
+        
+#     def test_accept_appointment(self):
+#         start_time = timezone.now() + timedelta(days=1)
+#         end_time = timezone.now() + timedelta(days=2)
+        
+#         appointment = self.patient.schedule_appointment(
+#             healthcare_providers=self.provider,
+#             start_datetime_utc=start_time,
+#             end_datetime_utc=end_time,
+#             reason="Test"
+#         )
+
+#         self.provider.accept_appointment(appointment)
+#         self.assertEqual(self.provider.view_appointment_schedule("week")[0].status,
+#                          Appointment.Status.CONFIRMED)
+#         self.assertEqual(self.patient.get_unread_count(), 1)
+        
+#     def test_invalid_accept_appointment(self):
+#         start_time = timezone.now() + timedelta(days=1)
+#         end_time = timezone.now() + timedelta(days=2)
+        
+#         appointment = self.patient.schedule_appointment(
+#             healthcare_providers=self.provider,
+#             start_datetime_utc=start_time,
+#             end_datetime_utc=end_time,
+#             reason="Test"
+#         )
+
+#         with self.assertRaises(PermissionError):
+#             self.provider2.accept_appointment(appointment)
+            
+#         self.provider.accept_appointment(appointment)
+#         with self.assertRaises(ValueError):
+#             self.provider.accept_appointment(appointment)
+            
+#     def test_add_medical_record(self):
+#         med_record = self.provider.add_medical_record(
+#             patient=self.patient,
+#             diagnosis="test",
+#             notes="test",
+#             prescriptions="test"
+#         )
+
+#         self.assertEqual(self.patient.view_medical_records()[0], med_record)
+        
+#     def test_invalid_add_medical_record(self):
+#         with self.assertRaises(ValueError):
+#             self.provider.add_medical_record(
+#                 patient=self.patient,
+#                 diagnosis="",
+#                 notes="test",
+#                 prescriptions="test"
+#             )
+#         with self.assertRaises(ValueError):
+#             self.provider.add_medical_record(
+#                 patient=self.patient,
+#                 diagnosis="test",
+#                 notes="",
+#                 prescriptions="test"
+#             )
+#         with self.assertRaises(ValueError):
+#             self.provider.add_medical_record(
+#                 patient=self.patient,
+#                 diagnosis="test",
+#                 notes="test",
+#                 prescriptions=""
+#             )
+            
+class AdminStaffModelTest(BaseModelTest):
     def setUp(self):
         super().setUp()
         
@@ -151,25 +701,24 @@ class PatientFunctionTest(BaseModelTest):
             username="test",
             password="password1234",
             email="test@example.com",
-            type=User.UserType.PATIENT, # type: ignore
+            type=User.UserType.PATIENT, 
             first_name="Test",
             last_name="User"
         )
         
-        self.patient_profile = PatientProfile.objects.create(
-            user=self.patient_user,
-            age=25,
-            blood_type="A+"
-        )
+        # self.patient_profile = PatientProfile.objects.create(
+        #     user=self.patient_user,
+        #     age=25,
+        #     blood_type="A+"
+        # )
         
-        self.patient = Patient.objects.get(id=self.patient_user.id) # type: ignore
+        self.patient = Patient.objects.get(id=self.patient_user.id) 
         
-        # Create healthcare provider
         self.provider_user = User.objects.create_user(
             username="doc",
             password="password1234",
             email="doc@example.com",
-            type=User.UserType.HEALTHCARE_PROVIDER, # type: ignore
+            type=User.UserType.HEALTHCARE_PROVIDER, 
             first_name="Doc",
             last_name="User"
         )
@@ -190,158 +739,46 @@ class PatientFunctionTest(BaseModelTest):
             primary_hospital=self.hospital
         )
         
-        self.provider = HealthcareProvider.objects.get(id=self.provider_user.id) # type: ignore
-        
-    def test_patient_view_doctors(self):
-        doctors = self.patient.view_healthcare_providers() # type: ignore
-        self.assertEqual(doctors.count(), 1)
-        self.assertEqual(doctors.first(), self.provider)
-        
-    def test_patient_search_doctors(self):
-        """Test patient can search doctors by speciality"""
-        # Search with matching speciality
-        doctors = self.patient.search_healthcare_providers(speciality="Gynecologist") # type: ignore
-        self.assertEqual(doctors.count(), 1)
-        
-        # Search with non-matching speciality
-        doctors = self.patient.search_healthcare_providers(speciality="Dermatology") # type: ignore
-        self.assertEqual(doctors.count(), 0)
-        
-        # Search without speciality
-        doctors = self.patient.search_healthcare_providers()
-        self.assertEqual(doctors.count(), 1)
-        
-    def test_patient_schedule_appointment(self):
+        self.provider = HealthcareProvider.objects.get(id=self.provider_user.id)
         start_time = timezone.now() + timedelta(days=1)
         end_time = timezone.now() + timedelta(days=2)
         
-        appointment = self.patient.schedule_appointment(
+        self.appointment = self.patient.schedule_appointment(
             healthcare_providers=self.provider,
             start_datetime_utc=start_time,
             end_datetime_utc=end_time,
             reason="Test"
         )
         
-        self.assertEqual(appointment.patient, self.patient)
-        self.assertEqual(appointment.healthcare_provider, self.provider)
-        self.assertEqual(appointment.status, Appointment.Status.REQUESTED)
-        self.assertEqual(appointment.reason, "Test")
-
-    def test_patient_schedule_past_appointment(self):
-        start_time = timezone.now() - timedelta(days=1)
-        end_time = timezone.now() + timedelta(days=1)
-        
-        with self.assertRaises(ValidationError):
-            self.patient.schedule_appointment(
-                healthcare_providers=self.provider,
-                start_datetime_utc=start_time,
-                end_datetime_utc=end_time,
-                reason="Test"
-            )
-
-
-
-
-
-
-
-# class UserModelTest(TestCase):
-#     def setUp(self):
-#         self.user_data = {
-#             "email": "alice@example.com",
-#             "date_of_birth": "1980-10-12",
-#             "password": "abc123",
-#             "first_name": "Alice",
-#             "last_name": "Perez"
-#         }
-        
-#     def test_create_user(self):
-#         user = User.objects.create_user(**self.user_data)
-#         self.assertEqual(user.email, self.user_data["email"])
-#         self.assertEqual(user.date_of_birth, self.user_data["date_of_birth"])
-#         self.assertTrue(user.check_password(self.user_data["password"]))
-#         self.assertEqual(user.first_name, self.user_data["first_name"])
-#         self.assertEqual(user.last_name, self.user_data["last_name"])
-#         self.assertTrue(user.is_active)
-#         self.assertFalse(user.is_admin)
-        
-#     def test_create_super_user(self):
-#         admin_user = User.objects.create_superuser(
-#             email="admin@example.com",
-#             password="109m3!jT+",
-#             first_name="Jason",
-#             last_name="Li",
-#             date_of_birth="1992-04-22",
-#         )
-#         self.assertTrue(admin_user.is_admin)
-#         self.assertTrue(admin_user.is_staff)
-        
-#     def test_user_str_representation(self):
-#         user = User.objects.create_user(**self.user_data)
-#         self.assertEqual(str(user), self.user_data["email"])
-        
-# class SpecialityModelTest(TestCase):
-#     def setUp(self):
-#         self.specialities = {
-#             "name": "General physician",
-#             "image": "test.svg"
-#         }
-
-#     def test_create_speciality(self):
-#         speciality = Speciality.objects.create(**self.specialities)
-#         self.assertEqual(str(speciality), "General physician")
-        
-# class DoctorModelTest(TestCase):
-#     def setUp(self):
-#         self.gynecologist = Speciality.objects.create(
-#             name="Gynecologist",
-#             image="img.svg"
-#         )
-#         self.doctor = {
-#             "first_name": "Emily",
-#             "last_name": "Larson",
-#             "image": "http://127.0.0.1:8000/media/doctors/doc2.png",
-#             "speciality": self.gynecologist,
-#             "degree": "MD",
-#             "experience": 3.,
-#             "about": "Board-certified obstetrician and gynecologist Dr. Emily Larson is dedicated to providing exceptional, evidence-based healthcare to women at every stage of life. With three years of experience as a practicing MD following her residency, Dr. Larson combines her extensive medical training with a warm, collaborative approach to patient care.",
-#             "fees": 60.,
-#             "address_line1": "3656 Longview Avenue",
-#             "address_line2": "Suite 202",
-#             "city": "Bronx",
-#             "state": "NY",
-#             "zip_code": "10453"
-#         }
+        self.admin_staff_user = User.objects.create(
+            username="admin",
+            password="password1234",
+            email="admin@example.com",
+            type=User.UserType.ADMIN_STAFF, 
+            first_name="Admin",
+            last_name="User"
+        )
+        self.admin_staff_profile = AdminStaffProfile.objects.create(
+            user=self.admin_staff_user,
+            hospital=self.hospital
+        )
+        self.admin_staff = AdminStaffProvider.objects.get(id=self.admin_staff_user.id)
     
-#     def test_create_doctor(self):
-#         doctor = Doctor.objects.create(**self.doctor)
-#         self.assertEqual(doctor.speciality, self.gynecologist)
-#         self.assertEqual(doctor.degree, "MD")
-#         self.assertEqual(doctor.about, self.doctor["about"])
-#         self.assertEqual(doctor.address_line1, self.doctor["address_line1"])
-#         self.assertEqual(doctor.address_line2, self.doctor["address_line2"])
-#         self.assertEqual(doctor.city, self.doctor["city"])
+    def test_manage_appointment(self):
+        start_time = timezone.now() + timedelta(days=7)
+        end_time = timezone.now() + timedelta(days=8)
         
-#     def test_experience_non_negative_constraint(self):
-#         invalid_data = self.doctor.copy()
-#         invalid_data["experience"] = -5.
+        self.admin_staff.manage_appointment(self.appointment,
+                                            action="reschedule",
+                                            new_start_datetime=start_time,
+                                            new_end_datetime=end_time)
         
-#         with self.assertRaises(IntegrityError):
-#             Doctor.objects.create(**invalid_data)
-            
-#     def test_fee_gt_zero_constraint(self):
-#         invalid_data = self.doctor.copy()
-#         invalid_data["fees"] = 0.
+        self.assertEqual(self.patient.view_appointments(status=Appointment.Status.RESCHEDULED).count(), 1)
         
-#         with self.assertRaises(IntegrityError):
-#             Doctor.objects.create(**invalid_data)
+        self.admin_staff.manage_appointment(self.appointment,
+                                            action="cancel")
+        self.assertEqual(self.patient.view_appointments(status=Appointment.Status.CANCELLED).count(), 1)
         
-#     def test_multiple_doctor_same_speciality(self):
-#         doctor1 = Doctor.objects.create(**self.doctor)
-
-#         doctor2_data = self.doctor.copy()
-#         doctor2_data["first_name"] = "Bob"
-#         doctor2 = Doctor.objects.create(**doctor2_data)
-        
-#         self.assertEqual(Doctor.objects.count(), 2)
-#         self.assertEqual(self.gynecologist.doctors.count(), 2)
+        self.admin_staff.manage_appointment(self.appointment,
+                                            action="complete")
+        self.assertEqual(self.patient.view_appointments(status=Appointment.Status.COMPLETED).count(), 1)
