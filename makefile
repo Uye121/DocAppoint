@@ -45,8 +45,8 @@ backend-migrate:
 	cd $(BACKEND_DIR) && $(PYTHON) manage.py migrate
 
 docker-backend-migrate:
-	docker compose exec backend python manage.py makemigrations api
-	docker compose exec backend python manage.py migrate api
+	docker compose exec backend python manage.py makemigrations
+	docker compose exec backend python manage.py migrate
 
 backend-createsuperuser:
 	cd $(BACKEND_DIR) && $(PYTHON) manage.py createsuperuser

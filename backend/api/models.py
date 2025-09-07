@@ -102,6 +102,19 @@ class User(BaseModel, AbstractUser):
                 message.save()
         elif other_user:
             self.received_messages.filter(sender=other_user, read=False).update(read=True) # type: ignore
+            
+    def clean(self):
+        super().clean()
+        
+        if not self.password:
+            raise ValidationError("Password is required")
+        
+        if not self.password.strip():
+            raise ValidationError("Password cannot be empty")
+        
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
     
     def __str__(self):
         return f"{self.username}: {self.get_type_display()}" # type: ignore
@@ -178,6 +191,12 @@ class AdminStaffProfile(models.Model):
     def __str__(self):
         return f"Admin Staff: {self.user.username} - {self.hospital.name}"
     
+class SystemAdminProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="system_admin_profile")
+    
+    def __str__(self):
+        return f"System Admin Staff: {self.user.username}"
+    
 # Class Managers
 class PatientManager(models.Manager):
     def get_queryset(self, *args, **kwargs):
@@ -226,6 +245,9 @@ class Patient(User):
     def schedule_appointment(self, healthcare_providers:'HealthcareProvider',
                              start_datetime_utc: datetime, end_datetime_utc: datetime,
                              reason:str, location: Optional[str]=None) -> 'Appointment':
+        if end_datetime_utc < start_datetime_utc:
+            raise ValueError("End time must be greater than start time.")
+        
         try:
             if location is None:
                 profile = healthcare_providers.healthcare_provider_profile # type: ignore
@@ -372,7 +394,6 @@ class HealthcareProvider(User):
         
         start_date = now.date()
         end_date = now.date()
-        
         match view_type:
             case 'day':
                 pass
@@ -438,7 +459,7 @@ class HealthcareProvider(User):
         medical_record.save()
         return medical_record
     
-class AdminStaffProvider(User):
+class AdminStaff(User):
     objects = AdminStaffManager() # type: ignore
     
     class Meta: # type: ignore
@@ -470,10 +491,13 @@ class AdminStaffProvider(User):
         if action == 'reschedule':
             new_start_datetime = kwargs.get('new_start_datetime')
             new_end_datetime = kwargs.get('new_end_datetime')
+            
             if new_start_datetime is None or new_end_datetime is None:
                 raise ValueError("new_start_datetime and new_end_datetime parameter is required for rescheduling.")
             if not isinstance(new_start_datetime, datetime) or not isinstance(new_end_datetime, datetime):
                 raise TypeError("new_date must be a datetime object.")
+            if new_end_datetime < new_start_datetime:
+                raise ValueError("End time must be greater than start time")
 
             appointment.appointment_start_datetime_utc = new_start_datetime
             appointment.appointment_end_datetime_utc = new_end_datetime
@@ -503,24 +527,57 @@ class SystemAdmin(User):
         super().save(*args, **kwargs)
         
     def create_user_account(self, username: str, password: str, email: str,
-                            user_type: User.UserType, **extra_fields) -> User:
+                            type: User.UserType, **extra_fields) -> tuple[User,
+                                                                          HealthcareProviderProfile
+                                                                          | PatientProfile
+                                                                          | AdminStaffProfile]:
+        if type not in [User.UserType.PATIENT, User.UserType.HEALTHCARE_PROVIDER, User.UserType.ADMIN_STAFF]:
+            raise ValidationError("Invalid user type")
+        if type == User.UserType.HEALTHCARE_PROVIDER:
+            req_attribute = ['speciality', 'image', 'education', 'about',
+                            'years_of_experience', 'fees', 'address_line1',
+                            'city', 'state', 'zip_code', 'license_number']
+            for attr in req_attribute:
+                if attr not in extra_fields:
+                    raise ValidationError(f'Mising one of the required attributes: {req_attribute}')
+        if type == User.UserType.ADMIN_STAFF:
+            if 'hospital' not in extra_fields:
+                raise ValidationError('Missing required attribute "hospital"')
+            
+        
         user = User.objects.create_user(
             username=username,
             password=password,
             email=email,
-            type=user_type,
-            **extra_fields
+            type=type,
+            first_name=extra_fields.pop("first_name"),
+            last_name=extra_fields.pop("last_name")
         )
         
-        match user_type:
+        match type:
             case User.UserType.PATIENT:
-                PatientProfile.objects.create(user=user)
+                profile = PatientProfile.objects.create(
+                    user=user,
+                    **extra_fields
+                )
             case User.UserType.HEALTHCARE_PROVIDER:
-                HealthcareProviderProfile.objects.create(user=user)
+                profile = HealthcareProviderProfile.objects.create(
+                    user=user,
+                    **extra_fields
+                )
             case User.UserType.ADMIN_STAFF:
-                AdminStaffProfile.objects.create(user=user)
+                profile = AdminStaffProfile.objects.create(
+                    user=user,
+                    **extra_fields
+                )
+            # Create patient by default
+            case _:
+                profile = PatientProfile.objects.create(
+                    user=user,
+                    **extra_fields
+                )
 
-        return user
+        return user, profile
     
     def disable_user_account(self, user: User) -> User:
         user.is_active = False
