@@ -2,12 +2,14 @@ from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action, permission_classes, api_view, authentication_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
+from rest_framework.exceptions import PermissionDenied, ValidationError, NotFound, APIException
 from rest_framework.authentication import SessionAuthentication
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.models import Group
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from django.utils import timezone
+from django.http import HttpRequest
 from django.middleware.csrf import get_token
 from datetime import datetime, timedelta
 from typing import List
@@ -15,7 +17,8 @@ from typing import List
 from .models import (
     User, Patient, HealthcareProvider, AdminStaff, SystemAdmin,
     Appointment, MedicalRecord, Message, Speciality, Hospital,
-    PatientProfile, AdminStaffProfile, HealthcareProviderProfile
+    PatientProfile, AdminStaffProfile, HealthcareProviderProfile,
+    Availability, TimeOff
 )
 from .serializers import (
     UserSerializer, PatientSerializer, HealthcareProviderSerializer,
@@ -29,6 +32,13 @@ from .permissions import (
     IsMedicalRecordProviderOrPatient, 
 )
 
+class BaseViewSet(viewsets.GenericViewSet):
+    def permission_denied(self, request: HttpRequest, message=None, code=None):
+        if request.authenticators and not request.successful_authenticator:
+            raise NotFound(detail="Authentication credentials were not provided.")
+        raise PermissionDenied(detail=message or "You do not have permission to perform this action.")
+
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 @authentication_classes([SessionAuthentication])
@@ -40,14 +50,17 @@ def register_user(request):
     if serializer.is_valid():
         user = serializer.save()
         
-        if user.type == User.UserType.PATIENT:
-            PatientProfile.objects.create(user=user)
-        elif user.type == User.UserType.HEALTHCARE_PROVIDER: # type: ignore
-            HealthcareProviderProfile.objects.create(user=user)
-        elif user.type == User.UserType.ADMIN_STAFF: # type: ignore
-            AdminStaffProfile.objects.create(user=user)
+        match user.type: # type: ignore
+            case User.UserType.PATIENT:
+                PatientProfile.objects.create(user=user)
+            case User.UserType.HEALTHCARE_PROVIDER:
+                HealthcareProviderProfile.objects.create(user=user)
+            case User.UserType.ADMIN_STAFF:
+                AdminStaffProfile.objects.create(user=user)
+            case _:
+                PatientProfile.objects.create(user=user)
     
-        login(request, user) # type: ignore
+        login(request, user)
         
         return Response({
             'user': serializer.data
@@ -99,3 +112,11 @@ def logout_user(request):
     """
     logout(request)
     return Response({'message': 'Logged out successfully'})
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_csrf_token(request):
+    """
+    Get CSRF token for React frontend
+    """
+    return Response({'csrfToken': get_token(request)})

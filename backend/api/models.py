@@ -218,7 +218,7 @@ class SystemAdminManager(models.Manager):
 class Patient(User):
     objects = PatientManager() # type: ignore
     
-    class Meta: # type: ignore
+    class Meta(User.Meta):
         proxy = True
         
     def save(self, *args, **kwargs):
@@ -312,7 +312,7 @@ class Patient(User):
 class HealthcareProvider(User):
     objects = HealthcareProviderManager() # type: ignore
     
-    class Meta: # type: ignore
+    class Meta(User.Meta):
         proxy = True
         
     def save(self, *args, **kwargs):
@@ -462,7 +462,7 @@ class HealthcareProvider(User):
 class AdminStaff(User):
     objects = AdminStaffManager() # type: ignore
     
-    class Meta: # type: ignore
+    class Meta(User.Meta):
         proxy = True
         
     def save(self, *args, **kwargs):
@@ -518,7 +518,7 @@ class AdminStaff(User):
 class SystemAdmin(User):
     objects = SystemAdminManager() # type: ignore
     
-    class Meta: # type: ignore
+    class Meta(User.Meta):
         proxy = True
         
     def save(self, *args, **kwargs):
@@ -595,7 +595,7 @@ class SystemAdmin(User):
         return user
     
 # Misc tables
-class Appointment(BaseModel, models.Model):
+class Appointment(BaseModel):
     class Status(models.TextChoices):
         REQUESTED = "REQUESTED", "Requested"
         CONFIRMED = "CONFIRMED", "Confirmed"
@@ -611,7 +611,7 @@ class Appointment(BaseModel, models.Model):
     reason = models.TextField()
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.REQUESTED)
     
-    class Meta: # type: ignore
+    class Meta(BaseModel.Meta):
         unique_together = ('patient', 'healthcare_provider', 'appointment_start_datetime_utc')
         constraints = [
             models.CheckConstraint(
@@ -632,12 +632,15 @@ class Appointment(BaseModel, models.Model):
     def __str__(self):
         return f"Appointment: {self.patient} with {self.healthcare_provider} at {self.appointment_start_datetime_utc}"
     
-class MedicalRecord(BaseModel, models.Model):
+class MedicalRecord(BaseModel):
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name="medical_records")
     healthcare_provider = models.ForeignKey(HealthcareProvider, on_delete=models.CASCADE)
     diagnosis = models.TextField()
     notes = models.TextField()
     prescriptions = models.TextField()
+    
+    class Meta(BaseModel.Meta):
+        ordering = ['-created_at']
     
     def __str__(self):
         return f"Medical Record: {self.patient} - {self.updated_at}"
@@ -648,6 +651,9 @@ class Message(models.Model):
     content = models.TextField()
     sent_at = models.DateTimeField(auto_now_add=True)
     read = models.BooleanField(default=False)
+    
+    class Meta:
+        ordering = ['-sent_at']
     
     def clean(self):
         super().clean()
@@ -692,6 +698,7 @@ class TimeOff(models.Model):
                 check=models.Q(end_datetime_utc__gte=models.F('start_datetime_utc'))
             )
         ]
+        ordering = ['-start_datetime_utc']
         
     def __str__(self):
         return f"{self.healthcare_provider} off: {self.start_datetime_utc} to {self.end_datetime_utc}"
