@@ -1,32 +1,40 @@
-from typing import List, Dict, Optional, Union
-from datetime import datetime, timedelta
+from zoneinfo import available_timezones
+from datetime import timedelta
+from zoneinfo import ZoneInfo
 from django.db import models
 from django.utils import timezone
-from django.db.models.query import QuerySet
-from django.contrib.auth.models import AbstractUser, Group
+from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
-class BaseModel(models.Model):
-    created_at = models.DateTimeField(db_index=True, default=timezone.now, editable=False)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        abstract = True
+from .mixin import TimestampMixin, AuditMixin
         
-class Speciality(models.Model):
+class Speciality(AuditMixin, models.Model):
     name = models.CharField(max_length=180, unique=True)
     image = models.FileField(upload_to='speciality')
+
+    # Attributes for soft-delete
+    is_removed = models.BooleanField(default=False, db_index=True)
+    removed_at = models.DateTimeField(null=True, blank=True)
     
     def __str__(self):
         return self.name
     
-class Hospital(models.Model):
+class Hospital(AuditMixin, models.Model):
     name = models.CharField(max_length=255)
     address = models.TextField()
     phone_number = models.CharField(max_length=20)
+    timezone = models.CharField(
+        max_length=64,
+        choices=[(z, z) for z in sorted(available_timezones())],
+        default='UTC'
+    )
 
-class User(BaseModel, AbstractUser):
+    # Attributes for soft-delete
+    is_removed = models.BooleanField(default=False, db_index=True)
+    removed_at = models.DateTimeField(null=True, blank=True)
+
+class User(TimestampMixin, AbstractUser):
     class UserType(models.TextChoices):
         PATIENT = "PATIENT", "Patient"
         HEALTHCARE_PROVIDER = "HEALTHCARE_PROVIDER", "Healthcare Provider"
@@ -42,15 +50,6 @@ class User(BaseModel, AbstractUser):
     date_of_birth = models.DateField(_("Date of Birth"), null=True, blank=True)
     phone_number = models.CharField(_("Phone Number"), max_length=20, blank=True)
     address = models.TextField(_("Address"), blank=True)
-            
-    def clean(self):
-        super().clean()
-        
-        if not self.password:
-            raise ValidationError("Password is required")
-        
-        if not self.password.strip():
-            raise ValidationError("Password cannot be empty")
         
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -61,19 +60,18 @@ class User(BaseModel, AbstractUser):
     
 class PatientProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="patient_profile")
-    age = models.PositiveIntegerField(_("Age"), blank=True)
     blood_type = models.CharField(_("Blood Type"), max_length=5, blank=True)
     allergies = models.TextField(_("Allergies"), blank=True)
     chronic_conditions = models.TextField(_("Chronic Conditions"), blank=True)
     current_medications = models.TextField(_("Current Medications"), blank=True)
     insurance = models.CharField(_("Insurance"), max_length=255, blank=True)
-    weight = models.PositiveIntegerField(_("Weight (kg)"), blank=True, null=True, help_text="Weight in grams")
+    weight = models.PositiveIntegerField(_("Weight (kg)"), blank=True, null=True, help_text="Weight in kg")
     height = models.PositiveIntegerField(_("Height (cm)"), blank=True, null=True, help_text="Height in centimeters")
     
     def __str__(self):
         return f"Patient Profile: {self.user.username}"
     
-class HealthcareProviderProfile(models.Model):
+class HealthcareProviderProfile(AuditMixin, models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="healthcare_provider_profile")
     speciality = models.ForeignKey(Speciality, on_delete=models.CASCADE, related_name='provider_speciality')
     image = models.ImageField(upload_to='healthcare_providers')
@@ -92,8 +90,12 @@ class HealthcareProviderProfile(models.Model):
     # Affiliations
     hospitals = models.ManyToManyField(Hospital, through="ProviderHospitalAssignment")
     primary_hospital = models.ForeignKey(Hospital, on_delete=models.SET_NULL, null=True, blank=True, related_name="primary_provider")
+
+    # Attributes for soft-delete
+    is_removed = models.BooleanField(default=False, db_index=True)
+    removed_at = models.DateTimeField(null=True, blank=True)
     
-    class Meta:
+    class Meta(AuditMixin.Meta):
         constraints = [
             models.CheckConstraint(
                 name="experience_non_negative",
@@ -121,6 +123,14 @@ class ProviderHospitalAssignment(models.Model):
     
     class Meta:
         unique_together = ['provider', 'hospital']
+        indexes = [
+            models.Index(fields=["provider", "is_active"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                condition=models.Q(end_datetime_utc__isnull=True)
+            )
+        ]
         
 class AdminStaffProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="admin_staff_profile")
@@ -208,7 +218,7 @@ class SystemAdmin(User):
         super().save(*args, **kwargs)
     
 # Misc tables
-class Appointment(BaseModel):
+class Appointment(TimestampMixin):
     class Status(models.TextChoices):
         REQUESTED = "REQUESTED", "Requested"
         CONFIRMED = "CONFIRMED", "Confirmed"
@@ -220,16 +230,16 @@ class Appointment(BaseModel):
     healthcare_provider = models.ForeignKey(HealthcareProvider, on_delete=models.CASCADE, related_name="provider_appointments")
     appointment_start_datetime_utc= models.DateTimeField()
     appointment_end_datetime_utc= models.DateTimeField()
-    location = models.CharField(max_length=255) # storing location as string in case of hospital data modification
+    location = models.ForeignKey(ProviderHospitalAssignment, on_delete=models.PROTECT, related_name='appointments')
     reason = models.TextField()
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.REQUESTED)
     
-    class Meta(BaseModel.Meta):
+    class Meta(TimestampMixin.Meta):
         unique_together = ('patient', 'healthcare_provider', 'appointment_start_datetime_utc')
         constraints = [
             models.CheckConstraint(
                 name='appointment_end_datetime_utc_gt_start_datetime',
-                check=models.Q(appointment_end_datetime_utc__gt=models.F('appointment_start_datetime_utc'))
+                condition=models.Q(appointment_end_datetime_utc__gt=models.F('appointment_start_datetime_utc'))
             )
         ]
     
@@ -245,14 +255,18 @@ class Appointment(BaseModel):
     def __str__(self):
         return f"Appointment: {self.patient} with {self.healthcare_provider} at {self.appointment_start_datetime_utc}"
     
-class MedicalRecord(BaseModel):
+class MedicalRecord(TimestampMixin, AuditMixin):
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name="medical_records")
     healthcare_provider = models.ForeignKey(HealthcareProvider, on_delete=models.CASCADE)
     diagnosis = models.TextField()
     notes = models.TextField()
     prescriptions = models.TextField()
+
+    # Attributes for soft-delete
+    is_removed = models.BooleanField(default=False, db_index=True)
+    removed_at = models.DateTimeField(null=True, blank=True)
     
-    class Meta(BaseModel.Meta):
+    class Meta(TimestampMixin.Meta, AuditMixin.Meta):
         ordering = ['-created_at']
     
     def __str__(self):
@@ -277,41 +291,102 @@ class Message(models.Model):
     def __str__(self):
         return f"Message from {self.sender} to {self.recipient}"
     
-class Availability(models.Model):
-    class DaysOfWeek(models.TextChoices):
-        MONDAY = "MON", "Monday"
-        TUESDAY = "TUE", "Tuesday"
-        WEDNESDAY = "WED", "Wednesday"
-        THURSDAY = "THU", "Thursday"
-        FRIDAY = "FRI", "Friday"
-        SATURDAY = "SAT", "Saturday"
-        SUNDAY = "SUN", "Sunday"
+# class Availability(models.Model):
+#     class DaysOfWeek(models.TextChoices):
+#         MONDAY = "MON", "Monday"
+#         TUESDAY = "TUE", "Tuesday"
+#         WEDNESDAY = "WED", "Wednesday"
+#         THURSDAY = "THU", "Thursday"
+#         FRIDAY = "FRI", "Friday"
+#         SATURDAY = "SAT", "Saturday"
+#         SUNDAY = "SUN", "Sunday"
     
-    healthcare_provider = models.ForeignKey(HealthcareProvider, on_delete=models.CASCADE, related_name="availability_slots")
-    day_of_week = models.CharField(max_length=3, choices=DaysOfWeek.choices)
-    start_time = models.TimeField()
-    end_time = models.TimeField()
+#     healthcare_provider = models.ForeignKey(HealthcareProvider, on_delete=models.CASCADE, related_name="availability_slots")
+#     day_of_week = models.CharField(max_length=3, choices=DaysOfWeek.choices)
+#     start_time = models.TimeField()
+#     end_time = models.TimeField()
     
-    class Meta:
-        unique_together = ('healthcare_provider', 'day_of_week')
+#     class Meta:
+#         unique_together = ('healthcare_provider', 'day_of_week')
         
-    def __str__(self):
-        return f"{self.healthcare_provider} Availability: {self.get_day_of_week_display()} {self.start_time}-{self.end_time}" # type: ignore
+#     def __str__(self):
+#         return f"{self.healthcare_provider} Availability: {self.get_day_of_week_display()} {self.start_time}-{self.end_time}" # type: ignore
     
-class TimeOff(models.Model):
-    healthcare_provider = models.ForeignKey(HealthcareProvider, on_delete=models.CASCADE, related_name="provider_timeoff")
-    start_datetime_utc = models.DateTimeField()
-    end_datetime_utc = models.DateTimeField()
+# class TimeOff(models.Model):
+#     healthcare_provider = models.ForeignKey(HealthcareProvider, on_delete=models.CASCADE, related_name="provider_timeoff")
+#     start_datetime_utc = models.DateTimeField()
+#     end_datetime_utc = models.DateTimeField()
     
-    class Meta:
-        unique_together = ('healthcare_provider', 'start_datetime_utc')
+#     class Meta:
+#         unique_together = ('healthcare_provider', 'start_datetime_utc')
+#         constraints = [
+#             models.CheckConstraint(
+#                 name='timeoff_start_datetime_utc',
+#                 check=models.Q(end_datetime_utc__gte=models.F('start_datetime_utc'))
+#             )
+#         ]
+#         ordering = ['-start_datetime_utc']
+        
+#     def __str__(self):
+#         return f"{self.healthcare_provider} off: {self.start_datetime_utc} to {self.end_datetime_utc}"
+    
+class Slot(TimestampMixin, AuditMixin):
+    class Status(models.TextChoices):
+        FREE = "FREE", "Free"
+        BOOKED = "BOOKED", "Booked"
+        BLOCKED = "BLOCKED", "Blocked" 
+        UNAVAILABLE = "UNAVAILABLE", "Unavailable"
+
+    provider = models.ForeignKey(HealthcareProvider,on_delete=models.CASCADE, related_name="slots")
+    hospital = models.ForeignKey(Hospital, on_delete=models.CASCADE, related_name='slots')
+    start = models.DateTimeField()
+    end = models.DateTimeField()
+    status = models.CharField(max_length=12, choices=Status.choices, default=Status.FREE) 
+    created_by = models.ForeignKey("User", on_delete=models.SET_NULL, null=True, blank=True,
+                                   related_name='slots_created')
+    updated_by = models.ForeignKey("User", on_delete=models.SET_NULL, null=True, blank=True,
+                                   related_name='slots_updated')
+    
+    class Meta(TimestampMixin.Meta, AuditMixin.Meta):
         constraints = [
+            models.UniqueConstraint(
+                fields=["provider", "start"],
+                name="uniq_provider_start"
+            ),
             models.CheckConstraint(
-                name='timeoff_start_datetime_utc',
-                check=models.Q(end_datetime_utc__gte=models.F('start_datetime_utc'))
-            )
+                condition=models.Q(end__gt=models.F("start")),
+                name="slot_end_gt_start"
+            ),
         ]
-        ordering = ['-start_datetime_utc']
+        indexes = [
+            models.Index(fields=["provider", "start", "status"]),
+            models.Index(fields=["hospital", "start", "status"]),
+        ]
+
+    @property
+    def duration(self) -> timedelta:
+        return self.end - self.start
+    
+    def is_past(self) -> bool:
+        return self.end < timezone.now()
+    
+    def is_booked(self) -> bool:
+        return self.status == self.Status.BOOKED
+    
+    def clean(self):
+        super().clean()
+
+        if self.start >= self.end:
+            raise ValidationError("End time must be after start time.")
+
+        if self.is_past():
+            raise ValidationError("Cannot create/modify a slot in the past.")
         
     def __str__(self):
-        return f"{self.healthcare_provider} off: {self.start_datetime_utc} to {self.end_datetime_utc}"
+        tz = ZoneInfo(self.hospital.timezone)
+        start_local = self.start.astimezone(tz)
+        end_local = self.end.astimezone(tz)
+        return (
+            f"{self.provider} @ {self.hospital}  "
+            f"{start_local:%Y-%m-%d %H:%M}–{end_local:%H:%M} ({self.status})"
+        )
