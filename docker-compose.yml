@@ -1,21 +1,28 @@
 services:
+  db:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: docappoint
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
   backend:
     build: ./backend
     command: >
-      sh -c "python manage.py makemigrations &&
-            python manage.py migrate &&
-            python manage.py runserver 0.0.0.0:8000"
+      sh -c "python manage.py makemigrations api &&
+             python manage.py migrate &&
+             python manage.py seed_providers &&
+             python manage.py runserver 0.0.0.0:8000"
     volumes:
       - ./backend:/api
       - ./backend/media:/app/media
     ports:
       - "8000:8000"
-    environment:
-      - POSTGRES_NAME=docappoint
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_HOST=db
-      - POSTGRES_PORT=5432
+    env_file:
+      - .env
     depends_on:
       - db
   frontend:
@@ -29,16 +36,6 @@ services:
       - NODE_ENV=development
     stdin_open: true
     tty: true
-  db:
-    image: postgres:14
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: docappoint
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
 
 volumes:
   postgres_data:

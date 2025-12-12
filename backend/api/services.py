@@ -7,7 +7,7 @@ from django.db.models.query import QuerySet
 from django.core.exceptions import ValidationError
 from .models import (
     User, Message, Patient, HealthcareProvider, Speciality,
-    Appointment, Availability, TimeOff, MedicalRecord, AdminStaff,
+    Appointment, MedicalRecord, AdminStaff,
     HealthcareProviderProfile, PatientProfile, AdminStaffProfile
 )
 
@@ -390,72 +390,72 @@ class MedicalRecordService:
         medical_record.save()
         return medical_record
     
-class AvailabilityService:
-    def __init__(self, provider: HealthcareProvider):
-        self.provider = provider
+# class AvailabilityService:
+#     def __init__(self, provider: HealthcareProvider):
+#         self.provider = provider
         
-    def _validate_day(self, day: str):
-        valid_days = [choice[0] for choice in Availability.DaysOfWeek.choices]
-        if day not in valid_days:
-            raise ValueError(f"Invalid day of week: {day}. Must be one of {valid_days}")
+#     def _validate_day(self, day: str):
+#         valid_days = [choice[0] for choice in Availability.DaysOfWeek.choices]
+#         if day not in valid_days:
+#             raise ValueError(f"Invalid day of week: {day}. Must be one of {valid_days}")
         
-    def _validate_time(self, start_time: datetime, end_time: datetime):
-        if start_time >= end_time:
-            raise ValueError("Start time must be before end time")
+#     def _validate_time(self, start_time: datetime, end_time: datetime):
+#         if start_time >= end_time:
+#             raise ValueError("Start time must be before end time")
     
-    def set_availability(self, slots: Dict[Availability.DaysOfWeek, tuple[datetime, ...]]) -> List['Availability']:
-        # validate time slots
-        for day, (start_time, end_time) in slots.items():
-            self._validate_day(day)
-            self._validate_time(start_time, end_time)
+#     def set_availability(self, slots: Dict[Availability.DaysOfWeek, tuple[datetime, ...]]) -> List['Availability']:
+#         # validate time slots
+#         for day, (start_time, end_time) in slots.items():
+#             self._validate_day(day)
+#             self._validate_time(start_time, end_time)
                 
-        for day, (start_time, end_time) in slots.items():
-            Availability.objects.update_or_create(
-                healthcare_provider=self.provider,
-                day_of_week=day,
-                start_time=start_time,
-                end_time=end_time
-            )
+#         for day, (start_time, end_time) in slots.items():
+#             Availability.objects.update_or_create(
+#                 healthcare_provider=self.provider,
+#                 day_of_week=day,
+#                 start_time=start_time,
+#                 end_time=end_time
+#             )
             
-        valid_days = {choice[0] for choice in Availability.DaysOfWeek.choices}
-        remaining_days = valid_days - set(slots.keys()) 
-        self.remove_availability(list(remaining_days))
+#         valid_days = {choice[0] for choice in Availability.DaysOfWeek.choices}
+#         remaining_days = valid_days - set(slots.keys()) 
+#         self.remove_availability(list(remaining_days))
 
-        return self.provider.availability_slots.all() # type: ignore
+#         return self.provider.availability_slots.all() # type: ignore
     
-    def remove_availability(self, days_of_week: List[str]) -> int:
-        for day in days_of_week:
-            self._validate_day(day)
+#     def remove_availability(self, days_of_week: List[str]) -> int:
+#         for day in days_of_week:
+#             self._validate_day(day)
             
-        count, _ = self.provider.availability_slots.filter(day_of_week__in=days_of_week).delete() # type: ignore
-        return count
+#         count, _ = self.provider.availability_slots.filter(day_of_week__in=days_of_week).delete() # type: ignore
+#         return count
     
-class TimeOffService:
-    def __init__(self, provider: HealthcareProvider):
-        self.provider = provider
+# class TimeOffService:
+#     def __init__(self, provider: HealthcareProvider):
+#         self.provider = provider
         
-    def set_timeoff(self, start_datetime_utc: datetime, end_datetime_utc: datetime) -> TimeOff:
-        now = timezone.now()
+#     def set_timeoff(self, start_datetime_utc: datetime, end_datetime_utc: datetime) -> TimeOff:
+#         now = timezone.now()
         
-        if end_datetime_utc < now:
-            raise ValueError("Cannot set time off for a past time")
+#         if end_datetime_utc < now:
+#             raise ValueError("Cannot set time off for a past time")
         
-        if start_datetime_utc >= end_datetime_utc:
-            raise ValueError("Start time must be before end datetime")
+#         if start_datetime_utc >= end_datetime_utc:
+#             raise ValueError("Start time must be before end datetime")
         
-        return TimeOff.objects.create(
-            healthcare_provider=self.provider,
-            start_datetime_utc=start_datetime_utc,
-            end_datetime_utc=end_datetime_utc
-        )
+#         return TimeOff.objects.create(
+#             healthcare_provider=self.provider,
+#             start_datetime_utc=start_datetime_utc,
+#             end_datetime_utc=end_datetime_utc
+#         )
         
-    def view_timeoff(self, upcoming: Optional[bool] = None) -> QuerySet:
-        now = timezone.now()
-        queryset = self.provider.provider_timeoff.all() # type: ignore
+#     def view_timeoff(self, upcoming: Optional[bool] = None) -> QuerySet:
+#         now = timezone.now()
+#         queryset = self.provider.provider_timeoff.all() # type: ignore
         
-        if upcoming is True:
-            return queryset.filter(start_datetime_utc__gt=now)
-        elif upcoming is False:
-            return queryset.filter(start_datetime_utc__lt=now)
-        else:
-            return queryset
+#         if upcoming is True:
+#             return queryset.filter(start_datetime_utc__gt=now)
+#         elif upcoming is False:
+#             return queryset.filter(start_datetime_utc__lt=now)
+#         else:
+#             return queryset

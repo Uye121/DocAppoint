@@ -126,9 +126,13 @@ class ProviderHospitalAssignment(models.Model):
         indexes = [
             models.Index(fields=["provider", "is_active"]),
         ]
+        # Provider can only be assigned to same hospital only after previous
+        # assignment has ended
         constraints = [
             models.UniqueConstraint(
-                condition=models.Q(end_datetime_utc__isnull=True)
+                fields=['provider', 'hospital'],
+                condition=models.Q(end_datetime_utc__isnull=True),
+                name="unique_provider_hospital_assignment"
             )
         ]
         
@@ -290,46 +294,7 @@ class Message(models.Model):
     
     def __str__(self):
         return f"Message from {self.sender} to {self.recipient}"
-    
-# class Availability(models.Model):
-#     class DaysOfWeek(models.TextChoices):
-#         MONDAY = "MON", "Monday"
-#         TUESDAY = "TUE", "Tuesday"
-#         WEDNESDAY = "WED", "Wednesday"
-#         THURSDAY = "THU", "Thursday"
-#         FRIDAY = "FRI", "Friday"
-#         SATURDAY = "SAT", "Saturday"
-#         SUNDAY = "SUN", "Sunday"
-    
-#     healthcare_provider = models.ForeignKey(HealthcareProvider, on_delete=models.CASCADE, related_name="availability_slots")
-#     day_of_week = models.CharField(max_length=3, choices=DaysOfWeek.choices)
-#     start_time = models.TimeField()
-#     end_time = models.TimeField()
-    
-#     class Meta:
-#         unique_together = ('healthcare_provider', 'day_of_week')
-        
-#     def __str__(self):
-#         return f"{self.healthcare_provider} Availability: {self.get_day_of_week_display()} {self.start_time}-{self.end_time}" # type: ignore
-    
-# class TimeOff(models.Model):
-#     healthcare_provider = models.ForeignKey(HealthcareProvider, on_delete=models.CASCADE, related_name="provider_timeoff")
-#     start_datetime_utc = models.DateTimeField()
-#     end_datetime_utc = models.DateTimeField()
-    
-#     class Meta:
-#         unique_together = ('healthcare_provider', 'start_datetime_utc')
-#         constraints = [
-#             models.CheckConstraint(
-#                 name='timeoff_start_datetime_utc',
-#                 check=models.Q(end_datetime_utc__gte=models.F('start_datetime_utc'))
-#             )
-#         ]
-#         ordering = ['-start_datetime_utc']
-        
-#     def __str__(self):
-#         return f"{self.healthcare_provider} off: {self.start_datetime_utc} to {self.end_datetime_utc}"
-    
+
 class Slot(TimestampMixin, AuditMixin):
     class Status(models.TextChoices):
         FREE = "FREE", "Free"
@@ -357,6 +322,11 @@ class Slot(TimestampMixin, AuditMixin):
                 condition=models.Q(end__gt=models.F("start")),
                 name="slot_end_gt_start"
             ),
+            models.UniqueConstraint(
+                fields=["provider", "start"],
+                condition=models.Q(status="FREE"),
+                name="uniq_provider_start_free"
+            )
         ]
         indexes = [
             models.Index(fields=["provider", "start", "status"]),

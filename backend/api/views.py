@@ -17,8 +17,7 @@ from typing import List
 from .models import (
     User, Patient, HealthcareProvider, AdminStaff, SystemAdmin,
     Appointment, MedicalRecord, Message, Speciality, Hospital,
-    PatientProfile, AdminStaffProfile, HealthcareProviderProfile,
-    Availability, TimeOff
+    PatientProfile, AdminStaffProfile, HealthcareProviderProfile
 )
 from .serializers import (
     UserSerializer, PatientSerializer, HealthcareProviderSerializer,
@@ -32,91 +31,91 @@ from .permissions import (
     IsMedicalRecordProviderOrPatient, 
 )
 
-class BaseViewSet(viewsets.GenericViewSet):
-    def permission_denied(self, request: HttpRequest, message=None, code=None):
-        if request.authenticators and not request.successful_authenticator:
-            raise NotFound(detail="Authentication credentials were not provided.")
-        raise PermissionDenied(detail=message or "You do not have permission to perform this action.")
+# class BaseViewSet(viewsets.GenericViewSet):
+#     def permission_denied(self, request: HttpRequest, message=None, code=None):
+#         if request.authenticators and not request.successful_authenticator:
+#             raise NotFound(detail="Authentication credentials were not provided.")
+#         raise PermissionDenied(detail=message or "You do not have permission to perform this action.")
 
 
-@api_view(['POST'])
-@permission_classes([AllowAny])
-@authentication_classes([SessionAuthentication])
-def register_user(request):
-    """
-    Register a new user account
-    """
-    serializer = UserSerializer(data=request.data)
-    if serializer.is_valid():
-        user = serializer.save()
+# @api_view(['POST'])
+# @permission_classes([AllowAny])
+# @authentication_classes([SessionAuthentication])
+# def register_user(request):
+#     """
+#     Register a new user account
+#     """
+#     serializer = UserSerializer(data=request.data)
+#     if serializer.is_valid():
+#         user = serializer.save()
         
-        match user.type: # type: ignore
-            case User.UserType.PATIENT:
-                PatientProfile.objects.create(user=user)
-            case User.UserType.HEALTHCARE_PROVIDER:
-                HealthcareProviderProfile.objects.create(user=user)
-            case User.UserType.ADMIN_STAFF:
-                AdminStaffProfile.objects.create(user=user)
-            case _:
-                PatientProfile.objects.create(user=user)
+#         match user.type: # type: ignore
+#             case User.UserType.PATIENT:
+#                 PatientProfile.objects.create(user=user)
+#             case User.UserType.HEALTHCARE_PROVIDER:
+#                 HealthcareProviderProfile.objects.create(user=user)
+#             case User.UserType.ADMIN_STAFF:
+#                 AdminStaffProfile.objects.create(user=user)
+#             case _:
+#                 PatientProfile.objects.create(user=user)
     
-        login(request, user)
+#         login(request, user)
         
-        return Response({
-            'user': serializer.data
-        }, status=status.HTTP_201_CREATED)
+#         return Response({
+#             'user': serializer.data
+#         }, status=status.HTTP_201_CREATED)
 
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['POST'])
-@permission_classes([AllowAny])
-@authentication_classes([SessionAuthentication])
-def login_user(request):
-    """
-    Login user with session authentication
-    """
-    username = request.data.get('username')
-    password = request.data.get('password')
+# @api_view(['POST'])
+# @permission_classes([AllowAny])
+# @authentication_classes([SessionAuthentication])
+# def login_user(request):
+#     """
+#     Login user with session authentication
+#     """
+#     username = request.data.get('username')
+#     password = request.data.get('password')
     
-    if not username or not password:
-        return Response(
-            {'error': 'Username and password required'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+#     if not username or not password:
+#         return Response(
+#             {'error': 'Username and password required'},
+#             status=status.HTTP_400_BAD_REQUEST
+#         )
         
-    user = authenticate(username=username, password=password)
+#     user = authenticate(username=username, password=password)
     
-    if user is not None:
-        if user.is_active:
-            login(request, user)
-            serializer = UserSerializer(user)
-            return Response({
-                'user': serializer.data,
-            })
-        else:
-            return Response(
-                {'error': 'Account is disabled'},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
-    else:
-        return Response(
-            {'error': 'Invalid credentials'},
-            status=status.HTTP_401_UNAUTHORIZED
-        )
+#     if user is not None:
+#         if user.is_active:
+#             login(request, user)
+#             serializer = UserSerializer(user)
+#             return Response({
+#                 'user': serializer.data,
+#             })
+#         else:
+#             return Response(
+#                 {'error': 'Account is disabled'},
+#                 status=status.HTTP_401_UNAUTHORIZED
+#             )
+#     else:
+#         return Response(
+#             {'error': 'Invalid credentials'},
+#             status=status.HTTP_401_UNAUTHORIZED
+#         )
         
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def logout_user(request):
-    """
-    Logout user
-    """
-    logout(request)
-    return Response({'message': 'Logged out successfully'})
+# @api_view(['POST'])
+# @permission_classes([IsAuthenticated])
+# def logout_user(request):
+#     """
+#     Logout user
+#     """
+#     logout(request)
+#     return Response({'message': 'Logged out successfully'})
 
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def get_csrf_token(request):
-    """
-    Get CSRF token for React frontend
-    """
-    return Response({'csrfToken': get_token(request)})
+# @api_view(['GET'])
+# @permission_classes([AllowAny])
+# def get_csrf_token(request):
+#     """
+#     Get CSRF token for React frontend
+#     """
+#     return Response({'csrfToken': get_token(request)})

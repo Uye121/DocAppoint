@@ -21,7 +21,7 @@ from django.conf.urls.static import static
 # from .views import SpecialityListCreateView, DoctorListCreateView, DoctorBySpecialityView, DoctorDeleteView
 
 urlpatterns = [
-    # path('admin/', admin.site.urls),
+    path('admin/', admin.site.urls),
     # path('specialities/', SpecialityListCreateView.as_view(), name='speciality-list-create'),
     # path('doctors/', DoctorListCreateView.as_view(), name='doctor-list-create'),
     # path('doctors/speciality/<str:speciality>', DoctorBySpecialityView.as_view(), name='doctors-by-speciality'),
