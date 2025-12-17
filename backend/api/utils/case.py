@@ -1,5 +1,5 @@
 import re
-from typing import Any, List, Dict, Union
+from typing import Any, List, Union
 
 CAMEL_REGEX = re.compile('(?<=.)_(\\w)')
 SNAKE_REGEX = re.compile('(?<=[a-z])([A-Z])')
@@ -17,7 +17,7 @@ def to_snake_case(text: Any) -> Any:
     return SNAKE_REGEX.sub(match_snake, text)
 
 JsonValue = Union[None, str, int, float, bool,
-                  List['JsonValue'], Dict[str, 'JsonValue']]
+                  List[Any], dict[str, Any]]
 
 def to_camelcase_data(data: JsonValue) -> JsonValue:
     if isinstance(data, dict):

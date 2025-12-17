@@ -54,19 +54,6 @@ docker-backend-migrate:
 backend-shell:
 	$(DC) exec backend $(PYTHON) manage.py shell
 
-# Frontend commands
-docker-frontend-dev:
-	docker compose up frontend
-
-frontend-install:
-	cd $(FRONTEND_DIR) && $(NPM) install
-
-frontend-dev:
-	cd $(FRONTEND_DIR) && $(NPM) run dev
-
-frontend-test:
-	cd $(FRONTEND_DIR) && $(NPM) run test
-
 # =============================================================================
 # FRONTEND
 # =============================================================================

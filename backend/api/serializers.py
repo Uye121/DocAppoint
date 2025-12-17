@@ -1,19 +1,15 @@
+# TODO: break up into respective file and delete
 from typing import Any, Dict, List
 from rest_framework import serializers
+from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import get_user_model
+
+from mixin import CamelCaseMixin
+from .utils.case import to_camelcase_data, to_snake_case_data, JsonValue
 from .models import (
     User, Patient, HealthcareProvider, Appointment, 
     MedicalRecord, Message, Speciality, Hospital
 )
-from .utils.case import to_camelcase_data, to_snake_case_data, JsonValue
-
-class CamelCaseMixin:
-    def to_representation(self, instance: Any) -> Dict[str, Any]:
-        representation = super().to_representation(instance) # type: ignore
-        return to_camelcase_data(representation) # type: ignore
-
-    def to_internal_value(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        return super().to_internal_value(to_snake_case_data(data)) # type: ignore
 
 class UserSerializer(CamelCaseMixin, serializers.ModelSerializer):
     class Meta:
