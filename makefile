@@ -75,10 +75,10 @@ docker-frontend-dev:
 # =============================================================================
 .PHONY: db-shell db-backup db-restore db-down db-up
 db-shell:
-	$(DC) exec db psql -U postgres -d docappoint
+	$(DC) exec postgres psql -U postgres -d docappoint
 
 db-backup:
-	$(DC) exec db pg_dump -U postgres docappoint > backup_$(shell date +%Y%m%d_%H%M%S).sql
+	$(DC) exec postgres pg_dump -U postgres docappoint > backup_$(shell date +%Y%m%d_%H%M%S).sql
 
 db-restore:
 	$(DC) exec -T db dropdb -U postgres --if-exists docappoint
@@ -89,7 +89,7 @@ db-down:
 	$(DC) down -v
 
 db-up:
-	$(DC) up -d db
+	$(DC) up -d postgres
 
 # =============================================================================
 # MISC / UTILITIES

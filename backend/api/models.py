@@ -1,9 +1,11 @@
+import uuid
 from zoneinfo import available_timezones
 from datetime import timedelta
 from zoneinfo import ZoneInfo
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import AbstractUser
+from django.db.models.functions import Lower
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
@@ -41,8 +43,19 @@ class User(TimestampMixin, AbstractUser):
         ADMIN_STAFF = "ADMIN_STAFF", "Admin Staff"
         SYSTEM_ADMIN = "SYSTEM_ADMIN", "System Admin"
         
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False
+    )
+    email = models.EmailField(
+        _("email address"),
+        unique=True,
+        error_messages={
+            "unique": _("A user with this email already exists."),
+        },
+    )
     base_type = UserType.PATIENT
-    
     type = models.CharField(
         _("Type"), max_length=50, choices=UserType.choices, default=base_type
     )
@@ -50,13 +63,22 @@ class User(TimestampMixin, AbstractUser):
     date_of_birth = models.DateField(_("Date of Birth"), null=True, blank=True)
     phone_number = models.CharField(_("Phone Number"), max_length=20, blank=True)
     address = models.TextField(_("Address"), blank=True)
-        
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
+
+    # Use email as username for login
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username']
     
+    # Enforce case insensitive uniqueness
+    class Meta(TimestampMixin.Meta):
+        constraints = [
+            models.UniqueConstraint(
+                Lower("email"),
+                name="user_email_ci_unique"
+            )
+        ]
+
     def __str__(self):
-        return f"{self.username}: {self.get_type_display()}" # type: ignore
+        return f"{self.username}: {self.get_type_display()}"
     
 class PatientProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="patient_profile")

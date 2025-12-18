@@ -1,3 +1,4 @@
+from rest_framework.views import APIView
 from django_ratelimit.decorators import ratelimit
 from rest_framework import status, generics
 from rest_framework.response import Response
@@ -6,17 +7,18 @@ from django.contrib.auth import authenticate
 from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_decode
 from django.contrib.auth.tokens import default_token_generator
+from django.utils.decorators import method_decorator
 
 from ..models import User
 from ..serializers.auth import SignUpSerializer
 from ..services.auth import send_verification_email
 
+@method_decorator(ratelimit(key="ip", rate="5/h", method="POST"), name='post')
 class SignUpView(generics.CreateAPIView):
     serializer_class = SignUpSerializer
     authentication_classes = []
     permission_classes = []
 
-    @ratelimit(key="ip", rate="5/h", method="POST")
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
 
@@ -24,14 +26,15 @@ class SignUpView(generics.CreateAPIView):
         user = serializer.save()
         send_verification_email(user)
 
-class LoginView(generics.GenericAPIView):
+@method_decorator(ratelimit(key="ip", rate="10/h", method="POST"), name='post')
+class LoginView(APIView):
     authentication_classes = []
     permission_classes = []
 
-    @ratelimit(key="ip", rate="10/m", method="POST")
     def post(self, request):
         email = request.data.get("email")
         password = request.data.get("password")
+        print(f'{email} | {password}')
         user = authenticate(username=email, password=password)
         if user is None:
             return Response(
@@ -76,11 +79,11 @@ class VerifyEmailView(generics.GenericAPIView):
             return Response({"detail": "E-mail verified"}, status=status.HTTP_200_OK)
         return Response({"detail": "Bad or expired token"}, status=status.HTTP_400_BAD_REQUEST)
 
+@method_decorator(ratelimit(key="ip", rate="3/h", method="POST"), name='post')
 class ResendVerifyView(generics.GenericAPIView):
     authentication_classes = []
     permission_classes = []
 
-    @ratelimit(key="ip", rate="3/h", method="POST")
     def post(self, request):
         email = request.data.get("email")
         user = User.objects.filter(email=email).first()
