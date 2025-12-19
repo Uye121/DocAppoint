@@ -11,6 +11,11 @@ services:
       - postgres_data:/var/lib/postgresql/data
   backend:
     build: ./backend
+    develop:
+      watch:
+        - action: rebuild
+          path: ./backend
+          target: /app
     command: >
       sh -c "python manage.py makemigrations api &&
              python manage.py migrate &&

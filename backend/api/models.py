@@ -55,6 +55,10 @@ class User(TimestampMixin, AbstractUser):
             "unique": _("A user with this email already exists."),
         },
     )
+    # Make first_name & last_name required
+    first_name = models.CharField(_("first name"), max_length=150, blank=False)
+    last_name  = models.CharField(_("last name"),  max_length=150, blank=False)
+
     base_type = UserType.PATIENT
     type = models.CharField(
         _("Type"), max_length=50, choices=UserType.choices, default=base_type

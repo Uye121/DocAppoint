@@ -15,6 +15,12 @@ DC := docker compose
 dev:
 	$(DC) up --build
 
+dev-detached:
+	$(DC) up --build -d
+
+watch:
+	$(DC) watch
+
 stop:
 	$(DC) down
 
@@ -50,6 +56,9 @@ docker-backend-dev:
 docker-backend-migrate:
 	$(DC) exec backend $(PYTHON) manage.py makemigrations
 	$(DC) exec backend $(PYTHON) manage.py migrate
+
+docker-backend-test:
+	$(DC) exec backend python manage.py test api.tests.test_auth --settings=api.settings.development -v 2
 
 backend-shell:
 	$(DC) exec backend $(PYTHON) manage.py shell

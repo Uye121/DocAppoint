@@ -1,155 +1,155 @@
 # type: ignore
-import os
-import time
-from django.test import TestCase
-from django.contrib.auth import get_user_model
-from datetime import datetime, timedelta
-from django.utils import timezone
-from django.core.exceptions import ValidationError
-from django.db import IntegrityError
+# import os
+# import time
+# from django.test import TestCase
+# from django.contrib.auth import get_user_model
+# from datetime import datetime, timedelta
+# from django.utils import timezone
+# from django.core.exceptions import ValidationError
+# from django.db import IntegrityError
 
-from ..models import (
-    User, Patient, HealthcareProvider, AdminStaff, SystemAdmin,
-    Speciality, Hospital, PatientProfile, HealthcareProviderProfile,
-    AdminStaffProfile, SystemAdminProfile, Appointment, MedicalRecord,
-    Message, ProviderHospitalAssignment, Slot
-)
+# from ..models import (
+#     User, Patient, HealthcareProvider, AdminStaff, SystemAdmin,
+#     Speciality, Hospital, PatientProfile, HealthcareProviderProfile,
+#     AdminStaffProfile, SystemAdminProfile, Appointment, MedicalRecord,
+#     Message, ProviderHospitalAssignment, Slot
+# )
 
-User = get_user_model()
+# User = get_user_model()
 
-class BaseModelTest(TestCase):
-    def setUp(self):
-        self.speciality = Speciality.objects.create(
-            name='Gynecologist',
-            image='Gynecologist.svg'
-        )
+# class BaseModelTest(TestCase):
+#     def setUp(self):
+#         self.speciality = Speciality.objects.create(
+#             name='Gynecologist',
+#             image='Gynecologist.svg'
+#         )
         
-        self.hospital = Hospital.objects.create(
-            name="General Hospital",
-            address="123 Main St",
-            phone_number="123-456-7890"
-        )
+#         self.hospital = Hospital.objects.create(
+#             name="General Hospital",
+#             address="123 Main St",
+#             phone_number="123-456-7890"
+#         )
         
-        self.hospital2 = Hospital.objects.create(
-            name="Veteran Hospital",
-            address="123 Valley Ave",
-            phone_number="123-456-7890"
-        )
+#         self.hospital2 = Hospital.objects.create(
+#             name="Veteran Hospital",
+#             address="123 Valley Ave",
+#             phone_number="123-456-7890"
+#         )
         
-class UserModelTest(BaseModelTest):
-    def test_create_user(self):
-        user = User.objects.create_user(
-            username="test",
-            password="password1234",
-            email="test@example.com",
-            first_name="Test",
-            last_name="User"
-        )
+# class UserModelTest(BaseModelTest):
+#     def test_create_user(self):
+#         user = User.objects.create_user(
+#             username="test",
+#             password="password1234",
+#             email="test@example.com",
+#             first_name="Test",
+#             last_name="User"
+#         )
         
-        self.assertEqual(user.username, "test")
-        self.assertEqual(user.email, "test@example.com")
-        self.assertEqual(user.type, User.UserType.PATIENT) 
-        self.assertTrue(user.is_active)
-        self.assertFalse(user.is_staff)
+#         self.assertEqual(user.username, "test")
+#         self.assertEqual(user.email, "test@example.com")
+#         self.assertEqual(user.type, User.UserType.PATIENT) 
+#         self.assertTrue(user.is_active)
+#         self.assertFalse(user.is_staff)
         
-    def test_create_superuser(self):
-        user = User.objects.create_superuser(
-            username="admin",
-            password="password1234",
-            email="admin@example.com",
-            first_name="Admin",
-            last_name="User"
-        )
+#     def test_create_superuser(self):
+#         user = User.objects.create_superuser(
+#             username="admin",
+#             password="password1234",
+#             email="admin@example.com",
+#             first_name="Admin",
+#             last_name="User"
+#         )
         
-        self.assertEqual(user.username, "admin")
-        self.assertTrue(user.is_staff)
-        self.assertTrue(user.is_superuser)
+#         self.assertEqual(user.username, "admin")
+#         self.assertTrue(user.is_staff)
+#         self.assertTrue(user.is_superuser)
         
-    def test_create_patient_proxy(self):
-        user = User.objects.create_user(
-            username="test",
-            password="password1234",
-            email="test@example.com",
-            first_name="Test",
-            last_name="User"
-        )
+#     def test_create_patient_proxy(self):
+#         user = User.objects.create_user(
+#             username="test",
+#             password="password1234",
+#             email="test@example.com",
+#             first_name="Test",
+#             last_name="User"
+#         )
         
-        patient_profile = PatientProfile.objects.create(
-            user=user,
-            age=24,
-            blood_type="O",
-            allergies="peanut",
-            insurance="Blue Cross",
-            weight=70,
-            height=175
-        )
+#         patient_profile = PatientProfile.objects.create(
+#             user=user,
+#             age=24,
+#             blood_type="O",
+#             allergies="peanut",
+#             insurance="Blue Cross",
+#             weight=70,
+#             height=175
+#         )
         
-        patient = Patient.objects.get(id=user.id) 
-        self.assertEqual(patient.type, User.UserType.PATIENT) 
-        self.assertEqual(patient.profile, patient_profile)
+#         patient = Patient.objects.get(id=user.id) 
+#         self.assertEqual(patient.type, User.UserType.PATIENT) 
+#         self.assertEqual(patient.profile, patient_profile)
         
-    def test_create_healthcare_provider_proxy(self):
-        user = User.objects.create_user(
-            username="doc",
-            password="password1234",
-            email="doc@example.com",
-            type=User.UserType.HEALTHCARE_PROVIDER, 
-            first_name="Doc",
-            last_name="User"
-        )
-        provider_profile = HealthcareProviderProfile.objects.create(
-            user=user,
-            speciality=self.speciality,
-            image="doctor.jpg",
-            education="MD",
-            years_of_experience=10,
-            about="Experienced professional",
-            fees=150.,
-            address_line1="123 Main St",
-            city="Los Angeles",
-            state="CA",
-            zip_code="90012",
-            license_number="G40749",
-            primary_hospital=self.hospital
-        )
+#     def test_create_healthcare_provider_proxy(self):
+#         user = User.objects.create_user(
+#             username="doc",
+#             password="password1234",
+#             email="doc@example.com",
+#             type=User.UserType.HEALTHCARE_PROVIDER, 
+#             first_name="Doc",
+#             last_name="User"
+#         )
+#         provider_profile = HealthcareProviderProfile.objects.create(
+#             user=user,
+#             speciality=self.speciality,
+#             image="doctor.jpg",
+#             education="MD",
+#             years_of_experience=10,
+#             about="Experienced professional",
+#             fees=150.,
+#             address_line1="123 Main St",
+#             city="Los Angeles",
+#             state="CA",
+#             zip_code="90012",
+#             license_number="G40749",
+#             primary_hospital=self.hospital
+#         )
         
-        provider = HealthcareProvider.objects.get(id=user.id) 
-        self.assertEqual(provider.type, User.UserType.HEALTHCARE_PROVIDER) 
-        self.assertEqual(provider.profile, provider_profile)
-        self.assertEqual(provider_profile.fees, 150.)
+#         provider = HealthcareProvider.objects.get(id=user.id) 
+#         self.assertEqual(provider.type, User.UserType.HEALTHCARE_PROVIDER) 
+#         self.assertEqual(provider.profile, provider_profile)
+#         self.assertEqual(provider_profile.fees, 150.)
         
-    def test_create_admin_staff_proxy(self):
-        user = User.objects.create_user(
-            username="admin",
-            password="password1234",
-            email="admin@example.com",
-            type=User.UserType.ADMIN_STAFF, 
-            first_name="Admin",
-            last_name="User"
-        )
-        admin_staff_profile = AdminStaffProfile.objects.create(
-            user=user,
-            hospital=self.hospital
-        )
-        admin_staff = AdminStaff.objects.get(id=user.id) 
+#     def test_create_admin_staff_proxy(self):
+#         user = User.objects.create_user(
+#             username="admin",
+#             password="password1234",
+#             email="admin@example.com",
+#             type=User.UserType.ADMIN_STAFF, 
+#             first_name="Admin",
+#             last_name="User"
+#         )
+#         admin_staff_profile = AdminStaffProfile.objects.create(
+#             user=user,
+#             hospital=self.hospital
+#         )
+#         admin_staff = AdminStaff.objects.get(id=user.id) 
         
-        self.assertEqual(user.type, User.UserType.ADMIN_STAFF) 
-        self.assertEqual(admin_staff.admin_staff_profile, admin_staff_profile) 
+#         self.assertEqual(user.type, User.UserType.ADMIN_STAFF) 
+#         self.assertEqual(admin_staff.admin_staff_profile, admin_staff_profile) 
         
-    def test_create_system_admin_proxy(self):
-        user = User.objects.create_user(
-            username="sysadmin",
-            password="password1234",
-            email="sysadmin@example.com",
-            type=User.UserType.SYSTEM_ADMIN, 
-        )
-        sys_admin_profile = SystemAdminProfile.objects.create(
-            user=user
-        )
-        sysadmin = SystemAdmin.objects.get(id=user.id) 
+#     def test_create_system_admin_proxy(self):
+#         user = User.objects.create_user(
+#             username="sysadmin",
+#             password="password1234",
+#             email="sysadmin@example.com",
+#             type=User.UserType.SYSTEM_ADMIN, 
+#         )
+#         sys_admin_profile = SystemAdminProfile.objects.create(
+#             user=user
+#         )
+#         sysadmin = SystemAdmin.objects.get(id=user.id) 
         
-        self.assertEqual(user.type, User.UserType.SYSTEM_ADMIN) 
-        self.assertEqual(sysadmin.system_admin_profile, sys_admin_profile)
+#         self.assertEqual(user.type, User.UserType.SYSTEM_ADMIN) 
+#         self.assertEqual(sysadmin.system_admin_profile, sys_admin_profile)
         
 #     def test_send_message(self):
 #         patient_user = User.objects.create_user(

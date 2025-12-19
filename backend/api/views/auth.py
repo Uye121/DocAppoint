@@ -8,6 +8,7 @@ from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_decode
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.decorators import method_decorator
+from rest_framework.exceptions import Throttled
 
 from ..models import User
 from ..serializers.auth import SignUpSerializer
@@ -65,9 +66,10 @@ class VerifyEmailView(generics.GenericAPIView):
     permission_classes = []
 
     def get(self, request, *args, **kwargs):
-        uidb64 = kwargs["uid"]
-        token = kwargs["token"]
+        key = kwargs["key"]
+
         try:
+            uidb64, token = key.split("-", 1)
             uid = force_str(urlsafe_base64_decode(uidb64))
             user = User.objects.get(pk=uid)
         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
