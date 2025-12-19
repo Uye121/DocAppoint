@@ -1,18 +1,36 @@
 from rest_framework import permissions
 
-class AdminOnlyEdit(permissions.BasePermission):
+# Didn't add type signature due to Pylance Override Error
+class IsPatient(permissions.BasePermission):
     def has_permission(self, request, view):
-        """
-        Override default function to enforce action where only
-        admin users can POST/PUT/PATCH/DELETE.
+        return request.user.is_authenticated and request.user.type == 'PATIENT'
 
-        Args:
-            request (HTTPRequest): The incoming request object
-            view (APIView): The view accessed
+class IsHealthcareProvider(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.type == 'HEALTHCARE_PROVIDER'
 
-        Returns:
-            bool: True if permission is granted, false otherwise.
-        """
+class IsAdminStaff(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.type == 'ADMIN_STAFF'
+
+class IsSystemAdmin(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.type == 'SYSTEM_ADMIN'
+    
+class IsOwnerOrReadOnly(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
         if request.method in permissions.SAFE_METHODS:
             return True
-        return request.user and request.user.is_admin
+        return obj == request.user
+    
+class IsAppointmentParticipant(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        return obj.patient == request.user or obj.healthcare_provider == request.user
+    
+class IsMessageParticipant(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        return obj.sender == request.user or obj.recipient == request.user
+    
+class IsMedicalRecordProviderOrPatient(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        return obj.patient == request.user or obj.healthcare_provider == request.user

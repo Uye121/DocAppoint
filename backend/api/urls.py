@@ -15,17 +15,30 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from .views import SpecialityListCreateView, DoctorListCreateView, DoctorBySpecialityView, DoctorDeleteView
+from rest_framework_simplejwt.views import TokenRefreshView
+
+from .views.auth import (
+    SignUpView,
+    LoginView,
+    VerifyEmailView,
+    ResendVerifyView
+)
+
+authpatterns = [
+    path("signup/", SignUpView.as_view(), name="signup"),
+    path("login/", LoginView.as_view(), name="login"),
+    path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path("verify/<str:key>/", VerifyEmailView.as_view(), name="verify_email"),
+    path("resend-verify/", ResendVerifyView.as_view(), name="resend_verify"),
+    path("password-reset/", include("django_rest_passwordreset.urls")),
+]
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('specialities/', SpecialityListCreateView.as_view(), name='speciality-list-create'),
-    path('doctors/', DoctorListCreateView.as_view(), name='doctor-list-create'),
-    path('doctors/speciality/<str:speciality>', DoctorBySpecialityView.as_view(), name='doctors-by-speciality'),
-    path('doctors/<int:pk>/delete', DoctorDeleteView.as_view(), name='doctor-delete')
+    path("api/", include(authpatterns)),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
