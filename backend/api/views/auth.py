@@ -8,10 +8,10 @@ from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_decode
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.decorators import method_decorator
-from rest_framework.exceptions import Throttled
+from rest_framework.permissions import IsAuthenticated
 
 from ..models import User
-from ..serializers.auth import SignUpSerializer
+from ..serializers.auth import SignUpSerializer, ChangePasswordSerializer
 from ..services.auth import send_verification_email
 
 @method_decorator(ratelimit(key="ip", rate="5/h", method="POST"), name='post')
@@ -92,3 +92,30 @@ class ResendVerifyView(generics.GenericAPIView):
         if user and not user.is_active:
             send_verification_email(user)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            refresh_token = request.data["refresh"]
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response(status=status.HTTP_205_RESET_CONTENT)
+        except Exception:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data)
+        if serializer.is_valid():
+            user = request.user
+            if user.check_password(serializer.validated_data['old_password']):
+                user.set_password(serializer.validated_data['new_password'])
+                user.save()
+                return Response({"detail": "Password changed successfully."})
+            return Response({"detail": "Old password is incorrect."},
+                            status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

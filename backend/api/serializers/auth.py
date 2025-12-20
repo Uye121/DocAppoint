@@ -22,3 +22,7 @@ class SignUpSerializer(CamelCaseMixin, serializers.ModelSerializer):
         user.is_active = False 
         user.save()
         return user
+
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True, validators=[validate_password])

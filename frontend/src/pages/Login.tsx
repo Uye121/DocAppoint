@@ -1,19 +1,27 @@
 import React, { useState } from "react";
 
-// TODO: Follow https://clerk.com/blog/building-a-react-login-page-template
-// To separate login & sign up page + add validation
+const API = process.env.API_URL || "http://localhost:8000/api";
+
 const Login = (): React.JSX.Element => {
   const [state, setState] = useState<string>("Sign Up");
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [name, setName] = useState<string>("");
 
-  const onSubmit = async (event) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (event: React.SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setLoading(null);
+    setLoading(true);
+
+    
+
   };
 
   return (
-    <form className="min-h-[80vh] flex items-center">
+    <form onSubmit={handleSubmit} className="min-h-[80vh] flex items-center">
       <div className="flex flex-col gap-3 m-auto items-start p-8 min-w-[340px] sm:min-w-96 border rounded-xl text-zinc-600 text-sm shadow-lg">
         <p className="text-2xl font-semibold">
           {state == "Sign Up" ? "Create Account" : "Login"}
@@ -51,7 +59,7 @@ const Login = (): React.JSX.Element => {
             required
           />
         </div>
-        <button className="bg-primary text-white w-full py-2 rounded-md text-base">
+        <button type="submit" className="bg-primary text-white w-full py-2 rounded-md text-base">
           {state == "Sign Up" ? "Create Account" : "Login"}
         </button>
         {state == "Sign Up" ? (

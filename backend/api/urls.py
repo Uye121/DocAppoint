@@ -24,7 +24,9 @@ from .views.auth import (
     SignUpView,
     LoginView,
     VerifyEmailView,
-    ResendVerifyView
+    ResendVerifyView,
+    LogoutView,
+    ChangePasswordView
 )
 
 authpatterns = [
@@ -34,6 +36,8 @@ authpatterns = [
     path("verify/<str:key>/", VerifyEmailView.as_view(), name="verify_email"),
     path("resend-verify/", ResendVerifyView.as_view(), name="resend_verify"),
     path("password-reset/", include("django_rest_passwordreset.urls")),
+    path("logout/", LogoutView.as_view(), name="logout"),
+    path("change-password/", ChangePasswordView.as_view(), name="change_password"),
 ]
 
 urlpatterns = [
