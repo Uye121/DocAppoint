@@ -1,3 +1,5 @@
+import logging
+from rest_framework import serializers
 from rest_framework.views import APIView
 from django_ratelimit.decorators import ratelimit
 from rest_framework import status, generics
@@ -14,14 +16,24 @@ from ..models import User
 from ..serializers.auth import SignUpSerializer, ChangePasswordSerializer
 from ..services.auth import send_verification_email
 
+logger = logging.getLogger(__name__)
+
 @method_decorator(ratelimit(key="ip", rate="5/h", method="POST"), name='post')
 class SignUpView(generics.CreateAPIView):
     serializer_class = SignUpSerializer
     authentication_classes = []
     permission_classes = []
 
-    def post(self, request, *args, **kwargs):
-        return super().post(request, *args, **kwargs)
+    def handle_exception(self, exc):
+        if isinstance(exc, serializers.ValidationError):
+            logger.info("Sign-up validation error: %s", exc.detail)
+            return Response(exc.detail, status=status.HTTP_400_BAD_REQUEST)
+        
+        logger.exception("Sign-up error: %s", exc)
+        return Response(
+            {"detail": "Internal server error, please try again."},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
     def perform_create(self, serializer):
         user = serializer.save()
@@ -35,7 +47,6 @@ class LoginView(APIView):
     def post(self, request):
         email = request.data.get("email")
         password = request.data.get("password")
-        print(f'{email} | {password}')
         user = authenticate(username=email, password=password)
         if user is None:
             return Response(

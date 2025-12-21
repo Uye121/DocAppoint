@@ -1,4 +1,29 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { login, signup, verifyEmail, resendVerify } from "../api/auth";
-import { LoginPayload, SignupPayload } from "../types/auth";
+import axios from "axios";
+
+import { login as apiLogin, signup as apiSignup } from "../src/api/auth";
+import type { AuthPayload } from "../src/types/auth";
+
+export const useAuth = () => {
+  const nav = useNavigate();
+
+  const login = async (payload: AuthPayload) => {
+    const { user, access, refresh } = await apiLogin(payload);
+    localStorage.setItem("access", access);
+    localStorage.setItem("refresh", refresh);
+    nav("/");
+    return user;
+  };
+
+  const signup = async (payload: AuthPayload) => {
+    await apiSignup(payload);
+    nav("/verify");
+  };
+
+  const logout = () => {
+    localStorage.clear();
+    nav("/login");
+  };
+
+  return { login, signup, logout };
+};
