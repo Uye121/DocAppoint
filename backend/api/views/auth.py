@@ -11,6 +11,7 @@ from django.utils.http import urlsafe_base64_decode
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.decorators import method_decorator
 from rest_framework.permissions import IsAuthenticated
+from django_ratelimit.exceptions import Ratelimited
 
 from ..models import User
 from ..serializers.auth import SignUpSerializer, ChangePasswordSerializer
@@ -28,7 +29,12 @@ class SignUpView(generics.CreateAPIView):
         if isinstance(exc, serializers.ValidationError):
             logger.info("Sign-up validation error: %s", exc.detail)
             return Response(exc.detail, status=status.HTTP_400_BAD_REQUEST)
-        
+        if isinstance(exc, Ratelimited):
+            return Response(
+                {"detail": "Too many sign-up attempts, please try again later."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         logger.exception("Sign-up error: %s", exc)
         return Response(
             {"detail": "Internal server error, please try again."},
@@ -98,8 +104,13 @@ class ResendVerifyView(generics.GenericAPIView):
     permission_classes = []
 
     def post(self, request):
-        email = request.data.get("email")
-        user = User.objects.filter(email=email).first()
+        try:
+            uid64 = request.data.get("uid")
+            uid = force_str(urlsafe_base64_decode(uid64))
+            user = User.objects.get(pk=uid)
+        except Exception:
+            return Response({"detail": "Invalid uid"}, status=status.HTTP_400_BAD_REQUEST)
+
         if user and not user.is_active:
             send_verification_email(user)
         return Response(status=status.HTTP_204_NO_CONTENT)

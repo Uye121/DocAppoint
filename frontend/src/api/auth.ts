@@ -11,11 +11,10 @@ import type {
 export const login = (payload: AuthPayload) =>
     api.post<{ user: User } & TokenPair>("/login/", payload).then((res) => res.data);
 
-export const signup = async (payload: AuthPayload) => {
-    const res = await api.post("/signup/", payload)
-    return res.data;
-}
+export const signup = (payload: AuthPayload) =>
+    api.post("/signup/", payload).then((res) => res.data);
 
+// TODO: check below
 export const verifyEmail = (key: string) =>
     api.get<{ detail: string }>(`/verify/${key}`).then((res) => res.data);
 
@@ -34,4 +33,4 @@ export const logout = () => {
         return api.post("/logout/", { refresh }).then((res) => res.data);
     }
     return Promise.resolve();
-}
+};

@@ -8,6 +8,7 @@ import Login from './Login'
 import UserAppointment from './UserAppointment'
 import UserProfile from './UserProfile'
 import Verify from './Verify'
+import VerifyEmail from './VerifyEmail'
 
 export {
     About,
@@ -19,5 +20,6 @@ export {
     Login,
     UserAppointment,
     UserProfile,
-    Verify
+    Verify,
+    VerifyEmail
 }

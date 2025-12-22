@@ -335,28 +335,33 @@ class ResendVerifyViewTests(APITestCase):
         )
         self.url = reverse("resend_verify")
 
+    def _uid(self, user):
+        return urlsafe_base64_encode(force_bytes(user.pk))
+
     @patch("api.views.auth.send_verification_email")
     def test_resend_to_inactive_user_sends_email(self, mock_send):
-        res = self.client.post(self.url, {"email": "test@example.com"})
+        payload = {"uid": self._uid(self.inactive)}
+        res = self.client.post(self.url, payload)
         self.assertEqual(res.status_code, 204)
         mock_send.assert_called_once_with(self.inactive)
 
     def test_no_email_sent_to_active_user(self):
         with patch("api.views.auth.send_verification_email") as mock_send:
-            res = self.client.post(self.url, {"email": "test2@example.com"})
+            payload = {"uid": self._uid(self.active)}
+            res = self.client.post(self.url, payload)
         self.assertEqual(res.status_code, 204)
         mock_send.assert_not_called()
 
-    def test_no_email_sent_to_nonexistent_address(self):
-        with patch("api.views.auth.send_verification_email") as mock_send:
-            res = self.client.post(self.url, {"email": "no@example.com"})
-        self.assertEqual(res.status_code, 204)
-        mock_send.assert_not_called()
+    def test_invalid_uid(self):
+        res = self.client.post(self.url, {"uid": "invalid-b64"})
+        self.assertEqual(res.status_code, 400)
+        self.assertIn("Invalid uid", res.data["detail"])
 
     def test_ratelimit_blocks_4th_call(self):
+        payload = {"uid": self._uid(self.inactive)}
         for _ in range(3):
-            self.client.post(self.url, {"email": "test@example.com"})
-        res = self.client.post(self.url, {"email": "test@example.com"})
+            self.client.post(self.url, payload)
+        res = self.client.post(self.url, payload)
         self.assertEqual(res.status_code, 403)
 
 # ---------- Logout ----------
@@ -421,10 +426,12 @@ class LogoutViewTests(APITestCase):
 class ChangePasswordViewTests(APITestCase):
     @classmethod
     def setUpTestData(cls):
-        cache.clear()
         cls.user = User.objects.create_user(
             username="newuser", email="test@example.com", password="ComplexPass123!", is_active=True
         )
+
+    def setUp(self):
+        cache.clear()
 
     def _get_auth_client(self):
         refresh = RefreshToken.for_user(self.user)
@@ -442,6 +449,8 @@ class ChangePasswordViewTests(APITestCase):
         )
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data["detail"], "Password changed successfully.")
+
+        self.user.refresh_from_db()
 
         self.assertTrue(self.user.check_password("ComplexPass123"))
         self.assertFalse(self.user.check_password("ComplexPass123!"))

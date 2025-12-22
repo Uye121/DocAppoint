@@ -23,8 +23,8 @@ class SignUpSerializer(CamelCaseMixin, serializers.ModelSerializer):
     
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
-        ok = serializer.is_valid()
-        if not ok:
+        valid_data = serializer.is_valid()
+        if not valid_data:
             logger.error('validation errors →', serializer.errors)
             return Response(serializer.errors, status=400)
         return super().post(request, *args, **kwargs)

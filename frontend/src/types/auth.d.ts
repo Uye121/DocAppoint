@@ -12,7 +12,7 @@ export interface TokenPair {
 }
 
 export interface ResendVerifyPayload {
-  email: string;
+  uid: string;
 }
 
 export interface PasswordResetPayload {
@@ -29,3 +29,10 @@ export interface User {
   email: string;
   username: string;
 }
+
+const VERIFY_STATUS = {
+  LOADING: 'Loading',
+  FAILURE: 'Failure',
+  SUCCESSFUL: 'Successful',
+} as const;
+type VerifyStatus = typeof VERIFY_STATUS[keyof typeof VERIFY_STATUS];
