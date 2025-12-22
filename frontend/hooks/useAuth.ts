@@ -30,15 +30,15 @@ export const useAuth = () => {
     nav("/login");
   };
 
-  const resetPassword = async (email: string) => {
-    await passwordReset({ email });
-    nav('/reset-password-sent');
-  };
+//   const resetPassword = async (email: string) => {
+//     await passwordReset({ email });
+//     nav('/reset-password-sent');
+//   };
 
-  const confirmReset = async (payload: PasswordResetConfirmPayload) => {
-    await passwordResetConfirm(payload);
-    nav('/login');
-  }
-
+//   const confirmReset = async (payload: PasswordResetConfirmPayload) => {
+//     await passwordResetConfirm(payload);
+//     nav('/login');
+//   }
+// ;
   return { login, signup, logout };
 };
