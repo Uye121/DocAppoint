@@ -5,17 +5,27 @@
 ### Features
 * Authentication:
   
-  * User login with email and password
+  * User login/logout and sign up
 
-  * JWT token
+  * Account email verification
 
-  * Unit tested backend
+  * Secure access via JWT
+
+    * Background JWT refresh via frontend interceptor
+
+* Scalability
+
+  * Containeriztion of different services via Docker
 
 * Safety
 
   * Database audit trail
 
   * Sensitive tables soft delete
+
+* Misc
+
+  * Unit tested backend
 
 ## Compliance & Security
 * HIPAA Security Rule alignment (access control, encryption in transit, audit-log, rate-limiting)
