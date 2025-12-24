@@ -29,3 +29,11 @@ export interface User {
   email: string;
   username: string;
 }
+
+export interface AuthCtx {
+  user: User | null;
+  loading: boolean;
+  login: (payload: AuthPayload) => Promise<void>;
+  signup: (payload: AuthPayload) => Promise<void>;
+  logout: () => Promise<void>;
+}

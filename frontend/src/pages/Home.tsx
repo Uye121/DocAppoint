@@ -5,8 +5,8 @@ const Home = (): React.JSX.Element => {
   return (
     <div>
       <Header />
-      <SpecialtyMenu />
-      <TopDoctors />
+      {/* <SpecialtyMenu />
+      <TopDoctors /> */}
       <Banner />
     </div>
   );

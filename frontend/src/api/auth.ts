@@ -34,3 +34,7 @@ export const logout = () => {
     }
     return Promise.resolve();
 };
+
+// Interceptor included the access token in header, so no need to pass it
+export const getMe = () =>
+    api.get<User>("/me/").then((res) => res.data);

@@ -32,6 +32,7 @@ const Signup = (): React.JSX.Element => {
 
     try {
       await signup(form);
+      nav('/verify');
     } catch (err) {
       console.log(err);
 

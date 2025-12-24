@@ -14,7 +14,7 @@ from rest_framework.permissions import IsAuthenticated
 from django_ratelimit.exceptions import Ratelimited
 
 from ..models import User
-from ..serializers.auth import SignUpSerializer, ChangePasswordSerializer
+from ..serializers.auth import SignUpSerializer, ChangePasswordSerializer, UserSerializer
 from ..services.auth import send_verification_email
 
 logger = logging.getLogger(__name__)
@@ -141,3 +141,12 @@ class ChangePasswordView(APIView):
             return Response({"detail": "Old password is incorrect."},
                             status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class UserView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        serializer = UserSerializer(request.user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+

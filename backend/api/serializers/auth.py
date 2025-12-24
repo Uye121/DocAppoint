@@ -38,3 +38,11 @@ class SignUpSerializer(CamelCaseMixin, serializers.ModelSerializer):
 class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True, validators=[validate_password])
+
+class UserSerializer(CamelCaseMixin, serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'type', 
+                 'date_of_birth', 'phone_number', 'address']
+        extra_kwargs = {'password': {'write_only': True}}
+        read_only_fields = fields

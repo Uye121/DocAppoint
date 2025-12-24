@@ -495,3 +495,31 @@ class ChangePasswordViewTests(APITestCase):
             },
         )
         self.assertEqual(resp.status_code, status.HTTP_401_UNAUTHORIZED)
+
+# ---------- User Info ----------
+class UserViewTests(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(
+            username="newuser", email="test@example.com", password="ComplexPass123!"
+        )
+
+    def setUp(self):
+        cache.clear()
+        self.url = reverse("user_info")
+    
+    def _authenticate_client(self, user):
+        refresh = RefreshToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
+    
+    def test_get_authenticated_user_data(self):
+        self._authenticate_client(self.user)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["id"], str(self.user.id))
+        self.assertEqual(response.data["email"], self.user.email)
+
+    def test_get_unauthenticated(self):
+        self.client.credentials()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 401)

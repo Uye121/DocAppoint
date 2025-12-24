@@ -9,6 +9,7 @@ import type { AuthPayload } from "../types/auth";
 const Login = (): React.JSX.Element => {
   const nav = useNavigate();
   const { login } = useAuth();
+
   const [form, setForm] = useState<AuthPayload>({
     email: "",
     password: "",
@@ -29,6 +30,7 @@ const Login = (): React.JSX.Element => {
 
     try {
       await login(form);
+      nav('/');
     } catch (err) {
       console.log(err);
 
