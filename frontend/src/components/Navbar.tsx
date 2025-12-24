@@ -1,17 +1,19 @@
 import React, { useState } from "react";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
+
 import { assets } from "../assets/assets_frontend/assets";
-import { NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from '../../hooks/useAuth';
 
 const Navbar = (): React.JSX.Element => {
-  const navigate = useNavigate();
-
+  const nav = useNavigate();
+  const { user, logout } = useAuth();
   const [showMenu, setShowMenu] = useState(false);
-  const [token, setToken] = useState(true);
+  const location = useLocation();
 
   return (
     <div className="flex items-center justify-between text-sm py-4 mb-5 border-b border-b-gray-400">
       <img
-        onClick={() => navigate("/")}
+        onClick={() => nav("/")}
         className="w-44 cursor-pointer"
         src={assets.logo}
         alt="Logo"
@@ -35,7 +37,7 @@ const Navbar = (): React.JSX.Element => {
         </NavLink>
       </ul>
       <div className="flex items-center gap-4">
-        {token ? (
+        {user ? (
           <div className="flex items-center gap-2 cursor-pointer group relative">
             <img
               className="w-8 rounded-full"
@@ -50,19 +52,27 @@ const Navbar = (): React.JSX.Element => {
             <div className="absolute top-0 right-0 pt-14 text-base font-medium text-gray-600 z-20 hidden group-hover:block">
               <div className="min-w-48 bg-stone-100 rounded flex flex-col gap-4 p-4">
                 <p
-                  onClick={() => navigate("user-profile")}
+                  onClick={() => nav("user-profile")}
                   className="hover:text-black cursor-pointer"
                 >
                   My Profile
                 </p>
                 <p
-                  onClick={() => navigate("appointments")}
+                  onClick={() => nav("appointments")}
                   className="hover:text-black cursor-pointer"
                 >
                   My Appointments
                 </p>
                 <p
-                  onClick={() => setToken(false)}
+                  onClick={async () => {
+                    try {
+                      await logout();
+                    } catch (err) {
+                      console.error('Logout error: ', err);
+                    } finally {
+                      nav('/login');
+                    }
+                  }}
                   className="hover:text-black cursor-pointer"
                 >
                   Logout
@@ -72,10 +82,16 @@ const Navbar = (): React.JSX.Element => {
           </div>
         ) : (
           <button
-            onClick={() => navigate("/login")}
+            onClick={() => {
+              if (location.pathname == '/signup') {
+                nav("/login");
+              } else {
+                nav("/signup");
+              }
+            }}
             className="bg-primary text-white px-8 py-3 rounded-full font-light hidden md:block"
           >
-            Create Account
+            {location.pathname === '/login' ? "Create Account" : "Login"}
           </button>
         )}
         <img

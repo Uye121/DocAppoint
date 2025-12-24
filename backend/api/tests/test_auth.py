@@ -1,6 +1,7 @@
 import uuid
 from unittest.mock import patch
 from django.contrib.auth.tokens import default_token_generator
+from rest_framework_simplejwt.tokens import RefreshToken
 from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
@@ -334,26 +335,191 @@ class ResendVerifyViewTests(APITestCase):
         )
         self.url = reverse("resend_verify")
 
+    def _uid(self, user):
+        return urlsafe_base64_encode(force_bytes(user.pk))
+
     @patch("api.views.auth.send_verification_email")
     def test_resend_to_inactive_user_sends_email(self, mock_send):
-        res = self.client.post(self.url, {"email": "test@example.com"})
+        payload = {"uid": self._uid(self.inactive)}
+        res = self.client.post(self.url, payload)
         self.assertEqual(res.status_code, 204)
         mock_send.assert_called_once_with(self.inactive)
 
     def test_no_email_sent_to_active_user(self):
         with patch("api.views.auth.send_verification_email") as mock_send:
-            res = self.client.post(self.url, {"email": "test2@example.com"})
+            payload = {"uid": self._uid(self.active)}
+            res = self.client.post(self.url, payload)
         self.assertEqual(res.status_code, 204)
         mock_send.assert_not_called()
 
-    def test_no_email_sent_to_nonexistent_address(self):
-        with patch("api.views.auth.send_verification_email") as mock_send:
-            res = self.client.post(self.url, {"email": "no@example.com"})
-        self.assertEqual(res.status_code, 204)
-        mock_send.assert_not_called()
+    def test_invalid_uid(self):
+        res = self.client.post(self.url, {"uid": "invalid-b64"})
+        self.assertEqual(res.status_code, 400)
+        self.assertIn("Invalid uid", res.data["detail"])
 
     def test_ratelimit_blocks_4th_call(self):
+        payload = {"uid": self._uid(self.inactive)}
         for _ in range(3):
-            self.client.post(self.url, {"email": "test@example.com"})
-        res = self.client.post(self.url, {"email": "test@example.com"})
+            self.client.post(self.url, payload)
+        res = self.client.post(self.url, payload)
         self.assertEqual(res.status_code, 403)
+
+# ---------- Logout ----------
+class LogoutViewTests(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cache.clear()
+        cls.user = User.objects.create_user(
+            username="newuser2", email="test2@example.com", password="pass", is_active=True
+        )
+
+    def _get_token(self):
+        refresh = RefreshToken.for_user(self.user)
+        return str(refresh), str(refresh.access_token)
+    
+    def test_logout_success(self):
+        refresh, access = self._get_token()
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {access}")
+
+        res = self.client.post(reverse("logout"), {"refresh": refresh})
+        self.assertEqual(res.status_code, status.HTTP_205_RESET_CONTENT)
+
+        res = self.client.post(
+            reverse("token_refresh"), {"refresh": refresh}
+        )
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_logout_without_authentication(self):
+        refresh, _ = self._get_token()
+
+        res = self.client.post(reverse("logout"), {"refresh": refresh})
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_without_refresh_token(self):
+        _, access = self._get_token()
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {access}")
+
+        res = self.client.post(reverse("logout"), {})
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_logout_with_invalid_refresh_token(self):
+        _, access = self._get_token()
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {access}")
+
+        resp = self.client.post(reverse("logout"), {"refresh": "i.am.not.refresh"})
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_logout_token_idempotent(self):
+        """Black-listing an already black-listed token is safe."""
+        refresh, access = self._get_token()
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {access}")
+
+        # First call
+        res = self.client.post(reverse("logout"), {"refresh": refresh})
+        self.assertEqual(res.status_code, status.HTTP_205_RESET_CONTENT)
+
+        # Second call with same token
+        res = self.client.post(reverse("logout"), {"refresh": refresh})
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+# ---------- Change Password ----------
+class ChangePasswordViewTests(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(
+            username="newuser", email="test@example.com", password="ComplexPass123!", is_active=True
+        )
+
+    def setUp(self):
+        cache.clear()
+
+    def _get_auth_client(self):
+        refresh = RefreshToken.for_user(self.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
+        return self.client
+    
+    def test_change_password_success(self):
+        client = self._get_auth_client()
+        res = client.post(
+            reverse("change_password"),
+            {
+                "old_password": "ComplexPass123!",
+                "new_password": "ComplexPass123"
+            },
+        )
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data["detail"], "Password changed successfully.")
+
+        self.user.refresh_from_db()
+
+        self.assertTrue(self.user.check_password("ComplexPass123"))
+        self.assertFalse(self.user.check_password("ComplexPass123!"))
+
+    def test_wrong_old_password(self):
+        client = self._get_auth_client()
+        res = client.post(
+            reverse("change_password"),
+            {
+                "old_password": "ComplexPass",
+                "new_password": "ComplexPass123!"
+            },
+        )
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("Old password is incorrect.", res.data["detail"])
+
+    def test_weak_new_password(self):
+        client = self._get_auth_client()
+        res = client.post(
+            reverse("change_password"),
+            {
+                "old_password": "ComplexPass123!",
+                "new_password": "123"
+            },
+        )
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("new_password", res.data)
+
+    def test_missing_fields(self):
+        client = self._get_auth_client()
+        res = client.post(reverse("change_password"), {})
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("old_password", res.data)
+        self.assertIn("new_password", res.data)
+
+    def test_unauthenticated(self):
+        resp = self.client.post(
+            reverse("change_password"),
+            {
+                "old_password": "xxx",
+                "new_password": "yyy"
+            },
+        )
+        self.assertEqual(resp.status_code, status.HTTP_401_UNAUTHORIZED)
+
+# ---------- User Info ----------
+class UserViewTests(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(
+            username="newuser", email="test@example.com", password="ComplexPass123!"
+        )
+
+    def setUp(self):
+        cache.clear()
+        self.url = reverse("user_info")
+    
+    def _authenticate_client(self, user):
+        refresh = RefreshToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
+    
+    def test_get_authenticated_user_data(self):
+        self._authenticate_client(self.user)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["id"], str(self.user.id))
+        self.assertEqual(response.data["email"], self.user.email)
+
+    def test_get_unauthenticated(self):
+        self.client.credentials()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 401)

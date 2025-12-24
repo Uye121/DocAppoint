@@ -24,7 +24,10 @@ from .views.auth import (
     SignUpView,
     LoginView,
     VerifyEmailView,
-    ResendVerifyView
+    ResendVerifyView,
+    LogoutView,
+    ChangePasswordView,
+    UserView,
 )
 
 authpatterns = [
@@ -33,7 +36,10 @@ authpatterns = [
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("verify/<str:key>/", VerifyEmailView.as_view(), name="verify_email"),
     path("resend-verify/", ResendVerifyView.as_view(), name="resend_verify"),
-    path("password-reset/", include("django_rest_passwordreset.urls")),
+    path("password-reset/", include("django_rest_passwordreset.urls")), # TODO: to be modified
+    path("logout/", LogoutView.as_view(), name="logout"),
+    path("change-password/", ChangePasswordView.as_view(), name="change_password"),
+    path("me/", UserView.as_view(), name="user_info")
 ]
 
 urlpatterns = [

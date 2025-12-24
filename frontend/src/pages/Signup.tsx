@@ -3,45 +3,46 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../hooks/useAuth";
-import { formatErrors } from "../../utils/errorMap";
+import { formatErrors } from '../../utils/errorMap';
 import type { AuthPayload } from "../types/auth";
 
-const Login = (): React.JSX.Element => {
+const Signup = (): React.JSX.Element => {
   const nav = useNavigate();
-  const { login } = useAuth();
-
+  const { signup } = useAuth();
   const [form, setForm] = useState<AuthPayload>({
-    email: "",
-    password: "",
-  });
+    email: '',
+    password: '',
+    username: '',
+    firstName: '',
+    lastName: '',
+   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleRedirect = () => {
-    nav("/signup");
+    nav('/login');
   };
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) =>
-    setForm({ ...form, [event.target.name]: event.target.value });
+    setForm({ ...form, [event.target.name]: event.target.value })
 
   const handleSubmit = async (event: React.SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoading(true);
 
     try {
-      await login(form);
-      nav('/');
+      await signup(form);
+      nav('/verify');
     } catch (err) {
       console.log(err);
 
       if (axios.isAxiosError(err) && err.response?.status === 400) {
-        const errorMsg =
-          err.response?.data?.detail || formatErrors(err.response?.data);
+        const errorMsg = err.response?.data?.detail || formatErrors(err.response?.data)
         setError(errorMsg);
       } else if (err instanceof Error) {
         setError(err?.message);
       } else {
-        setError("Unexpected error");
+        setError('Unexpected error');
       }
     }
     setLoading(false);
@@ -50,8 +51,43 @@ const Login = (): React.JSX.Element => {
   return (
     <form onSubmit={handleSubmit} className="min-h-[80vh] flex items-center">
       <div className="flex flex-col gap-3 m-auto items-start p-8 min-w-[340px] sm:min-w-96 max-w-md border rounded-xl text-zinc-600 text-sm shadow-lg">
-        <p className="text-2xl font-semibold">Login</p>
+        <p className="text-2xl font-semibold">
+          Create Account
+        </p>
         <p>Please sign up/login to get started.</p>
+        <div className="w-full">
+          <p>Username</p>
+          <input
+            type="text"
+            name="username"
+            className="border border-zinc-300 rounded w-full p-2 mt-1"
+            onChange={handleChange}
+            value={form.username}
+            required
+          />
+        </div>
+        <div className="w-full">
+          <p>First Name</p>
+          <input
+            type="text"
+            name="firstName"
+            className="border border-zinc-300 rounded w-full p-2 mt-1"
+            onChange={handleChange}
+            value={form.firstName}
+            required
+          />
+        </div>
+        <div className="w-full">
+          <p>Last Name</p>
+          <input
+            type="text"
+            name="lastName"
+            className="border border-zinc-300 rounded w-full p-2 mt-1"
+            onChange={handleChange}
+            value={form.lastName}
+            required
+          />
+        </div>
         <div className="w-full">
           <p>Email</p>
           <input
@@ -87,10 +123,10 @@ const Login = (): React.JSX.Element => {
           type="submit"
           className="bg-primary text-white w-full py-2 rounded-md text-base"
         >
-          Login
+          Create Account
         </button>
         <p>
-          Create a new account{" "}
+          Already have an account? Login{" "}
           <span
             onClick={handleRedirect}
             className="text-primary underline cursor-pointer"
@@ -104,4 +140,4 @@ const Login = (): React.JSX.Element => {
   );
 };
 
-export default Login;
+export default Signup;

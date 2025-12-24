@@ -1,6 +1,6 @@
 # DocAppoint
 
-**DocAppoint** is a patient appointment dashboard with Django REST framework and React frontend inspired by the course [Build Full Stack Doctor Appointment Booking System](https://www.youtube.com/watch?v=eRTTlS0zaW8). The application is containerized with Docker in order to provide high portability, easy scalability, and consistent deployment. All logics are kept separate and data are shared only through REST. This app is work in-progress and will be updated reguarly.
+**DocAppoint** is a patient appointment dashboard with Django REST framework and React frontend with design based on the course [Build Full Stack Doctor Appointment Booking System](https://www.youtube.com/watch?v=eRTTlS0zaW8). The application is containerized with Docker in order to provide high portability, easy scalability, and consistent deployment. All logics are kept separate and data are shared only through REST. This app is work in-progress and will be updated reguarly.
 
 ### Features
 * Authentication:
@@ -34,4 +34,4 @@ You will need Docker, Django, and React.
 
 ### Acknowledgement
 
-The project's frontend was inspired by [Build Full Stack Doctor Appointment Booking System](https://www.youtube.com/watch?v=eRTTlS0zaW8) by [GreatStack](https://www.youtube.com/@GreatStackDev). This implementation refactored the code from JavaScript to TypeScript.
+The project's frontend based on [Build Full Stack Doctor Appointment Booking System](https://www.youtube.com/watch?v=eRTTlS0zaW8) by [GreatStack](https://www.youtube.com/@GreatStackDev). This implementation refactored the code from JavaScript to TypeScript.

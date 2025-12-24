@@ -32,6 +32,11 @@ services:
       - postgres
   frontend:
     build: ./frontend
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend
+          target: /app
     ports:
       - "3000:3000"
     volumes:
