@@ -5,7 +5,6 @@ from decimal import Decimal
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.forms import ValidationError
 from django.db import IntegrityError
 
 from api.models import Speciality, HealthcareProviderProfile, Hospital

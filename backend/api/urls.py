@@ -29,6 +29,19 @@ from .views.auth import (
     ChangePasswordView,
     UserView,
 )
+from .views.healthcare_provider import (
+    HealthcareProviderListView,
+    HealthcareProviderProfileView,
+    MyHealthcareProviderProfileView,
+    HealthcareProviderStatisticsView
+)
+from .views.speciality import (
+    SpecialityListView,
+    SpecialityDetailView,
+    SpecialityCreateView,
+    SpecialityUpdateView,
+    SpecialityDeleteView
+)
 
 authpatterns = [
     path("signup/", SignUpView.as_view(), name="signup"),
@@ -42,9 +55,25 @@ authpatterns = [
     path("me/", UserView.as_view(), name="user_info")
 ]
 
+providerpatterns = [
+    path("", HealthcareProviderListView.as_view(), name="provider_list"),
+    path("<uuid:id>/", HealthcareProviderProfileView.as_view(), name="provider_detail"),
+    path("me/", MyHealthcareProviderProfileView.as_view(), name="my_provider_profile"),
+    path("statistics/", HealthcareProviderStatisticsView.as_view(), name="provider_dashboard"),
+]
+
+specialitypatterns = [
+    path("", SpecialityListView.as_view(), name="speciality_list"),
+    path("<int:id>/", SpecialityDetailView.as_view(), name="speciality_detail"),
+    path("create/", SpecialityCreateView.as_view(), name="speciality_create"),
+    path("<int:id>/update/", SpecialityUpdateView.as_view(), name="speciality_update"),
+    path("<int:id>/delete/", SpecialityDeleteView.as_view(), name="speciality_delete"),
+]
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("api/", include(authpatterns)),
+    path("api/providers/", include(providerpatterns)),
+    path("api/specialities/", include(specialitypatterns)),
 ]
-
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

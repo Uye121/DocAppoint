@@ -1,35 +1,35 @@
-from rest_framework import viewsets, status, permissions
-from rest_framework.decorators import action, permission_classes, api_view, authentication_classes
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
-from rest_framework.exceptions import PermissionDenied, ValidationError, NotFound, APIException
-from rest_framework.authentication import SessionAuthentication
-from django.contrib.auth import login, authenticate, logout
-from django.contrib.auth.models import Group
-from django.shortcuts import get_object_or_404
-from django.db.models import Q
-from django.utils import timezone
-from django.http import HttpRequest
-from django.middleware.csrf import get_token
-from datetime import datetime, timedelta
-from typing import List
+# from rest_framework import viewsets, status, permissions
+# from rest_framework.decorators import action, permission_classes, api_view, authentication_classes
+# from rest_framework.response import Response
+# from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
+# from rest_framework.exceptions import PermissionDenied, ValidationError, NotFound, APIException
+# from rest_framework.authentication import SessionAuthentication
+# from django.contrib.auth import login, authenticate, logout
+# from django.contrib.auth.models import Group
+# from django.shortcuts import get_object_or_404
+# from django.db.models import Q
+# from django.utils import timezone
+# from django.http import HttpRequest
+# from django.middleware.csrf import get_token
+# from datetime import datetime, timedelta
+# from typing import List
 
-from .models import (
-    User, Patient, HealthcareProvider, AdminStaff, SystemAdmin,
-    Appointment, MedicalRecord, Message, Speciality, Hospital,
-    PatientProfile, AdminStaffProfile, HealthcareProviderProfile
-)
-from .serializers import (
-    UserSerializer, PatientSerializer, HealthcareProviderSerializer,
-    AppointmentSerializer, MedicalRecordSerializer, MessageSerializer,
-    SpecialitySerializer, HospitalSerializer
-)
+# from .models import (
+#     User, Patient, HealthcareProvider, AdminStaff, SystemAdmin,
+#     Appointment, MedicalRecord, Message, Speciality, Hospital,
+#     PatientProfile, AdminStaffProfile, HealthcareProviderProfile
+# )
+# from .serializers import (
+#     UserSerializer, PatientSerializer, HealthcareProviderSerializer,
+#     AppointmentSerializer, MedicalRecordSerializer, MessageSerializer,
+#     SpecialitySerializer, HospitalSerializer
+# )
 
-from .permissions import (
-    IsPatient, IsHealthcareProvider, IsAdminStaff, IsSystemAdmin,
-    IsOwnerOrReadOnly, IsAppointmentParticipant, IsMessageParticipant,
-    IsMedicalRecordProviderOrPatient, 
-)
+# from .permissions import (
+#     IsPatient, IsHealthcareProvider, IsAdminStaff, IsSystemAdmin,
+#     IsOwnerOrReadOnly, IsAppointmentParticipant, IsMessageParticipant,
+#     IsMedicalRecordProviderOrPatient, 
+# )
 
 # class BaseViewSet(viewsets.GenericViewSet):
 #     def permission_denied(self, request: HttpRequest, message=None, code=None):
