@@ -18,33 +18,31 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 
-from .views.auth import (
-    SignUpView,
+from .views import (
+    UserViewSet,
     LoginView,
     VerifyEmailView,
     ResendVerifyView,
     LogoutView,
     ChangePasswordView,
     UserView,
-)
-from .views.healthcare_provider import (
-    HealthcareProviderListView,
-    HealthcareProviderProfileView,
-    MyHealthcareProviderProfileView,
-    HealthcareProviderStatisticsView
-)
-from .views.speciality import (
-    SpecialityListView,
-    SpecialityDetailView,
-    SpecialityCreateView,
-    SpecialityUpdateView,
-    SpecialityDeleteView
+    PatientViewSet,
+    HealthcareProviderViewSet,
+    SpecialityViewSet
 )
 
+router = DefaultRouter()
+router.register("users", UserViewSet, basename="user")
+router.register("patient", PatientViewSet, basename="patient")
+router.register("provider", HealthcareProviderViewSet, basename="provider")
+router.register("speciality", SpecialityViewSet, basename="speciality")
+# router.register("patients", PatientViewSet, basename="patient")
+# router.register("providers", HealthcareProviderViewSet, basename="provider")
+
 authpatterns = [
-    path("signup/", SignUpView.as_view(), name="signup"),
     path("login/", LoginView.as_view(), name="login"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("verify/<str:key>/", VerifyEmailView.as_view(), name="verify_email"),
@@ -55,25 +53,12 @@ authpatterns = [
     path("me/", UserView.as_view(), name="user_info")
 ]
 
-providerpatterns = [
-    path("", HealthcareProviderListView.as_view(), name="provider_list"),
-    path("<uuid:id>/", HealthcareProviderProfileView.as_view(), name="provider_detail"),
-    path("me/", MyHealthcareProviderProfileView.as_view(), name="my_provider_profile"),
-    path("statistics/", HealthcareProviderStatisticsView.as_view(), name="provider_dashboard"),
-]
-
-specialitypatterns = [
-    path("", SpecialityListView.as_view(), name="speciality_list"),
-    path("<int:id>/", SpecialityDetailView.as_view(), name="speciality_detail"),
-    path("create/", SpecialityCreateView.as_view(), name="speciality_create"),
-    path("<int:id>/update/", SpecialityUpdateView.as_view(), name="speciality_update"),
-    path("<int:id>/delete/", SpecialityDeleteView.as_view(), name="speciality_delete"),
-]
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path("api/", include(authpatterns)),
-    path("api/providers/", include(providerpatterns)),
-    path("api/specialities/", include(specialitypatterns)),
+    path('api/auth/', include(authpatterns)),
+    path("api/", include(router.urls)),
+    # path("api/providers/", include(providerpatterns)),
+    # path("api/specialities/", include(specialitypatterns)),
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

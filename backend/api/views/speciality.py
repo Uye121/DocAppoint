@@ -1,66 +1,48 @@
-from rest_framework import generics
-from rest_framework.exceptions import ValidationError
-from django_ratelimit.decorators import ratelimit
-from django.utils.decorators import method_decorator
-from rest_framework.permissions import IsAdminUser
-from rest_framework.parsers import MultiPartParser, FormParser
-
+from django.utils import timezone
+from rest_framework import mixins, viewsets, permissions
 from ..models import Speciality
-from ..serializers.speciality import (
+from ..serializers import (
     SpecialitySerializer,
     SpecialityListSerializer,
-    SpecialityCreateSerializer
+    SpecialityCreateSerializer,
 )
-from ..services.speciality import SpecialityService
+from ..permissions import IsHealthcareProvider
 
-@method_decorator(ratelimit(key="ip", rate="30/h", method="GET"), name='get')
-class SpecialityListView(generics.ListAPIView):
-    queryset = Speciality.objects.filter(is_removed=False).order_by('name')
-    serializer_class = SpecialityListSerializer
+class SpecialityViewSet(
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet,
+):
+    """
+    Features:
+        - Authenticated user can view specialities
+    """
+    queryset = Speciality.objects.filter(
+        is_removed=False
+    )
 
-class SpecialityDetailView(generics.RetrieveAPIView):
-    """Get speciality details"""
-    queryset = Speciality.objects.filter(is_removed=False)
-    serializer_class = SpecialitySerializer
-    lookup_field = 'id'
+    def get_serializer_class(self):
+        if self.action == "create":
+            return SpecialityCreateSerializer
+        if self.action == "list":
+            return SpecialityListSerializer
+        return SpecialitySerializer
 
-@method_decorator(ratelimit(key="ip", rate="10/h", method="POST"), name='post')
-class SpecialityCreateView(generics.CreateAPIView):
-    """Create new speciality (admin only)"""
-    permission_classes = [IsAdminUser]
-    serializer_class = SpecialityCreateSerializer
-    parser_classes = [MultiPartParser, FormParser]
+    def get_permissions(self):
+        if self.action in ("create", "update", "partial_update", "destroy"):
+            return [permissions.IsAdminUser(), IsHealthcareProvider()]
+        return [permissions.IsAuthenticated()]
 
     def perform_create(self, serializer):
-        serializer.save()
-
-class SpecialityUpdateView(generics.UpdateAPIView):
-    """Update speciality (admin only)"""
-    permission_classes = [IsAdminUser]
-    queryset = Speciality.objects.filter(is_removed=False)
-    serializer_class = SpecialityCreateSerializer
-    parser_classes = [MultiPartParser, FormParser]
-    lookup_field = 'id'
+        return serializer.save(
+            created_by=self.request.user,
+            updated_by=self.request.user,
+        )
 
     def perform_update(self, serializer):
-        try:
-            speciality = SpecialityService.update_speciality(
-                self.get_object(),
-                name=serializer.validated_data.get('name'),
-                image=serializer.validated_data.get('image')
-            )
-            serializer.instance = speciality
-        except ValidationError as e:
-            raise ValidationError({"detail": str(e)})
-
-class SpecialityDeleteView(generics.DestroyAPIView):
-    """Soft delete speciality (admin only)"""
-    permission_classes = [IsAdminUser]
-    queryset = Speciality.objects.filter(is_removed=False)
-    lookup_field = 'id'
-
-    def perform_destroy(self, instance):
-        try:
-            SpecialityService.soft_delete_speciality(instance)
-        except ValidationError as e:
-            raise ValidationError({"detail": str(e)})
+        serializer.save(
+            updated_by=self.request.user,
+            updated_at=timezone.now(),
+        )

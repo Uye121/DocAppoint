@@ -13,6 +13,9 @@ def send_verification_email(user: User) -> None:
     """
     Build and send a one-time verification email to user
     """
+    if user.is_active:
+        raise ValueError("Account is already verified.")
+
     # Change the login timestamp to invalidate the previous link
     user.last_login = timezone.now()
     user.save(update_fields=["last_login"])
@@ -20,8 +23,7 @@ def send_verification_email(user: User) -> None:
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     token = default_token_generator.make_token(user)
     link = f"{settings.FRONTEND_URL}/verify-email?uid={uid}&token={token}"
-    html = render_to_string("verify.html", {"first_name": user.first_name, "link": link}
-    )
+    html = render_to_string("verify.html", {"first_name": user.first_name, "link": link})
     send_mail(
         subject="Confirmation Email",
         message="",

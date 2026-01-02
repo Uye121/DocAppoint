@@ -1,3 +1,4 @@
+# TODO
 import json
 import os
 from pathlib import Path
@@ -6,12 +7,26 @@ from django.core.management.base import BaseCommand
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
+from django.core.exceptions import ValidationError
 
-from api.models import Speciality, HealthcareProviderProfile, Hospital
+from api.models import Speciality, Hospital
+from api.serializers import HealthcareProviderCreateSerializer, SystemAdminCreateSerializer
 
 User = get_user_model()
 DOC_FILE = Path(f'{settings.MEDIA_ROOT}/doctor.json')
 SPEC_FILE = Path(f'{settings.MEDIA_ROOT}/speciality.json')
+
+def create_admin(data: dict):
+    serializer = SystemAdminCreateSerializer(data=data)
+    serializer.is_valid(raise_exception=True)
+    provider = serializer.save()
+    return provider, True
+
+def create_provider_from_dict(data: dict):
+    serializer = HealthcareProviderCreateSerializer(data=data)
+    serializer.is_valid(raise_exception=True)
+    provider = serializer.save()
+    return provider, True
 
 class Command(BaseCommand):
     help = "Load provider data from tmp.json"
@@ -27,22 +42,26 @@ class Command(BaseCommand):
         admin_username = os.environ.get('ADMIN_USERNAME', 'admin')
         admin_email = os.environ.get('ADMIN_EMAIL', 'admin@docappoint.com')
         admin_password = os.environ.get('ADMIN_PASSWORD')
+        payload = {
+            'email': admin_email,
+            'username': admin_username,
+            'password': admin_password,
+            'first_name': 'System',
+            'last_name': 'Admin',
+            'role': 'Software Engineer'
+        }
 
-        admin_user, created = User.objects.get_or_create(
-            email=admin_email,
-            defaults={
-                'username': admin_username,
-                'type': User.UserType.SYSTEM_ADMIN,
-                'is_staff': True,
-                'is_superuser': True,
-                'first_name': 'System',
-                'last_name': 'Admin'
-            }
-        )
-
-        if created or not admin_user.has_usable_password():
-            admin_user.set_password(admin_password)
-            admin_user.save()
+        try:
+            admin_user, created = create_admin(payload)
+            if created or not admin_user.has_usable_password():
+                admin_user.set_password(admin_password)
+                admin_user.save()
+        except Exception:
+            self.stdout.write(self.style.WARNING(f"System admin already created"))
+            admin_user = User.objects.get(
+                email=admin_email,
+                username=admin_username
+            )
 
         # create specialities first
         for row in spec_data:
@@ -72,64 +91,47 @@ class Command(BaseCommand):
         )
 
         for row in doc_data:
-            firstName = row["firstName"]
-            lastName = row["lastName"]
-            email = f'{firstName.lower()}.{lastName.lower()}@example.com'
+            first_name = row["firstName"]
+            last_name = row["lastName"]
+            email = f'{first_name.lower()}.{last_name.lower()}@example.com'
+            username=f'{last_name[0].lower()}{first_name.lower()}'
 
-            try:
-                user, created = User.objects.get_or_create(
-                    username=f'{lastName[0].lower()}{firstName.lower()}',
-                    defaults={
-                        "email": email,
-                        "first_name": firstName,
-                        "last_name": lastName,
-                        "type": User.UserType.HEALTHCARE_PROVIDER,
-                    },
-                )
-            except IntegrityError:
+            if User.objects.filter(email__iexact=email).exists():
+                self.stdout.write(self.style.WARNING(f"Skipping {email} – already exists"))
                 continue
 
-            if created:
-                user.set_password('doc12345')
-                user.save()
+            payload = {
+                "email": email,
+                "username": username,
+                "password": "doc12345",
+                "first_name": first_name,
+                "last_name": last_name,
+                "date_of_birth": None,
+                "speciality": row["speciality"]["id"],
+                "education": row["degree"],
+                "years_of_experience": int(float(row["experience"])),
+                "about": row["about"],
+                "fees": Decimal(row["fees"]),
+                "address_line1": row["addressLine1"],
+                "address_line2": row.get("addressLine2", ""),
+                "city": row["city"],
+                "state": row["state"],
+                "zip_code": row["zipCode"],
+                "license_number": "D12345",
+            }
 
-            if not created and user.email != email:
-                user.email = email
-                user.save()
-
-            # self.stdout.write(self.style.SUCCESS(f"Created user: {user.username}"))
-
-            speciality = Speciality.objects.get(id=row["speciality"]["id"])
-
-            profile, profile_created = HealthcareProviderProfile.objects.get_or_create(
-                user=user,
-                defaults={
-                    "speciality": speciality,
-                    "education": row["degree"],
-                    "years_of_experience": int(float(row["experience"])),
-                    "about": row["about"],
-                    "fees": Decimal(row["fees"]),
-                    "address_line1": row["addressLine1"],
-                    "address_line2": row.get("addressLine2", ""),
-                    "city": row["city"],
-                    "state": row["state"],
-                    "zip_code": row["zipCode"],
-                    "license_number": "D12345",
-                    "created_by": admin_user,
-                    "updated_by": admin_user,
-                },
-            )
-
-            if profile_created or not profile.image:
-                profile.image = row["image"]
-                profile.save()
-            
-            # attach to hospital
-            profile.hospitals.add(hospital)
+            try:
+                provider, created = create_provider_from_dict(payload)
+            except ValidationError as e:
+                self.stdout.write(self.style.WARNING(f"Skipping {email}: {e.detail}"))
+                continue
             
             # If this is a new profile, also set primary_hospital
-            if profile_created:
-                profile.primary_hospital = hospital
-                profile.save()
+            if created:
+                provider.primary_hospital = hospital
+                provider.save(update_fields=["primary_hospital"])
+            self.stdout.write(
+                self.style.SUCCESS(f"{'Created' if created else 'Existed'}: {provider}")
+            )
 
         self.stdout.write(self.style.SUCCESS("Providers seeded"))

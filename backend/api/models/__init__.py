@@ -5,24 +5,21 @@ from .appointment import Appointment, Slot
 from .medical import MedicalRecord
 from .message import Message
 from .speciality import Speciality
-from .managers import (
-    PatientManager,
-    HealthcareProviderManager,
-    AdminStaffManager,
-    SystemAdminManager
-)
-from .profiles import (
-    PatientProfile,
-    HealthcareProviderProfile,
-    AdminStaffProfile,
-    SystemAdminProfile
-)
+# from .managers import (
+#     PatientManager,
+#     HealthcareProviderManager,
+#     AdminStaffManager,
+#     SystemAdminManager
+# )
+# from .profiles import (
+#     PatientProfile,
+#     HealthcareProviderProfile,
+#     AdminStaffProfile,
+#     SystemAdminProfile
+# )
 
 __all__ = [
     'User', 'Patient', 'HealthcareProvider', 'AdminStaff', 'SystemAdmin',
     'Hospital', 'ProviderHospitalAssignment', 'Appointment', 'Slot',
-    'MedicalRecord', 'Message', 'Speciality', 'PatientManager',
-    'HealthcareProviderManager', 'AdminStaffManager', 'SystemAdminManager',
-    'PatientProfile', 'HealthcareProviderProfile', 'AdminStaffProfile',
-    'SystemAdminProfile'
+    'MedicalRecord', 'Message', 'Speciality'
 ]

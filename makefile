@@ -58,7 +58,10 @@ docker-backend-migrate:
 	$(DC) exec backend $(PYTHON) manage.py migrate
 
 docker-backend-test:
-	$(DC) exec backend python manage.py test api.tests.test_auth --settings=api.settings.development -v 2
+	$(DC) exec backend pytest api/tests/user/test_views.py -v
+
+docker-backend-test-all:
+	$(DC) exec backend pytest --reuse-db
 
 backend-shell:
 	$(DC) exec backend $(PYTHON) manage.py shell

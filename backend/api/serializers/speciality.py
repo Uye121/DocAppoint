@@ -29,7 +29,4 @@ class SpecialityListSerializer(serializers.ModelSerializer):
 class SpecialityCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Speciality
-        fields = (
-            "name",
-            "image",
-        )
+        fields = ("name", "image")

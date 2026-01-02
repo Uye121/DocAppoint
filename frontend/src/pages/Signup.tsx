@@ -54,7 +54,6 @@ const Signup = (): React.JSX.Element => {
         <p className="text-2xl font-semibold">
           Create Account
         </p>
-        <p>Please sign up/login to get started.</p>
         <div className="w-full">
           <p>Username</p>
           <input

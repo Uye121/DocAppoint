@@ -1,102 +1,102 @@
-from typing import Type
-from rest_framework import generics, status, filters
+from django.utils import timezone
+from rest_framework import exceptions
+from rest_framework import mixins, viewsets, permissions, status
+from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.exceptions import ValidationError
-from django_filters.rest_framework import DjangoFilterBackend
-from django_ratelimit.decorators import ratelimit
-from django.utils.decorators import method_decorator
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.serializers import Serializer
-
-from ..models import Appointment, HealthcareProvider, HealthcareProviderProfile
-from ..serializers.healthcare_provider import (
-    HealthcareProviderProfileSerializer,
-    HealthcareProviderProfileCreateSerializer, 
-    HealthcareProviderListSerializer
+from rest_framework.pagination import PageNumberPagination
+from ..models import HealthcareProvider, User
+from ..serializers import (
+    HealthcareProviderSerializer,
+    HealthcareProviderCreateSerializer,
+    HealthcareProviderOnBoardSerializer,
+    HealthcareProviderListSerializer,
 )
-from ..services.healthcare_provider import HealthcareProviderService
+from ..permissions import IsStaffOrAdmin
 
-@method_decorator(ratelimit(key="ip", rate="50/h", method="GET"), name='get')
-class HealthcareProviderListView(generics.ListAPIView):
-    queryset = HealthcareProviderProfile.objects.filter(
-        is_removed=False,
-        user__is_active=True
-    ).select_related('user', 'speciality', 'primary_hospital')
-    serializer_class = HealthcareProviderListSerializer
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = {
-        'speciality': ['exact'],
-        'primary_hospital': ['exact'], 
-        'years_of_experience': ['gte', 'lte'],
-        'fees': ['gte', 'lte'],
-        'city': ['icontains'],
-        'state': ['exact'],
-    }
-    search_fields = [
-        'user__first_name',
-        'user__last_name', 
-        'speciality__name',
-        'about',
-        'city'
-    ]
-    ordering_fields = ['years_of_experience', 'fees', 'created_at']
-    ordering = ['-years_of_experience']
+class HealthcareProviderViewSet(
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet,
+):
+    """
+    Features
+        - Public list (active, non-deleted) with search / filter
+        - Authenticated provider can onboard themselves
+        - Each provider owns their own profile (R/U)
+        - Staff full CRUD
+    """
+    queryset = HealthcareProvider.objects.filter(
+        is_removed=False, user__is_active=True
+    ).select_related("user", "speciality", "primary_hospital")
+    pagination_class = PageNumberPagination
 
-class HealthcareProviderProfileView(generics.RetrieveAPIView):
-    permission_classes = [IsAuthenticated]
+    def get_serializer_class(self):
+        if self.action == "create":
+            return HealthcareProviderCreateSerializer
+        if self.action == "onboard":
+            return HealthcareProviderOnBoardSerializer
+        if self.action == "list":
+            return HealthcareProviderListSerializer
+        return HealthcareProviderSerializer
 
-    queryset = HealthcareProviderProfile.objects.select_related(
-        'user', 'speciality', 'primary_hospital'
-    ).filter(is_removed=False)
-    serializer_class = HealthcareProviderProfileSerializer
-    lookup_field = 'id'
+    def get_permissions(self):
+        if self.action in ("create", "update", "partial_update", "destroy", "onboard"):
+            return [IsStaffOrAdmin()]
+        return [permissions.IsAuthenticated()]
 
-class MyHealthcareProviderProfileView(generics.RetrieveUpdateAPIView):
-    """Get/update current user's healthcare provider profile"""
-    permission_classes = [IsAuthenticated]
-    serializer_class = HealthcareProviderProfileSerializer
+    def get_object(self):
+        if 'pk' in self.kwargs:
+            # Staff or the provider themselves accessing via ID
+            return HealthcareProvider.objects.get(user_id=self.kwargs['pk'])
+        return self.request.user.provider
+    
+    @action(detail=False, methods=["get", "patch", "put"], url_path="me")
+    def me(self, request):
+        if not hasattr(request.user, 'provider'):
+            raise exceptions.NotFound("Provider profile not found.")
 
-    def get_object(self) -> HealthcareProviderProfile:
-        profile = HealthcareProviderService.get_provider_profile(self.request.user)
-        if not profile:
-            raise ValidationError("Healthcare provider profile not found")
-        return profile
-
-    def get_serializer_class(self) -> Type[Serializer]:
-        if self.request.method in ['PUT', 'PATCH']:
-            return HealthcareProviderProfileCreateSerializer
-        return HealthcareProviderProfileSerializer
-
-class HealthcareProviderStatisticsView(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        try:
-            provider = HealthcareProvider.objects.get(user=request.user)
-            profile = provider.profile
-            
-            upcoming_appointments = Appointment.objects.filter(
-                healthcare_provider=provider,
-                appointment_start_datetime_utc__gte=timezone.now(),
-                status__in=[Appointment.Status.CONFIRMED, Appointment.Status.REQUESTED]
-            ).count()
-            
-            completed_appointments = Appointment.objects.filter(
-                healthcare_provider=provider,
-                status=Appointment.Status.COMPLETED
-            ).count()
-            
-            return Response({
-                'profile': HealthcareProviderProfileSerializer(profile).data,
-                'stats': {
-                    'upcoming_appointments': upcoming_appointments,
-                    'completed_appointments': completed_appointments,
-                    'years_of_experience': profile.years_of_experience,
-                    'fees': profile.fees,
-                }
-            })
-        except HealthcareProvider.DoesNotExist:
-            return Response(
-                {"detail": "Healthcare provider profile not found"},
-                status=status.HTTP_404_NOT_FOUND
+        if request.method == "GET":
+            serializer = self.get_serializer(request.user.provider)
+            return Response(serializer.data)
+        else:  # PATCH/PUT
+            serializer = self.get_serializer(
+                request.user.provider, 
+                data=request.data, 
+                partial=(request.method == "PATCH")
             )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
+
+    @action(detail=False, methods=["post"], url_path="onboard")
+    def onboard(self, request):        
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response({"detail": "Provider profile created."}, status=status.HTTP_201_CREATED)
+
+    def perform_create(self, serializer):
+        return serializer.save()
+
+    def perform_update(self, serializer):
+        user = self.request.user
+        instance = self.get_object()
+        can_update = False
+
+        if user.is_staff or hasattr(user, 'system_admin'):
+            can_update = True
+        elif hasattr(user, 'admin_staff'):
+            print('prov: ', instance.primary_hospital.name)
+            print('admin: ', user.admin_staff.hospital.name)
+            if instance.primary_hospital and instance.primary_hospital == user.admin_staff.hospital:
+                can_update = True
+
+        if can_update and serializer.validated_data.get("is_removed") is True:
+            instance = serializer.save()
+            instance.removed_at = timezone.now()
+            instance.save(update_fields=["removed_at"])
+        else:
+            super().perform_update(serializer)

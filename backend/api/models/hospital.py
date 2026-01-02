@@ -20,7 +20,7 @@ class Hospital(AuditMixin, models.Model):
     removed_at = models.DateTimeField(null=True, blank=True)
 
 class ProviderHospitalAssignment(models.Model):
-    provider = models.ForeignKey('HealthcareProviderProfile', on_delete=models.CASCADE)
+    provider = models.ForeignKey('HealthcareProvider', on_delete=models.CASCADE)
     hospital = models.ForeignKey(Hospital, on_delete=models.CASCADE)
     is_active = models.BooleanField(default=True)
     start_datetime_utc = models.DateTimeField(default=timezone.now)

@@ -1,5 +1,4 @@
 import logging
-from rest_framework import serializers
 from rest_framework.views import APIView
 from django_ratelimit.decorators import ratelimit
 from rest_framework import status, generics
@@ -14,38 +13,12 @@ from rest_framework.permissions import IsAuthenticated
 from django_ratelimit.exceptions import Ratelimited
 
 from ..models import User
-from ..serializers.auth import SignUpSerializer, ChangePasswordSerializer, UserSerializer
+from ..serializers import ChangePasswordSerializer, UserSerializer
 from ..services.auth import send_verification_email
 
 logger = logging.getLogger(__name__)
 
-@method_decorator(ratelimit(key="ip", rate="5/h", method="POST"), name='post')
-class SignUpView(generics.CreateAPIView):
-    serializer_class = SignUpSerializer
-    authentication_classes = []
-    permission_classes = []
-
-    def handle_exception(self, exc):
-        if isinstance(exc, serializers.ValidationError):
-            logger.info("Sign-up validation error: %s", exc.detail)
-            return Response(exc.detail, status=status.HTTP_400_BAD_REQUEST)
-        if isinstance(exc, Ratelimited):
-            return Response(
-                {"detail": "Too many sign-up attempts, please try again later."},
-                status=status.HTTP_403_FORBIDDEN
-            )
-
-        logger.exception("Sign-up error: %s", exc)
-        return Response(
-            {"detail": "Internal server error, please try again."},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
-
-    def perform_create(self, serializer):
-        user = serializer.save()
-        send_verification_email(user)
-
-@method_decorator(ratelimit(key="ip", rate="10/h", method="POST"), name='post')
+# @method_decorator(ratelimit(key="ip", rate="10/h", method="POST"), name='post')
 class LoginView(APIView):
     authentication_classes = []
     permission_classes = []
@@ -53,27 +26,43 @@ class LoginView(APIView):
     def post(self, request):
         email = request.data.get("email")
         password = request.data.get("password")
-        user = authenticate(username=email, password=password)
-        if user is None:
+
+        if not email or not password:
+            return Response(
+                {"detail": "Missing email or password."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            # check if user exist
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            user = None
+        
+        # Try to authenticate the user
+        authenticated_user = authenticate(username=email, password=password)
+        
+        if authenticated_user is None:
+            # If authentication failed, check if it's because user is inactive
+            if user is not None and user.check_password(password) and not user.is_active:
+                return Response(
+                    { "detail": "E-mail not verified" },
+                    status=status.HTTP_403_FORBIDDEN
+                )
             return Response(
                 { "detail": "Invalid credentials" },
                 status=status.HTTP_401_UNAUTHORIZED
             )
-        if not user.is_active:
-            return Response(
-                { "detail": "E-mail not verified" },
-                status=status.HTTP_403_FORBIDDEN
-            )
         
-        refresh = RefreshToken.for_user(user)
+        refresh = RefreshToken.for_user(authenticated_user)
         return Response(
             {
                 "refresh": str(refresh),
                 "access": str(refresh.access_token),
                 "user": {
-                    "id": user.id,
-                    "email": user.email,
-                    "username": user.username
+                    "id": authenticated_user.id,
+                    "email": authenticated_user.email,
+                    "username": authenticated_user.username
                 },
             }
         )
@@ -98,7 +87,7 @@ class VerifyEmailView(generics.GenericAPIView):
             return Response({"detail": "E-mail verified"}, status=status.HTTP_200_OK)
         return Response({"detail": "Bad or expired token"}, status=status.HTTP_400_BAD_REQUEST)
 
-@method_decorator(ratelimit(key="ip", rate="3/h", method="POST"), name='post')
+# @method_decorator(ratelimit(key="ip", rate="3/h", method="POST"), name='post')
 class ResendVerifyView(generics.GenericAPIView):
     authentication_classes = []
     permission_classes = []
