@@ -8,6 +8,7 @@ from ..serializers import (
     UserSerializer,
     ChangePasswordSerializer,
 )
+from ..services.auth import send_verification_email
 
 User = get_user_model()
 
@@ -34,6 +35,10 @@ class UserViewSet(
 
     def get_object(self):
         return self.request.user
+    
+    def perform_create(self, serializer):
+        user = serializer.save()
+        send_verification_email(user)
 
     @action(detail=False, methods=["post"], url_path="change-password")
     def change_password(self, request):

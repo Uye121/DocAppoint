@@ -9,6 +9,8 @@
 
   * Account email verification
 
+    * Resend verification email
+
   * Secure access via JWT
 
     * Background JWT refresh via frontend interceptor

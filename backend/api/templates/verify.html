@@ -67,12 +67,12 @@
       <p>Hi {{ first_name }},</p>
       <p>Please confirm your email address by clicking the button below. This link expires in 24 hours.</p>
 
-      <a class="btn" href="{{ link|safe }}">Confirm email address</a>
+      <a class="btn" href="{{ link | safe }}">Confirm email address</a>
 
       <p>If the button doesn’t work, copy and paste this link into your browser:</p>
-      <p style="word-break: break-all; color: #495057;">{{ link }}</p>
+      <p style="word-break: break-all; color: #495057;">{{ link | safe }}</p>
 
-      <p>Need help? <a href="{{ support_url }}">Contact support</a></p>
+      <p>Need help? <a href="{{ support_url | safe }}">Contact support</a></p>
     </div>
 
     <div class="footer">

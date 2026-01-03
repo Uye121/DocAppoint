@@ -10,20 +10,17 @@ const VerifyEmail = (): React.JSX.Element => {
   const [searchParams] = useSearchParams();
   const nav = useNavigate();
   const [status, setStatus] = useState<VerifyStatus>(VERIFY_STATUS.LOADING);
-  const [uid, setUid] = useState<ResendVerifyPayload | null>(null);
+  const [email, setEmail] = useState<ResendVerifyPayload | null>(null);
 
   useEffect(() => {
-    const uid = searchParams.get("uid");
     const token = searchParams.get("token");
 
-    if (!uid || !token) {
+    if (!token) {
       setStatus(VERIFY_STATUS.FAILURE);
       return;
     }
 
-    setUid({ uid });
-    const key = `${uid}-${token}`;
-    verifyEmail(key)
+    verifyEmail(token)
       .then(() => setStatus(VERIFY_STATUS.SUCCESSFUL))
       .catch(() => setStatus(VERIFY_STATUS.FAILURE));
   }, [searchParams]);
@@ -52,19 +49,46 @@ const VerifyEmail = (): React.JSX.Element => {
       case VERIFY_STATUS.FAILURE:
       default:
         return (
-          <div className="flex flex-col items-center">
-            <h2 className="text-2xl font-semibold mb-2">
-              Invalid or expired link
-            </h2>
-            <p className="text-zinc-600 mb-4">
-              Please request a new confirmation email.
-            </p>
-            <button
-              className="border px-10 md:px-16 py-8 mb-4 hover:bg-sky-400 hover:text-white"
-              onClick={() => resendVerify(uid)}
-            >
-              Go to login
-            </button>
+          <div className="min-h-screen flex items-center justify-center bg-white">
+            <div className="w-full max-w-md px-6 py-12">
+              <div className="flex flex-col items-center text-center">
+                <h2 className="text-2xl font-semibold mb-2">
+                  Invalid or expired link
+                </h2>
+                <p className="text-zinc-600 mb-6">
+                  Please request a new confirmation email.
+                </p>
+
+                <div className="w-full mb-5">
+                  <label className="block text-sm text-zinc-700 mb-1">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="border border-zinc-300 rounded w-full px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                  />
+                </div>
+                <button
+                  onClick={() => {
+                    resendVerify({ email })
+                    nav("/verify")
+                  }}
+                  className="w-full bg-sky-500 text-white py-2.5 rounded hover:bg-sky-600 transition mb-3"
+                >
+                  Resend Verification Email
+                </button>
+                <button
+                  onClick={() => nav("/login")}
+                  className="w-full border border-sky-500 text-sky-500 py-2.5 rounded hover:bg-sky-50 transition"
+                >
+                  Go to login
+                </button>
+              </div>
+            </div>
           </div>
         );
     }

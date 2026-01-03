@@ -45,7 +45,7 @@ router.register("speciality", SpecialityViewSet, basename="speciality")
 authpatterns = [
     path("login/", LoginView.as_view(), name="login"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
-    path("verify/<str:key>/", VerifyEmailView.as_view(), name="verify_email"),
+    path("verify/", VerifyEmailView.as_view(), name="verify_email"),
     path("resend-verify/", ResendVerifyView.as_view(), name="resend_verify"),
     path("password-reset/", include("django_rest_passwordreset.urls")), # TODO: to be modified
     path("logout/", LogoutView.as_view(), name="logout"),

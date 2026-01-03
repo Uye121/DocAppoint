@@ -12,7 +12,7 @@ export interface TokenPair {
 }
 
 export interface ResendVerifyPayload {
-  uid: string;
+  email: string;
 }
 
 export interface PasswordResetPayload {

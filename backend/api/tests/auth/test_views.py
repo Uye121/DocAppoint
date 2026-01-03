@@ -1,10 +1,12 @@
 import pytest
+import time
 from django.contrib.auth import get_user_model
-from django.contrib.auth.tokens import default_token_generator
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from rest_framework.test import APIClient
 from rest_framework import status
+
+from ...utils.tokens import build_verification_jwt
 
 User = get_user_model()
 
@@ -30,7 +32,7 @@ class TestLogin:
         assert res.status_code == status.HTTP_200_OK
         assert "access" in res.data
         assert "refresh" in res.data
-        assert res.data["user"]["id"] == user.pk
+        assert res.data["user"]["id"] == str(user.pk)
 
     def test_wrong_password(self, api_client, user_factory):
         user = user_factory(email="bad@user.com")
@@ -61,23 +63,21 @@ class TestLogin:
 #  verify email
 # ==================================================================
 class TestVerifyEmail:
-    url = "/api/auth/verify/{key}/"
+    url = "/api/auth/verify/"
 
     def test_success(self, api_client, user_factory):
         user = user_factory(email="verify@user.com", is_active=False)
-        token = default_token_generator.make_token(user)
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
-        key = f"{uid}-{token}"
-        res = api_client.get(self.url.format(key=key))
+        token = build_verification_jwt(user)
+        res = api_client.get(self.url, {"token": token})
+        print(res)
         assert res.status_code == status.HTTP_200_OK
         user.refresh_from_db()
         assert user.is_active
 
     def test_bad_token(self, api_client):
-        res = api_client.get(self.url.format(key="bad-token"))
+        res = api_client.get(self.url, {"token": "bad-token"})
         assert res.status_code == status.HTTP_400_BAD_REQUEST
-        assert res.data["detail"] == "Bad link"
-
+        assert res.data["detail"] == "Bad or expired token"
 
 # ==================================================================
 #  resend verification
@@ -87,20 +87,51 @@ class TestResendVerify:
 
     def test_success(self, api_client, user_factory):
         user = user_factory(email="resend@user.com", is_active=False)
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
-        res = api_client.post(self.url, {"uid": uid}, format="json")
+        res = api_client.post(self.url, {"email": user.email}, format="json")
         assert res.status_code == status.HTTP_204_NO_CONTENT
+
+    def test_second_resend_invalidates_previous_token(
+        self, api_client, user_factory
+    ):
+        user = user_factory(email="tok@inv.com", is_active=False)
+
+        # first resend
+        res = api_client.post(self.url, {"email": user.email}, format="json")
+        assert res.status_code == status.HTTP_204_NO_CONTENT
+        user.refresh_from_db()
+        token_a = build_verification_jwt(user)   # captured “old” token
+        old_ts = user.reset_sent_at
+
+        time.sleep(2)
+
+        # second resend
+        res = api_client.post(self.url, {"email": user.email}, format="json")
+        assert res.status_code == status.HTTP_204_NO_CONTENT
+        user.refresh_from_db()
+        assert user.reset_sent_at > old_ts 
+
+        # reject first token
+        bad = api_client.get("/api/auth/verify/", {"token": token_a})
+        assert bad.status_code == status.HTTP_400_BAD_REQUEST
+        assert "bad or expired token" in bad.data["detail"].lower()
+
+        # second token works
+        user.refresh_from_db()
+        token_b = build_verification_jwt(user)
+        good = api_client.get("/api/auth/verify/", {"token": token_b})
+        assert good.status_code == status.HTTP_200_OK
+        user.refresh_from_db()
+        assert user.is_active
 
     def test_resend_active_user(self, api_client, user_factory):
         user = user_factory(email="active@user.com", is_active=True)
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
-        res = api_client.post(self.url, {"uid": uid}, format="json")
-        assert res.status_code == status.HTTP_204_NO_CONTENT  # silent success
-
-    def test_bad_uid(self, api_client):
-        res = api_client.post(self.url, {"uid": "bad-uid"}, format="json")
+        res = api_client.post(self.url, {"email": user.email}, format="json")
         assert res.status_code == status.HTTP_400_BAD_REQUEST
-        assert res.data["detail"] == "Invalid uid"
+
+    def test_invalid_email(self, api_client):
+        res = api_client.post(self.url, {"email": "bademail@abc.com"}, format="json")
+        assert res.status_code == status.HTTP_404_NOT_FOUND
+        assert "No User matches the given query." in res.data["detail"]
 
 # ==================================================================
 #  logout

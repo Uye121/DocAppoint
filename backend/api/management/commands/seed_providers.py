@@ -54,6 +54,9 @@ class Command(BaseCommand):
         try:
             admin_user, created = create_admin(payload)
             if created or not admin_user.has_usable_password():
+                User.objects.filter(pk=admin_user.user_id).update(
+                    is_active=True,
+                )
                 admin_user.set_password(admin_password)
                 admin_user.save()
         except Exception:
