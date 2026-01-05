@@ -1,17 +1,44 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import type { ISpeciality } from "../types/app";
-import { apiClient } from "../api/client";
+import { SyncLoader } from "react-spinners";
+
+import type { Speciality } from "../types/specialities";
+import { useSpecialities } from "../../hooks/useSpecialities";
+import { formatErrors } from "../../utils/errorMap";
 
 const SpecialtyMenu = (): React.JSX.Element => {
+  const { specialities, loading, error, getSpecialities } = useSpecialities();
   const [specialityData, setSpecialityData] = useState([]);
 
   useEffect(() => {
-    apiClient
-      .get("/specialities")
-      .then((data) => setSpecialityData(data))
-      .catch((error) => console.error("API Error: ", error));
+    // apiClient
+    //   .get("/specialities")
+    //   .then((data) => setSpecialityData(data))
+    //   .catch((error) => console.error("API Error: ", error));
+    try {
+      getSpecialities();
+    } catch (err) {
+      console.log(err);
+      setError(formatErrors(err));
+    }
   }, []);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center">
+        <SyncLoader size={30} color="#38BDF8" loading />
+        <p className="mt-4 text-zinc-600">Retrieving data...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-16 text-red-600">
+        <p>{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -24,7 +51,7 @@ const SpecialtyMenu = (): React.JSX.Element => {
         your appointment hassle-free.
       </p>
       <div className="flex sm:justify-center gap-4 pt-5 w-full overflow-scroll">
-        {specialityData.map((item: ISpeciality, index: number) => (
+        {specialities && specialities.map((item: Speciality, index: number) => (
           <Link
             onClick={() => scrollTo(0, 0)}
             className="flex flex-col items-center text-xs cursor-pointer flex-shrink-0 hover:translate-y-[-10px] transition-all duration-500"

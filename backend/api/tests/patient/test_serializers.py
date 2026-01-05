@@ -43,19 +43,27 @@ class TestPatientSerializer:
         assert "height" in ps.errors
 
 class TestPatientCreateSerializer:
-    def test_create_full(self):
+    @pytest.fixture
+    def base_payload(self):
+        def _payload(**overrides):
+            payload = {
+                "email": "new@patient.com",
+                "username": "newpatient",
+                "password": "Complex123!",
+                "first_name": "Neo",
+                "last_name": "Patient",
+                "date_of_birth": "1990-01-01",
+                "blood_type": "O+",
+                "weight": 80,
+                "height": 190,
+            }
+            payload.update(overrides)
+            return payload
+        return _payload
+    
+    def test_create_full(self, base_payload):
         assert User.objects.count() == 0
-        payload = {
-            "email": "new@patient.com",
-            "username": "newpatient",
-            "password": "Complex123!",
-            "first_name": "Neo",
-            "last_name": "Patient",
-            "date_of_birth": "1990-01-01",
-            "blood_type": "O+",
-            "weight": 80,
-            "height": 190,
-        }
+        payload = base_payload()
         ps = PatientCreateSerializer(data=payload)
         assert ps.is_valid(), ps.errors
         patient = ps.save()
@@ -63,31 +71,15 @@ class TestPatientCreateSerializer:
         assert patient.user.email == "new@patient.com"
         assert patient.weight == 80
 
-    def test_email_case_insensitive_duplicate(self, user_factory):
-        user_factory(email="EXIST@example.com")
-        payload = {
-            "email": "exist@example.com",
-            "username": "new",
-            "password": "Complex123!",
-            "first_name": "A",
-            "last_name": "B",
-        }
+    def test_email_case_insensitive_duplicate(self, base_payload, user_factory):
+        user_factory(email="NEW@patient.com")
+        payload = base_payload()
         ps = PatientCreateSerializer(data=payload)
         assert not ps.is_valid()
         assert "email" in ps.errors
 
-    def test_weight_zero_rejected(self):
-        payload = {
-            "email": "new@patient.com",
-            "username": "newpatient",
-            "password": "Complex123!",
-            "first_name": "Neo",
-            "last_name": "Patient",
-            "date_of_birth": "1990-01-01",
-            "blood_type": "O+",
-            "weight": 0,
-            "height": 190,
-        }
+    def test_weight_zero_rejected(self, base_payload):
+        payload = base_payload(weight=0)
         ps = PatientCreateSerializer(data=payload)
         assert not ps.is_valid()
         assert "weight" in ps.errors

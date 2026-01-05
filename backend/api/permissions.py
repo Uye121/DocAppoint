@@ -25,19 +25,3 @@ class IsStaffOrAdmin(permissions.BasePermission):
         return (user.is_staff
                 or hasattr(user, 'system_admin')
                 or hasattr(user, 'admin_staff'))
-    
-    def has_object_permission(self, request, view, obj):
-        user = request.user
-        
-        # Staff and system admin can access any provider
-        if user.is_staff or hasattr(user, 'system_admin'):
-            return True
-        
-        # Hospital admin can only access providers from their hospital
-        if hasattr(user, 'admin_staff'):
-            return (
-                obj.primary_hospital and
-                obj.primary_hospital == user.admin_staff.hospital
-            )
-        
-        return False

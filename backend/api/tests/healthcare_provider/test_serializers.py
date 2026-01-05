@@ -44,104 +44,68 @@ class TestHealthcareProviderSerializer:
         assert "license_number" in ps.errors
 
 class TestHealthcareProviderCreateSerializer:
-    def test_create(self, speciality_factory):
+    @pytest.fixture
+    def base_payload(self):
+        def _payload(**overrides):
+            payload = {
+                "email": "doc@test.com",
+                "username": "docnew",
+                "password": "Complex123!",
+                "first_name": "Doc",
+                "last_name": "Tor",
+                "speciality": None,
+                "fees": "120.00",
+                "address_line1": "123 Main",
+                "city": "Town",
+                "state": "CA",
+                "zip_code": "12345",
+                "license_number": "AB123456",
+            }
+            payload.update(overrides)
+            return payload
+        return _payload
+
+    def test_create(self, base_payload, speciality_factory):
         sp = speciality_factory()
-        payload = {
-            "email": "doc@new.com",
-            "username": "docnew",
-            "password": "Complex123!",
-            "first_name": "Doc",
-            "last_name": "Tor",
-            "speciality": sp.pk,
-            "fees": "120.00",
-            "address_line1": "123 Main",
-            "city": "Town",
-            "state": "CA",
-            "zip_code": "12345",
-            "license_number": "AB123456",
-        }
+        payload = base_payload(speciality=sp.pk)
         ser = HealthcareProviderCreateSerializer(data=payload)
         assert ser.is_valid(), ser.errors
         obj = ser.save()
-        assert obj.user.email == "doc@new.com"
+        assert obj.user.email == "doc@test.com"
         assert obj.fees == Decimal("120.00")
         assert obj.years_of_experience == 0 
         assert obj.user.check_password("Complex123!")
 
-    def test_email_case_insensitive_duplicate(self, user_factory, speciality_factory):
-        user_factory(email="EXIST@example.com")
-        payload = {
-            "email": "exist@example.com",
-            "username": "doc",
-            "password": "Complex123!",
-            "first_name": "A",
-            "last_name": "B",
-            "speciality": speciality_factory().pk,
-            "fees": "100.00",
-            "address_line1": "123 Main",
-            "city": "Town",
-            "state": "CA",
-            "zip_code": "12345",
-            "license_number": "AB123456",
-        }
+    def test_email_case_insensitive_duplicate(
+        self,
+        base_payload,
+        user_factory,
+        speciality_factory
+    ):
+        user_factory(email="doc@test.com")
+        payload = base_payload(
+            speciality=speciality_factory().pk,
+        )
         ps = HealthcareProviderCreateSerializer(data=payload)
         assert not ps.is_valid()
         assert "email" in ps.errors
 
-    def test_speciality_missing(self):
-        payload = {
-            "email": "doc@new.com",
-            "username": "doc",
-            "password": "Complex123!",
-            "first_name": "A",
-            "last_name": "B",
-            "fees": "100.00",
-            "address_line1": "123 Main",
-            "city": "Town",
-            "state": "CA",
-            "zip_code": "12345",
-            "license_number": "AB123456",
-        }
+    def test_speciality_missing(self, base_payload):
+        payload = base_payload()
         ps = HealthcareProviderCreateSerializer(data=payload)
         assert not ps.is_valid()
         assert "speciality" in ps.errors
 
-    def test_invalid_license(self, speciality_factory):
+    def test_invalid_license(self, base_payload, speciality_factory):
         sp = speciality_factory()
-        payload = {
-            "email": "doc@new.com",
-            "username": "doc",
-            "password": "Complex123!",
-            "first_name": "A",
-            "last_name": "B",
-            "speciality": sp.pk,
-            "fees": "100.00",
-            "address_line1": "123 Main",
-            "city": "Town",
-            "state": "CA",
-            "zip_code": "12345",
-            "license_number": "12",
-        }
+        payload = base_payload(license_number="12", speciality=sp.pk)
         ps = HealthcareProviderCreateSerializer(data=payload)
         assert not ps.is_valid()
         assert "license_number" in ps.errors
 
-    def test_password_blank_invalid(self, speciality_factory):
+    def test_password_blank_invalid(self, base_payload, speciality_factory):
         sp = speciality_factory()
-        payload = {
-            "email": "doc@new.com",
-            "username": "doc",
-            "password": "",
-            "first_name": "A",
-            "last_name": "B",
-            "speciality": sp.pk,
-            "fees": "100.00",
-            "address_line1": "123 Main",
-            "city": "Town",
-            "state": "CA",
-            "zip_code": "12345",
-            "license_number": "AB123456",
-        }
+        payload = base_payload(password="")
         ps = HealthcareProviderCreateSerializer(data=payload)
         assert not ps.is_valid()
         assert "password" in ps.errors
@@ -157,58 +121,75 @@ class TestHealthcareProviderListSerializer:
         assert data["lastName"] == p.user.last_name
 
 class TestHealthcareProviderOnBoardSerializer:
-    def test_create_first_time(self, rf, user_factory, speciality_factory):
+    @pytest.fixture
+    def base_payload(self):
+        def _payload(**overrides):
+            payload = {
+                "email": "doc@test.com",
+                "username": "docnew",
+                "password": "Complex123!",
+                "first_name": "Doc",
+                "last_name": "Tor",
+                "speciality": None,
+                "about": "test",
+                "fees": "120.00",
+                "address_line1": "123 Main",
+                "city": "Town",
+                "state": "CA",
+                "zip_code": "12345",
+                "license_number": "AB123456",
+            }
+            payload.update(overrides)
+            return payload
+        return _payload
+    
+    def test_create_first_time(
+        self,
+        rf,
+        base_payload,
+        user_factory,
+        speciality_factory
+    ):
         user = user_factory()
         request = rf.post("/fake/")
-        payload = {
-            "user": user.pk,
-            "about": "test",
-            "speciality": speciality_factory().pk,
-            "fees": "99.99",
-            "address_line1": "456 Oak",
-            "city": "Ville",
-            "state": "NY",
-            "zip_code": "54321",
-            "license_number": "XY987654",
-        }
+        payload = base_payload(
+            user=user.pk,
+            fees="99.99",
+            speciality=speciality_factory().pk
+        )
         ps = HealthcareProviderOnBoardSerializer(data=payload, context={"request": request})
         assert ps.is_valid(), ps.errors
         obj = ps.save()
         assert obj.user == user
         assert obj.fees == Decimal("99.99")
 
-    def test_second_provider(self, rf, healthcare_provider_factory, speciality_factory):
+    def test_second_provider(
+        self,
+        rf,
+        base_payload,
+        healthcare_provider_factory,
+        speciality_factory
+    ):
         p = healthcare_provider_factory()
         request = rf.post("/fake/")
-        payload = {
-            "user": p.user.pk,
-            "about": "test",
-            "speciality": speciality_factory().pk,
-            "fees": "99.99",
-            "address_line1": "456 Oak",
-            "city": "Ville",
-            "state": "NY",
-            "zip_code": "54321",
-            "license_number": "XY987654",
-        }
+        payload = base_payload(
+            user=p.user.pk,
+            speciality=speciality_factory().pk
+        )
         ps = HealthcareProviderOnBoardSerializer(data=payload, context={"request": request})
         assert not ps.is_valid()
         assert "already exists" in str(ps.errors)
 
-    def test_fees_negative(self, rf, user_factory, speciality_factory):
+    def test_fees_negative(
+        self,
+        rf,
+        base_payload,
+        user_factory,
+        speciality_factory
+    ):
         user = user_factory()
         request = rf.post("/fake/")
-        payload = {
-            "user": user.pk,
-            "about": "test",
-            "speciality": speciality_factory().pk,
-            "fees": -10,
-            "address_line1": "456 Oak",
-            "city": "Ville",
-            "state": "NY",
-            "zip_code": "54321",
-            "license_number": "XY987654",
-        }
+        payload = base_payload(user=user.pk, speciality=speciality_factory().pk, fees=-10)
         ps = HealthcareProviderOnBoardSerializer(data=payload, context={"request": request})
         assert not ps.is_valid()
         assert "fees" in ps.errors

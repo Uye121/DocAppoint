@@ -5,6 +5,7 @@ import Navbar from "./Navbar";
 import RelatedDoctors from "./RelatedDoctors";
 import SpecialtyMenu from "./SpecialtyMenu";
 import TopDoctors from "./TopDoctors";
+import ProtectedRoutes from "./ProtectedRoutes";
 
 export {
   Banner,
@@ -14,4 +15,5 @@ export {
   RelatedDoctors,
   SpecialtyMenu,
   TopDoctors,
+  ProtectedRoutes,
 };

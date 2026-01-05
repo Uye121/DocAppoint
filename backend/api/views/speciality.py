@@ -6,7 +6,7 @@ from ..serializers import (
     SpecialityListSerializer,
     SpecialityCreateSerializer,
 )
-from ..permissions import IsHealthcareProvider
+from ..permissions import IsStaffOrAdmin
 
 class SpecialityViewSet(
     mixins.CreateModelMixin,
@@ -32,7 +32,7 @@ class SpecialityViewSet(
 
     def get_permissions(self):
         if self.action in ("create", "update", "partial_update", "destroy"):
-            return [permissions.IsAdminUser(), IsHealthcareProvider()]
+            return [IsStaffOrAdmin()]
         return [permissions.IsAuthenticated()]
 
     def perform_create(self, serializer):
@@ -43,6 +43,5 @@ class SpecialityViewSet(
 
     def perform_update(self, serializer):
         serializer.save(
-            updated_by=self.request.user,
-            updated_at=timezone.now(),
+            updated_by=self.request.user
         )

@@ -43,69 +43,63 @@ class TestProviderList:
 class TestProviderSignUp:
     url = "/api/provider/"
 
-    def test_create_minimal(self, api_client, speciality_factory, admin_staff_factory):
+    @pytest.fixture
+    def base_payload(self):
+        def _payload(**overrides):
+            payload = {
+                "email": "doc@test.com",
+                "username": "docnew",
+                "password": "Complex123!",
+                "first_name": "Doc",
+                "last_name": "Tor",
+                "speciality": None,
+                "fees": "120.00",
+                "address_line1": "123 Main",
+                "city": "Town",
+                "state": "CA",
+                "zip_code": "12345",
+                "license_number": "AB123456",
+            }
+            payload.update(overrides)
+            return payload
+        return _payload
+
+    def test_create_minimal(
+        self,
+        api_client,
+        base_payload,
+        speciality_factory,
+        admin_staff_factory
+    ):
         s = speciality_factory()
         a = admin_staff_factory()
-
-        payload = {
-            "email": "doc@new.com",
-            "username": "docnew",
-            "password": "Complex123!",
-            "first_name": "Doc",
-            "last_name": "Tor",
-            "speciality": s.pk,
-            "fees": "120.00",
-            "address_line1": "123 Main",
-            "city": "Town",
-            "state": "CA",
-            "zip_code": "12345",
-            "license_number": "AB123456",
-        }
+        payload = base_payload(speciality=s.pk)
         api_client.force_authenticate(user=a.user)
         res = api_client.post(self.url, payload, format="json")
         assert res.status_code == status.HTTP_201_CREATED, res.data
-        user = User.objects.get(email="doc@new.com")
+        user = User.objects.get(email="doc@test.com")
         assert hasattr(user, "provider")
         assert user.provider.fees == 120
 
-    def test_user_create_denied(self, api_client, speciality_factory, user_factory):
+    def test_user_create_denied(
+        self,
+        base_payload,
+        api_client,
+        speciality_factory,
+        user_factory
+    ):
         s = speciality_factory()
         u = user_factory()
 
-        payload = {
-            "email": "doc@new.com",
-            "username": "docnew",
-            "password": "Complex123!",
-            "first_name": "Doc",
-            "last_name": "Tor",
-            "speciality": s.pk,
-            "fees": "120.00",
-            "address_line1": "123 Main",
-            "city": "Town",
-            "state": "CA",
-            "zip_code": "12345",
-            "license_number": "AB123456",
-        }
+        payload = base_payload(speciality=s.pk)
         api_client.force_authenticate(user=u)
         res = api_client.post(self.url, payload, format="json")
         assert res.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_speciality_required(self, api_client, admin_staff_factory):
+    def test_speciality_required(self, base_payload, api_client, admin_staff_factory):
         a = admin_staff_factory()
+        payload = base_payload()
 
-        payload = {
-            "email": "bad@doc.com",
-            "username": "bad",
-            "password": "Complex123!",
-            "first_name": "A",
-            "last_name": "B",
-            "fees": "100.00",
-            "address_line1": "123 Main",
-            "city": "Town",
-            "state": "CA",
-            "zip_code": "12345",
-            "license_number": "AB123456",
-        }
         api_client.force_authenticate(user=a.user)
         res = api_client.post(self.url, payload, format="json")
         assert res.status_code == status.HTTP_400_BAD_REQUEST
@@ -117,62 +111,67 @@ class TestProviderSignUp:
 class TestProviderOnBoard:
     url = "/api/provider/onboard/"
 
-    def test_success(self, api_client, admin_staff_factory, speciality_factory, user_factory):
+    @pytest.fixture
+    def base_payload(self):
+        def _payload(**overrides):
+            payload = {
+                "user": None,
+                "about": "test",
+                "speciality": None,
+                "fees": "99.99",
+                "address_line1": "123 Main",
+                "city": "Town",
+                "state": "CA",
+                "zip_code": "12345",
+                "license_number": "AB123456",
+            }
+            payload.update(overrides)
+            return payload
+        return _payload
+
+    def test_success(
+        self,
+        api_client,
+        base_payload,
+        admin_staff_factory,
+        speciality_factory,
+        user_factory
+    ):
         a = admin_staff_factory()
         user = user_factory()
         api_client.force_authenticate(user=a.user)
-        payload = {
-            "user": user.pk,
-            "speciality": speciality_factory().pk,
-            "about": "test",
-            "fees": "99.99",
-            "address_line1": "456 Oak",
-            "city": "Ville",
-            "state": "NY",
-            "zip_code": "54321",
-            "license_number": "XY987654",
-        }
+        payload = base_payload(user=user.pk, speciality=speciality_factory().pk)
         res = api_client.post(self.url, payload, format="json")
         assert res.status_code == status.HTTP_201_CREATED
         assert hasattr(user, "provider")
         assert float(user.provider.fees) == 99.99
 
-    def test_user_onboard_denied(self, api_client, user_factory, speciality_factory):
+    def test_user_onboard_denied(
+        self,
+        base_payload,
+        api_client,
+        user_factory,
+        speciality_factory
+    ):
         user = user_factory()
         api_client.force_authenticate(user=user)
-        payload = {
-            "speciality": speciality_factory().pk,
-            "about": "test",
-            "fees": "99.99",
-            "address_line1": "456 Oak",
-            "city": "Ville",
-            "state": "NY",
-            "zip_code": "54321",
-            "license_number": "XY987654",
-        }
+        payload = base_payload(speciality=speciality_factory().pk)
         res = api_client.post(self.url, payload, format="json")
         assert res.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_second_profile_rejected(self,
-                                     api_client,
-                                     healthcare_provider_factory,
-                                     admin_staff_factory,
-                                     speciality_factory):
+    def test_second_profile_rejected(
+        self,
+        base_payload,
+        api_client,
+        healthcare_provider_factory,
+        admin_staff_factory,
+        speciality_factory
+    ):
         a = admin_staff_factory()
         prov = healthcare_provider_factory()
 
         api_client.force_authenticate(user=a.user)
-        payload = {
-            "user": prov.user.pk,
-            "speciality": speciality_factory().pk,
-            "about": "test",
-            "fees": "99.99",
-            "address_line1": "456 Oak",
-            "city": "Ville",
-            "state": "NY",
-            "zip_code": "54321",
-            "license_number": "XY987654",
-        }
+        payload = base_payload(user=prov.user.pk, speciality=speciality_factory().pk)
         res = api_client.post(self.url, payload, format="json")
         assert res.status_code == status.HTTP_400_BAD_REQUEST
         print('res: ', res.data)

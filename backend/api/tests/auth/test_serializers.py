@@ -30,7 +30,6 @@ class TestChangePasswordSerializer:
         assert not ss.is_valid()
         assert "new_password" in ss.errors
 
-
 # ==================================================================
 #  LoginSerializer
 # ==================================================================

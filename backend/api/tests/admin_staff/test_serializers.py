@@ -14,7 +14,6 @@ User = get_user_model()
 
 pytestmark = pytest.mark.django_db
 
-
 def _dummy_image(name="1x1.png"):
     img = Image.new("RGBA", (1, 1), (255, 0, 0, 0))
     file = io.BytesIO()

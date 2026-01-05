@@ -1,5 +1,5 @@
 import React from "react";
-import { Route, Routes } from "react-router-dom";
+import { Outlet, Route, Routes } from "react-router-dom";
 import {
   About,
   Appointments,
@@ -11,28 +11,42 @@ import {
   UserProfile,
   UserAppointment,
   Verify,
-  VerifyEmail
+  VerifyEmail,
 } from "./pages";
-import { Footer, Navbar } from "./components";
+import { Footer, Navbar, ProtectedRoutes } from "./components";
+import { SpecialitiesProvider } from "./context";
 
 const App = (): React.JSX.Element => {
   return (
     <div className="mx-4 sm:mx-[10%]">
       <Navbar />
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/doctors" element={<Doctors />} />
-        <Route path="/doctors/:speciality" element={<Doctors />} />
-        <Route path="/signup" element={<Signup />} />
+        {/* public */}
         <Route path="/login" element={<Login />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/verify" element={<Verify />} />
-        <Route path="/verify-email" element={<VerifyEmail />} />
-        <Route path="/user-profile" element={<UserProfile />} />
-        <Route path="/appointment" element={<Appointments />} />
-        <Route path="/my-appointments" element={<UserAppointment />} />
-        <Route path="/appointment/:docId" element={<Appointments />} />
+        <Route path="/signup" element={<Signup />} />
+
+        {/* protected */}
+        <Route element={<ProtectedRoutes />}>
+          <Route
+            element={
+              <SpecialitiesProvider>
+                <Outlet />
+              </SpecialitiesProvider>
+            }
+          >
+            <Route path="/" element={<Home />} />
+            <Route path="/doctors" element={<Doctors />} />
+            <Route path="/doctors/:speciality" element={<Doctors />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/verify" element={<Verify />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/user-profile" element={<UserProfile />} />
+            <Route path="/appointment" element={<Appointments />} />
+            <Route path="/my-appointments" element={<UserAppointment />} />
+            <Route path="/appointment/:docId" element={<Appointments />} />
+          </Route>
+        </Route>
       </Routes>
       <Footer />
     </div>
