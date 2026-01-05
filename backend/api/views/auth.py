@@ -26,7 +26,6 @@ class LoginView(APIView):
     def post(self, request):
         email = request.data.get("email")
         password = request.data.get("password")
-        logger.info(f'{email} | {password}')
 
         if not email or not password:
             return Response(

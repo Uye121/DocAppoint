@@ -14,7 +14,7 @@ import {
   VerifyEmail,
 } from "./pages";
 import { Footer, Navbar, ProtectedRoutes } from "./components";
-import { SpecialitiesProvider } from "./context";
+import { SpecialitiesProvider, DoctorProvider } from "./context";
 
 const App = (): React.JSX.Element => {
   return (
@@ -24,13 +24,17 @@ const App = (): React.JSX.Element => {
         {/* public */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/verify" element={<Verify />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
 
         {/* protected */}
         <Route element={<ProtectedRoutes />}>
           <Route
             element={
               <SpecialitiesProvider>
-                <Outlet />
+                <DoctorProvider>
+                  <Outlet />
+                </DoctorProvider>
               </SpecialitiesProvider>
             }
           >
@@ -39,8 +43,6 @@ const App = (): React.JSX.Element => {
             <Route path="/doctors/:speciality" element={<Doctors />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
-            <Route path="/verify" element={<Verify />} />
-            <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/user-profile" element={<UserProfile />} />
             <Route path="/appointment" element={<Appointments />} />
             <Route path="/my-appointments" element={<UserAppointment />} />

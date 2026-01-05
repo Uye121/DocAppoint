@@ -7,12 +7,14 @@ from ..mixin import CamelCaseMixin
 from .user import UserSerializer
 
 class HealthcareProviderSerializer(CamelCaseMixin, serializers.ModelSerializer):
+    id = serializers.PrimaryKeyRelatedField(source='user', read_only=True)
     user = UserSerializer(read_only=True)
     speciality_name = serializers.CharField(source='speciality.name', read_only=True)
 
     class Meta:
         model = HealthcareProvider
         fields = [
+            "id",
             "user",
             "speciality",
             "speciality_name", 
@@ -161,6 +163,7 @@ class HealthcareProviderCreateSerializer(CamelCaseMixin, serializers.ModelSerial
         return provider
 
 class HealthcareProviderListSerializer(CamelCaseMixin, serializers.ModelSerializer):
+    id = serializers.PrimaryKeyRelatedField(source='user', read_only=True)
     speciality_name = serializers.CharField(source='speciality.name', read_only=True)
     first_name = serializers.CharField(source='user.first_name', read_only=True)
     last_name = serializers.CharField(source='user.last_name', read_only=True)
@@ -170,10 +173,19 @@ class HealthcareProviderListSerializer(CamelCaseMixin, serializers.ModelSerializ
     class Meta:
         model = HealthcareProvider
         fields = [
+            "id",
             "user",
             "speciality",
             "speciality_name", 
+            "education",
             "years_of_experience",
+            "about",
+            "address_line1",
+            "address_line2",
+            "city",
+            "state",
+            "zip_code",
+            "certifications",
             "primary_hospital",
             "primary_hospital_name",
             "first_name",

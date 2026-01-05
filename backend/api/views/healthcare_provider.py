@@ -47,6 +47,7 @@ class HealthcareProviderViewSet(
         return [permissions.IsAuthenticated()]
 
     def get_object(self):
+        
         if 'pk' in self.kwargs:
             # Staff or the provider themselves accessing via ID
             return HealthcareProvider.objects.get(user_id=self.kwargs['pk'])

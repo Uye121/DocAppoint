@@ -1,11 +1,16 @@
-import React, { useContext } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
-import { AppContext } from "../context/AppContext";
-import type { IDoctor } from "../types/app";
+
+import type { Doctor } from "../types/doctor";
+import { useDoctor } from "../../hooks/useDoctor";
 
 const TopDoctors = (): React.JSX.Element => {
   const navigate = useNavigate();
-  const { doctors } = useContext(AppContext);
+  const { doctors } = useDoctor();
+
+  for (let i=0; i<doctors?.length; i+= 1) {
+    console.log(`d: ${JSON.stringify(doctors[i])}`)
+  }
 
   return (
     <div className="flex flex-col items-center gap-4 my-16 text-gray-900 md:mx-10">
@@ -14,7 +19,7 @@ const TopDoctors = (): React.JSX.Element => {
         Simply browse through our extensive list of trusted doctors.
       </p>
       <div className="w-full grid grid-cols-fluid gap-4 pt-5 gap-y-6 px-3 sm:px-0">
-        {doctors.slice(0, 10).map((item: IDoctor, index: number) => (
+        {doctors.slice(0, 10).map((item: Doctor, index: number) => (
           <div
             onClick={() => {
               navigate(`/appointment/${item.id}`);
@@ -26,14 +31,14 @@ const TopDoctors = (): React.JSX.Element => {
             <img
               className="bg-blue-50"
               src={item.image}
-              alt={item.name + "'s portrait"}
+              alt={"Dr. " + item.lastName + "'s portrait"}
             />
             <div className="p-4">
               <div className="flex items-center gap-2 text-sm text-center text-green-500">
                 <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                 <p>Online</p>
               </div>
-              <p className="text-gray-900 text-lg font-medium">{item.name}</p>
+              <p className="text-gray-900 text-lg font-medium">{item.firstName + " " + item.lastName}</p>
               <p className="text-gray-600 text-sm">{item.speciality}</p>
             </div>
           </div>

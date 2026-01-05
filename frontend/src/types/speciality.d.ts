@@ -4,9 +4,9 @@ export interface Speciality {
   image: string;
 }
 
-export interface SpecialitiesCtx {
+export interface SpecialityCtx {
   specialities: Speciality[] | null;
   loading: boolean;
   error: string | null;
-  getSpecialities: () => Promise<void>;
+  getSpecialities: () => Promise<Speciality[]>;
 }

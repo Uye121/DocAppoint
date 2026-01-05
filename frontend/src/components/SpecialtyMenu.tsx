@@ -1,27 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
 import { SyncLoader } from "react-spinners";
 
-import type { Speciality } from "../types/specialities";
-import { useSpecialities } from "../../hooks/useSpecialities";
-import { formatErrors } from "../../utils/errorMap";
+import type { Speciality } from "../types/speciality";
+import { useSpeciality } from "../../hooks/useSpeciality";
 
 const SpecialtyMenu = (): React.JSX.Element => {
-  const { specialities, loading, error, getSpecialities } = useSpecialities();
-  const [specialityData, setSpecialityData] = useState([]);
-
-  useEffect(() => {
-    // apiClient
-    //   .get("/specialities")
-    //   .then((data) => setSpecialityData(data))
-    //   .catch((error) => console.error("API Error: ", error));
-    try {
-      getSpecialities();
-    } catch (err) {
-      console.log(err);
-      setError(formatErrors(err));
-    }
-  }, []);
+  const { specialities, loading, error } = useSpeciality();
 
   if (loading) {
     return (

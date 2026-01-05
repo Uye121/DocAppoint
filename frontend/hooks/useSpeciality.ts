@@ -1,9 +1,9 @@
 import { useContext } from "react";
 
-import { SpecialitiesContext } from "../src/context";
+import { SpecialityContext } from "../src/context";
 
-export const useSpecialities = () => {
-  const ctx = useContext(SpecialitiesContext);
+export const useSpeciality = () => {
+  const ctx = useContext(SpecialityContext);
   if (!ctx) throw new Error('useSpecialties must be used inside SpecialitiesProvider');
   return ctx; 
 };

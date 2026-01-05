@@ -1,13 +1,13 @@
-# TODO
 import json
 import os
+import mimetypes
 from pathlib import Path
 from decimal import Decimal
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.db import IntegrityError
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 from api.models import Speciality, Hospital
 from api.serializers import HealthcareProviderCreateSerializer, SystemAdminCreateSerializer
@@ -103,6 +103,18 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.WARNING(f"Skipping {email} – already exists"))
                 continue
 
+            with open(settings.MEDIA_ROOT/row["image"], 'rb') as f:
+                image_content = f.read()
+
+            image_name = Path(row["image"]).name
+            image_type, _ = mimetypes.guess_type(image_name)
+            image_type = image_type or "image/png"
+            image_file = SimpleUploadedFile(
+                name=image_name,
+                content=image_content,
+                content_type=image_type
+            )
+
             payload = {
                 "email": email,
                 "username": username,
@@ -121,6 +133,7 @@ class Command(BaseCommand):
                 "state": row["state"],
                 "zip_code": row["zipCode"],
                 "license_number": "D12345",
+                "image": image_file
             }
 
             try:
@@ -133,6 +146,8 @@ class Command(BaseCommand):
             if created:
                 provider.primary_hospital = hospital
                 provider.save(update_fields=["primary_hospital"])
+                provider.user.is_active = True
+                provider.user.save(update_fields=["is_active"])
             self.stdout.write(
                 self.style.SUCCESS(f"{'Created' if created else 'Existed'}: {provider}")
             )

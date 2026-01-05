@@ -6,7 +6,7 @@ const Home = (): React.JSX.Element => {
     <div>
       <Header />
       <SpecialtyMenu />
-      {/* <TopDoctors /> */}
+      <TopDoctors />
       <Banner />
     </div>
   );
