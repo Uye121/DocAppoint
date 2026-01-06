@@ -34,7 +34,8 @@ const Login = (): React.JSX.Element => {
     } catch (err) {
       console.log(err);
 
-      if (axios.isAxiosError(err) && err.response?.status === 400) {
+      console.log(axios.isAxiosError(err));
+      if (axios.isAxiosError(err)) {
         const errorMsg =
           err.response?.data?.detail || formatErrors(err.response?.data);
         setError(errorMsg);
@@ -51,7 +52,6 @@ const Login = (): React.JSX.Element => {
     <form onSubmit={handleSubmit} className="min-h-[80vh] flex items-center">
       <div className="flex flex-col gap-3 m-auto items-start p-8 min-w-[340px] sm:min-w-96 max-w-md border rounded-xl text-zinc-600 text-sm shadow-lg">
         <p className="text-2xl font-semibold">Login</p>
-        <p>Please sign up/login to get started.</p>
         <div className="w-full">
           <p>Email</p>
           <input

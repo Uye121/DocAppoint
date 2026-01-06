@@ -1,13 +1,16 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { AppContext } from "../context/AppContext";
+import { useQuery } from "@tanstack/react-query";
+import { SyncLoader } from "react-spinners";
+
 import { assets } from "../assets/assets_frontend/assets";
-import type { IDoctor, TimeSlotType } from "../types/app";
+import type { Doctor } from "../types/doctor";
 import { RelatedDoctors } from "../components";
+import { getDoctorById } from "../api/doctor";
 
 const Appointments = (): React.JSX.Element | null => {
   const { docId } = useParams();
-  const { doctors, currencySymbol } = useContext(AppContext);
+  // const { doctors, currencySymbol } = useContext(AppContext);
   const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 
   const [docInfo, setDocInfo] = useState<IDoctor | null>(null);
@@ -15,78 +18,85 @@ const Appointments = (): React.JSX.Element | null => {
   const [slotIndex, setSlotIndex] = useState<number>(0);
   const [slotTime, setSlotTime] = useState<string>("");
 
-  useEffect(() => {
-    const fetchDocInfo = async () => {
-      const doc = doctors.find((doc) => doc.id == docId);
-      setDocInfo(doc || null);
-    };
+  const { data, isLoading } = useQuery({
+    queryKey: ["doctor", docId],
+    queryFn: () => getDoctorById(docId!),
+    enabled: !!docId,
+    staleTime: 5 * 60 * 1000, // 5 min cache
+  });
 
-    fetchDocInfo();
-  }, [doctors, docId]);
+  console.log("appointment: ", data);
 
-  useEffect(() => {
-    const getAvailableSlots = async () => {
-      setDocSlots([]);
+  // useEffect(() => {
+  //   const getAvailableSlots = async () => {
+  //     setDocSlots([]);
 
-      const today = new Date();
-      for (let i = 0; i < 7; i += 1) {
-        const currentDate = new Date(today);
-        currentDate.setDate(today.getDate() + i);
+  //     const today = new Date();
+  //     for (let i = 0; i < 7; i += 1) {
+  //       const currentDate = new Date(today);
+  //       currentDate.setDate(today.getDate() + i);
 
-        const endTime = new Date();
-        endTime.setDate(today.getDate() + i);
-        endTime.setHours(21, 0, 0, 0);
+  //       const endTime = new Date();
+  //       endTime.setDate(today.getDate() + i);
+  //       endTime.setHours(21, 0, 0, 0);
 
-        if (today.getDate() == currentDate.getDate()) {
-          currentDate.setHours(
-            currentDate.getHours() > 10 ? currentDate.getHours() + 1 : 10,
-          );
-          currentDate.setMinutes(currentDate.getMinutes() > 30 ? 30 : 0);
-        } else {
-          currentDate.setHours(10);
-          currentDate.setMinutes(0);
-        }
+  //       if (today.getDate() == currentDate.getDate()) {
+  //         currentDate.setHours(
+  //           currentDate.getHours() > 10 ? currentDate.getHours() + 1 : 10,
+  //         );
+  //         currentDate.setMinutes(currentDate.getMinutes() > 30 ? 30 : 0);
+  //       } else {
+  //         currentDate.setHours(10);
+  //         currentDate.setMinutes(0);
+  //       }
 
-        const timeSlots: TimeSlotType[] = [];
-        while (currentDate < endTime) {
-          const formattedTime = currentDate.toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          });
+  //       const timeSlots: TimeSlotType[] = [];
+  //       while (currentDate < endTime) {
+  //         const formattedTime = currentDate.toLocaleTimeString([], {
+  //           hour: "2-digit",
+  //           minute: "2-digit",
+  //         });
 
-          timeSlots.push({
-            datetime: new Date(currentDate),
-            time: formattedTime,
-          });
+  //         timeSlots.push({
+  //           datetime: new Date(currentDate),
+  //           time: formattedTime,
+  //         });
 
-          currentDate.setMinutes(currentDate.getMinutes() + 30);
-        }
+  //         currentDate.setMinutes(currentDate.getMinutes() + 30);
+  //       }
 
-        setDocSlots((prev) => {
-          const previous = prev || [];
-          return [...previous, timeSlots];
-        });
-      }
-    };
+  //       setDocSlots((prev) => {
+  //         const previous = prev || [];
+  //         return [...previous, timeSlots];
+  //       });
+  //     }
+  //   };
 
-    getAvailableSlots();
-    console.log(docSlots);
-  }, [docInfo]);
+  //   // getAvailableSlots();
+  // }, [docInfo]);
+
+  if (isLoading)
+    return (
+      <div className="flex flex-col items-center">
+        <SyncLoader size={30} color="#38BDF8" loading />
+        <p className="mt-4 text-zinc-600">Verifying your email...</p>
+      </div>
+    );
 
   return (
-    docInfo && (
+    data && (
       <div>
         <div className="flex flex-col sm:flex-row gap-4">
           <div>
             <img
               className="bg-primary w-full sm:max-w-72 rounded-lg"
-              src={docInfo.image}
+              src={data.user.image}
               alt=""
             />
           </div>
           <div className="flex-1 border border-gray-400 rounded-lg p-8 py-7 bg-white mx-2 sm:mx-0 mt-[-80px] sm:mt-0">
             <p className="flex items-center gap-2 text-2xl font-medium text-gray-900">
-              {docInfo.name}
+              {data.user.firstName + " " + data.user.lastName}
               <img
                 className="w-5"
                 src={assets.verified_icon}
@@ -95,10 +105,10 @@ const Appointments = (): React.JSX.Element | null => {
             </p>
             <div className="flex items-center gap-2 text-sm mt-1 text-gray-600">
               <p>
-                {docInfo.degree} - {docInfo.speciality}
+                {data.education} - {data.specialityName}
               </p>
               <button className="py-0.5 px-2 border text-xs rounded-full">
-                {docInfo.experience}
+                {data.yearsOfExperience}
               </button>
             </div>
             <div>
@@ -106,14 +116,14 @@ const Appointments = (): React.JSX.Element | null => {
                 About <img src={assets.info_icon} alt="information icon" />
               </p>
               <p className="text-sm text-gray-500 max-w-[700px] mt-1">
-                {docInfo.about}
+                {data.about}
               </p>
             </div>
             <p className="text-gray-500 font-medium mt-4">
               Appointment fee:{" "}
               <span className="text-gray-600">
-                {currencySymbol}
-                {docInfo.fees}
+                {"$"}
+                {data.fees}
               </span>
             </p>
           </div>
@@ -151,7 +161,7 @@ const Appointments = (): React.JSX.Element | null => {
           </button>
         </div>
 
-        <RelatedDoctors docId={docId} speciality={docInfo.speciality} />
+        <RelatedDoctors docId={docId} speciality={data.speciality} />
       </div>
     )
   );

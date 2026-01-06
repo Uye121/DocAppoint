@@ -21,6 +21,10 @@ services:
              python manage.py migrate &&
              python manage.py seed_providers &&
              python manage.py runserver 0.0.0.0:8000"
+    deploy:
+      resources:
+        limits:
+          memory: 2G
     volumes:
       - ./backend:/api
       - ./backend/media:/app/media

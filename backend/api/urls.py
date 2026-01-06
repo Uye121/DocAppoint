@@ -18,23 +18,34 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 
-from .views.auth import (
-    SignUpView,
+from .views import (
+    UserViewSet,
     LoginView,
     VerifyEmailView,
     ResendVerifyView,
     LogoutView,
     ChangePasswordView,
     UserView,
+    PatientViewSet,
+    HealthcareProviderViewSet,
+    SpecialityViewSet
 )
 
+router = DefaultRouter()
+router.register("users", UserViewSet, basename="user")
+router.register("patient", PatientViewSet, basename="patient")
+router.register("provider", HealthcareProviderViewSet, basename="provider")
+router.register("speciality", SpecialityViewSet, basename="speciality")
+# router.register("patients", PatientViewSet, basename="patient")
+# router.register("providers", HealthcareProviderViewSet, basename="provider")
+
 authpatterns = [
-    path("signup/", SignUpView.as_view(), name="signup"),
     path("login/", LoginView.as_view(), name="login"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
-    path("verify/<str:key>/", VerifyEmailView.as_view(), name="verify_email"),
+    path("verify/", VerifyEmailView.as_view(), name="verify_email"),
     path("resend-verify/", ResendVerifyView.as_view(), name="resend_verify"),
     path("password-reset/", include("django_rest_passwordreset.urls")), # TODO: to be modified
     path("logout/", LogoutView.as_view(), name="logout"),
@@ -42,9 +53,12 @@ authpatterns = [
     path("me/", UserView.as_view(), name="user_info")
 ]
 
+
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path("api/", include(authpatterns)),
+    path('api/auth/', include(authpatterns)),
+    path("api/", include(router.urls)),
+    # path("api/providers/", include(providerpatterns)),
+    # path("api/specialities/", include(specialitypatterns)),
 ]
-
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

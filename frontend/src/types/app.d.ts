@@ -1,8 +1,3 @@
-export interface ISpeciality {
-  name: string;
-  image: string;
-}
-
 export interface IDoctor {
   id: string;
   name: string;
