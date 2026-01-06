@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
-import type { IDoctor } from "../types/app";
+import type { DoctorListItem } from "../types/doctor";
 
 interface RelatedDoctorsProps {
   docId: string | undefined;
@@ -14,7 +14,7 @@ const RelatedDoctors = ({
 }: RelatedDoctorsProps): React.JSX.Element => {
   const navigate = useNavigate();
   const { doctors } = useContext(AppContext);
-  const [relDoc, setRelDoc] = useState<IDoctor[]>([]);
+  const [relDoc, setRelDoc] = useState<DoctorListItem[]>([]);
 
   useEffect(() => {
     if (doctors.length && speciality) {
@@ -32,7 +32,7 @@ const RelatedDoctors = ({
         Simply browse through our extensive list of trusted doctors.
       </p>
       <div className="w-full grid grid-cols-fluid gap-4 pt-5 gap-y-6 px-3 sm:px-0">
-        {relDoc.slice(0, 5).map((item: IDoctor, index: number) => (
+        {relDoc.slice(0, 5).map((item: DoctorListItem, index: number) => (
           <div
             onClick={() => {
               navigate(`/appointment/${item.id}`);
@@ -44,15 +44,15 @@ const RelatedDoctors = ({
             <img
               className="bg-blue-50"
               src={item.image}
-              alt={item.name + "'s portrait"}
+              alt={"Dr. " + item.lastName + "'s portrait"}
             />
             <div className="p-4">
               <div className="flex items-center gap-2 text-sm text-center text-green-500">
                 <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                 <p>Online</p>
               </div>
-              <p className="text-gray-900 text-lg font-medium">{item.name}</p>
-              <p className="text-gray-600 text-sm">{item.speciality}</p>
+              <p className="text-gray-900 text-lg font-medium">{item.firstName + " " + item.lastName}</p>
+              <p className="text-gray-600 text-sm">{item.specialityName}</p>
             </div>
           </div>
         ))}

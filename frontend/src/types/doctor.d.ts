@@ -2,13 +2,17 @@ import type { Speciality } from "./speciality";
 import type { User } from "./user";
 import type { Hospital } from "./hospital";
 
-export interface Doctor {
-  id: number; 
-  user: User;
-  firstName: string;
-  lastName: string;
+export interface DoctorListItem {
+  id: number;
   speciality: number | Speciality;
   specialityName: string;
+  firstName: string;
+  lastName: string;
+  image: string;
+}
+
+export interface Doctor extends DoctorListItem {
+  user: User;
   education: string;
   yearsOfExperience: number;
   about: string;
@@ -27,8 +31,8 @@ export interface Doctor {
 }
 
 export interface DoctorCtx {
-  doctors: Doctor[] | null;
+  doctors: DoctorListItem[] | null;
   loading: boolean;
   error: string | null;
-  getDoctors: () => Promise<Doctor[]>;
+  getDoctors: () => Promise<DoctorListItem[]>;
 }

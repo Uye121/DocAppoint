@@ -168,30 +168,16 @@ class HealthcareProviderListSerializer(CamelCaseMixin, serializers.ModelSerializ
     first_name = serializers.CharField(source='user.first_name', read_only=True)
     last_name = serializers.CharField(source='user.last_name', read_only=True)
     image = serializers.ImageField(source='user.image', read_only=True)
-    primary_hospital_name = serializers.CharField(source='primary_hospital.name', read_only=True)
 
     class Meta:
         model = HealthcareProvider
         fields = [
             "id",
-            "user",
             "speciality",
             "speciality_name", 
-            "education",
-            "years_of_experience",
-            "about",
-            "address_line1",
-            "address_line2",
-            "city",
-            "state",
-            "zip_code",
-            "certifications",
-            "primary_hospital",
-            "primary_hospital_name",
             "first_name",
             "last_name",
-            "image",
-            "fees",
+            "image"
         ]
 
 class HealthcareProviderOnBoardSerializer(CamelCaseMixin, serializers.ModelSerializer):

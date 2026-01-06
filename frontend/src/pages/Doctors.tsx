@@ -2,12 +2,12 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { useDoctor } from "../../hooks/useDoctor";
-import type { Doctor } from "../types/doctor";
+import type { DoctorListItem } from "../types/doctor";
 
 const Doctors = (): React.JSX.Element => {
   const navigate = useNavigate();
   const { speciality } = useParams();
-  const [filteredDoc, setFilteredDoc] = useState<Doctor[]>([]);
+  const [filteredDoc, setFilteredDoc] = useState<DoctorListItem[]>([]);
   const [showFilter, setShowFilter] = useState(false);
   const { doctors } = useDoctor();
 
@@ -15,7 +15,7 @@ const Doctors = (): React.JSX.Element => {
     const applyFilter = () => {
       if (speciality) {
         setFilteredDoc(
-          doctors.filter((doc: Doctor) => doc.specialityName == speciality),
+          doctors.filter((doc: DoctorListItem) => doc.specialityName == speciality),
         );
       } else {
         setFilteredDoc(doctors);
@@ -100,7 +100,7 @@ const Doctors = (): React.JSX.Element => {
           </p>
         </div>
         <div className="w-full grid grid-cols-fluid gap-4 gap-y-6">
-          {filteredDoc.map((item: Doctor, index: number) => (
+          {filteredDoc.map((item: DoctorListItem, index: number) => (
             <div
               onClick={() => navigate(`/appointment/${item.id}`)}
               className="border border-blue-200 rounded-xl overflow-hidden cursor-pointer hover:translate-y-[-10px] transition-all duration-500"

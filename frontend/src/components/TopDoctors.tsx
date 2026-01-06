@@ -1,16 +1,12 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
-import type { Doctor } from "../types/doctor";
+import type { DoctorListItem } from "../types/doctor";
 import { useDoctor } from "../../hooks/useDoctor";
 
 const TopDoctors = (): React.JSX.Element => {
   const navigate = useNavigate();
   const { doctors } = useDoctor();
-
-  for (let i=0; i<doctors?.length; i+= 1) {
-    console.log(`d: ${JSON.stringify(doctors[i])}`)
-  }
 
   return (
     <div className="flex flex-col items-center gap-4 my-16 text-gray-900 md:mx-10">
@@ -19,7 +15,7 @@ const TopDoctors = (): React.JSX.Element => {
         Simply browse through our extensive list of trusted doctors.
       </p>
       <div className="w-full grid grid-cols-fluid gap-4 pt-5 gap-y-6 px-3 sm:px-0">
-        {doctors.slice(0, 10).map((item: Doctor, index: number) => (
+        {doctors.slice(0, 10).map((item: DoctorListItem, index: number) => (
           <div
             onClick={() => {
               navigate(`/appointment/${item.id}`);
