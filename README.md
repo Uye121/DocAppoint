@@ -4,29 +4,27 @@
 
 ### Features
 * Authentication:
-  
   * User login/logout and sign up
-
   * Account email verification
-
     * Resend verification email
-
   * Secure access via JWT
-
     * Background JWT refresh via frontend interceptor
 
-* Scalability
+* Doctors:
+  * Paginated list of active doctors with filter
+  * Detailed doctor profile (education, fees, speciality, etc.)
 
+* Company:
+  * Display company information
+
+* Scalability
   * Containeriztion of different services via Docker
 
 * Safety
-
   * Database audit trail
-
   * Sensitive tables soft delete
 
 * Misc
-
   * Unit tested backend
 
 ## Compliance & Security
