@@ -10,9 +10,10 @@ from .auth import (
 from .patient import PatientViewSet
 from .healthcare_provider import HealthcareProviderViewSet
 from .speciality import SpecialityViewSet
+from .appointment import AppointmentViewSet, SlotViewSet
 
 __all__ = [
     'UserViewSet', 'PatientViewSet', 'HealthcareProviderViewSet', 'LoginView',
     'VerifyEmailView', 'ResendVerifyView', 'LogoutView', 'ChangePasswordView',
-    'UserView', 'SpecialityViewSet'
+    'UserView', 'SpecialityViewSet', 'AppointmentViewSet', 'SlotViewSet'
 ]

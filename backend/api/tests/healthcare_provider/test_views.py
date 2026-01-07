@@ -18,21 +18,21 @@ def api_client():
 class TestProviderList:
     url = "/api/provider/"
 
-    def test_list_only_active(self, api_client, healthcare_provider_factory, user_factory):
+    def test_list_only_active(self, api_client, provider_factory, user_factory):
         user = user_factory()
         api_client.force_authenticate(user=user)
 
-        healthcare_provider_factory(is_removed=False)
-        healthcare_provider_factory(is_removed=True) 
+        provider_factory(is_removed=False)
+        provider_factory(is_removed=True) 
         res = api_client.get(self.url)
         assert res.status_code == status.HTTP_200_OK
         assert len(res.data) == 1 
 
-    def test_search_smoke(self, api_client, healthcare_provider_factory, user_factory):
+    def test_search_smoke(self, api_client, provider_factory, user_factory):
         user = user_factory()
         api_client.force_authenticate(user=user)
 
-        healthcare_provider_factory(user__first_name="John", about="Cardio specialist")
+        provider_factory(user__first_name="John", about="Cardio specialist")
         res = api_client.get(self.url, {"search": "John"})
         assert res.status_code == status.HTTP_200_OK
         assert res.data[0]["firstName"] == "John"
@@ -163,12 +163,12 @@ class TestProviderOnBoard:
         self,
         base_payload,
         api_client,
-        healthcare_provider_factory,
+        provider_factory,
         admin_staff_factory,
         speciality_factory
     ):
         a = admin_staff_factory()
-        prov = healthcare_provider_factory()
+        prov = provider_factory()
 
         api_client.force_authenticate(user=a.user)
         payload = base_payload(user=prov.user.pk, speciality=speciality_factory().pk)
@@ -187,15 +187,15 @@ class TestProviderOnBoard:
 class TestProviderProfile:
     me_url = "/api/provider/me/"
 
-    def test_retrieve_own(self, api_client, healthcare_provider_factory):
-        prov = healthcare_provider_factory(about="Cardio expert")
+    def test_retrieve_own(self, api_client, provider_factory):
+        prov = provider_factory(about="Cardio expert")
         api_client.force_authenticate(user=prov.user)
         res = api_client.get(self.me_url)
         assert res.status_code == status.HTTP_200_OK
         assert res.data["about"] == "Cardio expert"
 
-    def test_update_own(self, api_client, healthcare_provider_factory):
-        prov = healthcare_provider_factory(fees=100)
+    def test_update_own(self, api_client, provider_factory):
+        prov = provider_factory(fees=100)
         api_client.force_authenticate(user=prov.user)
         payload = {"fees": "150.00"}
         res = api_client.patch(self.me_url, payload, format="json")
@@ -215,13 +215,13 @@ class TestProviderSoftDelete:
     def test_staff_can_soft_delete(
         self,
         api_client,
-        healthcare_provider_factory,
+        provider_factory,
         admin_staff_factory,
         hospital_factory
     ):
         h = hospital_factory()
         staff = admin_staff_factory(hospital=h)
-        prov = healthcare_provider_factory(primary_hospital=h, is_removed=False, removed_at=None)
+        prov = provider_factory(primary_hospital=h, is_removed=False, removed_at=None)
         api_client.force_authenticate(user=staff.user)
         payload = {"is_removed": True}
         url = f"/api/provider/{prov.user.pk}/"
@@ -235,12 +235,12 @@ class TestProviderSoftDelete:
     def test_non_staff_cannot_soft_delete(
         self,
         api_client,
-        healthcare_provider_factory,
+        provider_factory,
         patient_factory,
         hospital_factory,
     ):
         h = hospital_factory()
-        prov = healthcare_provider_factory(primary_hospital=h, is_removed=False)
+        prov = provider_factory(primary_hospital=h, is_removed=False)
         p = patient_factory()
         api_client.force_authenticate(user=p.user)
         payload = {"is_removed": True}

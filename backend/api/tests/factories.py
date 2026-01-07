@@ -2,7 +2,6 @@ import factory
 from django.contrib.auth import get_user_model
 from ..models import Patient, HealthcareProvider, AdminStaff, SystemAdmin, Hospital, Speciality
 
-# checkpoint
 User = get_user_model()
 
 class UserFactory(factory.django.DjangoModelFactory):

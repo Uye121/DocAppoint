@@ -31,7 +31,9 @@ from .views import (
     UserView,
     PatientViewSet,
     HealthcareProviderViewSet,
-    SpecialityViewSet
+    SpecialityViewSet,
+    AppointmentViewSet,
+    SlotViewSet
 )
 
 router = DefaultRouter()
@@ -39,6 +41,8 @@ router.register("users", UserViewSet, basename="user")
 router.register("patient", PatientViewSet, basename="patient")
 router.register("provider", HealthcareProviderViewSet, basename="provider")
 router.register("speciality", SpecialityViewSet, basename="speciality")
+router.register("appointment", AppointmentViewSet, basename="appointment")
+router.register("slot", SlotViewSet, basename="slot")
 # router.register("patients", PatientViewSet, basename="patient")
 # router.register("providers", HealthcareProviderViewSet, basename="provider")
 

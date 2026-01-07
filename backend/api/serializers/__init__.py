@@ -9,6 +9,12 @@ from .speciality import SpecialitySerializer, SpecialityListSerializer, Speciali
 from .system_admin import SystemAdminSerializer, SystemAdminCreateSerializer, SystemAdminOnBoardSerializer
 from .user import UserSerializer
 from .auth import ChangePasswordSerializer, LoginSerializer
+from .appointment import (
+    SlotSerializer,
+    AppointmentListSerializer,
+    AppointmentDetailSerializer,
+    AppointmentCreateSerializer
+)
 
 __all__ = [
     'AdminStaffSerializer', 'AdminStaffCreateSerializer', 'AdminStaffOnBoardSerializer',
@@ -17,6 +23,7 @@ __all__ = [
     'HealthcareProviderOnBoardSerializer', 'PatientSerializer', 'PatientCreateSerializer',
     'PatientOnBoardSerializer', 'SpecialitySerializer', 'SpecialityListSerializer',
     'SpecialityCreateSerializer', 'SystemAdminSerializer', 'SystemAdminCreateSerializer',
-    'SystemAdminOnBoardSerializer', 'UserSerializer', 'SignUpSerializer', 'ChangePasswordSerializer',
-    'LoginSerializer'
+    'SystemAdminOnBoardSerializer', 'UserSerializer', 'ChangePasswordSerializer',
+    'LoginSerializer', 'SlotSerializer', 'AppointmentListSerializer', 'AppointmentDetailSerializer',
+    'AppointmentCreateSerializer'
 ]
