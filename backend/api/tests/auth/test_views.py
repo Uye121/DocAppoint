@@ -10,7 +10,7 @@ from ...utils.tokens import build_verification_jwt
 
 User = get_user_model()
 
-pytestmark = pytest.mark.django_db
+pytestmark = pytest.mark.django_db(transaction=True)
 
 @pytest.fixture
 def api_client():

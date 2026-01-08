@@ -7,15 +7,9 @@ from django.contrib.auth import get_user_model
 from ...models import Speciality, AdminStaff
 from ...views import SpecialityViewSet
 
-User = get_user_model()
+pytestmark = pytest.mark.django_db(transaction=True)
 
-pytestmark = pytest.mark.django_db
-
-class TestSpecialityViewSet:
-    @pytest.fixture
-    def viewset(self):
-        return SpecialityViewSet()
-    
+class TestSpecialityPermissions:
     @pytest.fixture
     def api_factory(self):
         return APIRequestFactory()
@@ -24,7 +18,7 @@ class TestSpecialityViewSet:
     def image_file(self):
         return SimpleUploadedFile(
             "test.png", 
-            b"file_content", 
+            b"x", 
             content_type="image/png"
         )
     
@@ -32,7 +26,7 @@ class TestSpecialityViewSet:
     def create_payload(self, image_file):
         def _payload(**kwargs):
             base = {
-                "name": "Cardiology",
+                "name": kwargs.get("name", "Cardiology"),
                 "image": image_file,
                 "description": "Heart specialist",
             }
@@ -40,14 +34,6 @@ class TestSpecialityViewSet:
             return base
         return _payload
     
-    @pytest.fixture(autouse=True)
-    def cleanup(self):
-        yield
-        Speciality.objects.all().delete()
-        AdminStaff.objects.all().delete()
-        User.objects.all().delete()
-
-class TestSpecialityPermissions(TestSpecialityViewSet):
     def test_unauthenticated_cannot_create(self, api_factory, create_payload):
         view = SpecialityViewSet.as_view({"post": "create"})
         request = api_factory.post("/specialities/", create_payload(), format="multipart")
@@ -87,8 +73,31 @@ class TestSpecialityPermissions(TestSpecialityViewSet):
         response = view(request)
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-class TestSpecialityCreate(TestSpecialityViewSet):
+class TestSpecialityCreate:
+    @pytest.fixture
+    def api_factory(self):
+        return APIRequestFactory()
     
+    @pytest.fixture(scope='function')
+    def image_file(self):
+        return SimpleUploadedFile(
+            "test.png", 
+            b"x", 
+            content_type="image/png"
+        )
+    
+    @pytest.fixture
+    def create_payload(self, image_file):
+        def _payload(**kwargs):
+            base = {
+                "name": kwargs.get("name", "Cardiology"),
+                "image": image_file,
+                "description": "Heart specialist",
+            }
+            base.update(kwargs)
+            return base
+        return _payload
+
     def test_create_success(self, api_factory, create_payload, admin_staff_factory):
         admin_user = admin_staff_factory()
         payload = create_payload(name="Neurology")
@@ -149,7 +158,10 @@ class TestSpecialityCreate(TestSpecialityViewSet):
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert "name" in response.data
 
-class TestSpecialityRetrieve(TestSpecialityViewSet):
+class TestSpecialityRetrieve:
+    @pytest.fixture
+    def api_factory(self):
+        return APIRequestFactory()
     
     def test_retrieve_success(self, api_factory, user_factory, speciality_factory):
         user = user_factory()
@@ -184,8 +196,11 @@ class TestSpecialityRetrieve(TestSpecialityViewSet):
         
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-class TestSpecialityUpdate(TestSpecialityViewSet):
-    
+class TestSpecialityUpdate:
+    @pytest.fixture
+    def api_factory(self):
+        return APIRequestFactory()
+
     def test_update_success(self, api_factory, speciality_factory, admin_staff_factory):
         """Admin can update speciality"""
         admin_user = admin_staff_factory()

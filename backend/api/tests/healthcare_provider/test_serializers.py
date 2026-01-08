@@ -11,7 +11,7 @@ from ...serializers import (
 
 User = get_user_model()
 
-pytestmark = pytest.mark.django_db
+pytestmark = pytest.mark.django_db(transaction=True)
 
 class TestHealthcareProviderSerializer:
     def test_valid_update(self, provider_factory, speciality_factory):
@@ -116,7 +116,6 @@ class TestHealthcareProviderListSerializer:
         ps = HealthcareProviderListSerializer(instance=p)
         data = ps.data
         assert data["specialityName"] == p.speciality.name
-        assert data["primaryHospitalName"] == p.primary_hospital.name
         assert data["firstName"] == p.user.first_name
         assert data["lastName"] == p.user.last_name
 

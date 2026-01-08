@@ -12,7 +12,7 @@ from api.models import (
 )
 
 User = get_user_model()
-pytestmark = pytest.mark.django_db
+pytestmark = pytest.mark.django_db(transaction=True)
 
 class TestAppointmentModel:
     @pytest.fixture
@@ -27,7 +27,7 @@ class TestAppointmentModel:
         patient.user.save(update_fields=["is_active"])
 
         assignment = ProviderHospitalAssignment.objects.create(
-            provider=provider, hospital=h
+            healthcare_provider=provider, hospital=h
         )
         now = timezone.now()
         return {
@@ -80,7 +80,7 @@ class TestSlotModel:
         provider = provider_factory()
         now = timezone.now()
         return {
-            "provider": provider,
+            "healthcare_provider": provider,
             "hospital": h,
             "start": now + timedelta(hours=1),
             "end": now + timedelta(hours=2),
@@ -92,7 +92,7 @@ class TestSlotModel:
 
     def test_is_past(self, slot_data):
         slot = Slot(
-            provider=slot_data["provider"],
+            healthcare_provider=slot_data["healthcare_provider"],
             hospital=slot_data["hospital"],
             start=timezone.now() - timedelta(hours=2),
             end=timezone.now() - timedelta(hours=1),
@@ -114,7 +114,7 @@ class TestSlotModel:
     def test_past_slot_blocked(self, slot_data):
         with pytest.raises(ValidationError, match="past"):
             Slot(
-                provider=slot_data["provider"],
+                healthcare_provider=slot_data["healthcare_provider"],
                 hospital=slot_data["hospital"],
                 start=timezone.now() - timedelta(hours=2),
                 end=timezone.now() - timedelta(hours=1),

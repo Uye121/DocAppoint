@@ -9,7 +9,7 @@ class SlotSerializer(serializers.ModelSerializer):
         model = Slot
         fields = [
             "id",
-            "provider",
+            "healthcare_provider",
             "hospital",
             "start",
             "end",
@@ -31,24 +31,23 @@ class SlotSerializer(serializers.ModelSerializer):
 
 class AppointmentListSerializer(serializers.ModelSerializer):
     patient = PatientSerializer(read_only=True)
-    healthcare_provider = HealthcareProviderListSerializer(read_only=True)
+    provider = HealthcareProviderListSerializer(read_only=True, source="healthcare_provider")
 
     class Meta:
         model = Appointment
         fields = [
             "id",
             "patient",
-            "healthcare_provider",
+            "provider",
             "appointment_start_datetime_utc",
             "appointment_end_datetime_utc",
             "location",
-            "reason",
             "status",
         ]
 
 class AppointmentDetailSerializer(serializers.ModelSerializer):
     patient = PatientSerializer(read_only=True)
-    healthcare_provider = HealthcareProviderListSerializer(read_only=True)
+    provider = HealthcareProviderListSerializer(read_only=True, source="healthcare_provider")
     location = serializers.StringRelatedField()  # or nested if you want
 
     class Meta:
@@ -56,7 +55,7 @@ class AppointmentDetailSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "patient",
-            "healthcare_provider",
+            "provider",
             "appointment_start_datetime_utc",
             "appointment_end_datetime_utc",
             "location",
@@ -87,7 +86,8 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
         required=False,
         write_only=True,
     )
-    healthcare_provider = serializers.PrimaryKeyRelatedField(
+    provider = serializers.PrimaryKeyRelatedField(
+        source="healthcare_provider",
         queryset=HealthcareProvider.objects.all()
     )
     location = serializers.PrimaryKeyRelatedField(
@@ -98,7 +98,7 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
         model = Appointment
         fields = [
             "patient",
-            "healthcare_provider",
+            "provider",
             "appointment_start_datetime_utc",
             "appointment_end_datetime_utc",
             "location",

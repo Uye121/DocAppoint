@@ -5,11 +5,7 @@ from django.contrib.auth import get_user_model
 
 from api.models import (
     Appointment,
-    HealthcareProvider,
-    Hospital,
     ProviderHospitalAssignment,
-    Patient,
-    Speciality,
 )
 from ...serializers import (
     SlotSerializer,
@@ -19,7 +15,7 @@ from ...serializers import (
 )
 
 User = get_user_model()
-pytestmark = pytest.mark.django_db
+pytestmark = pytest.mark.django_db(transaction=True)
 
 class TestSlotSerializer:
     def test_valid_slot(self, provider_factory, hospital_factory):
@@ -29,7 +25,7 @@ class TestSlotSerializer:
         end = start + timedelta(minutes=30)
         ser = SlotSerializer(
             data={
-                "provider": prov.pk,
+                "healthcare_provider": prov.pk,
                 "hospital": h.pk,
                 "start": start,
                 "end": end,
@@ -46,7 +42,7 @@ class TestSlotSerializer:
         start = timezone.now() + timedelta(hours=1)
         s = SlotSerializer(
             data={
-                "provider": prov.pk,
+                "healthcare_provider": prov.pk,
                 "hospital": h.pk,
                 "start": start,
                 "end": start - timedelta(minutes=1),
@@ -62,7 +58,7 @@ class TestSlotSerializer:
         past = timezone.now() - timedelta(hours=2)
         s = SlotSerializer(
             data={
-                "provider": prov.pk,
+                "healthcare_provider": prov.pk,
                 "hospital": h.pk,
                 "start": past,
                 "end": past + timedelta(minutes=30),
@@ -79,7 +75,7 @@ class TestAppointmentSerializers:
         provider = provider_factory()
         user = user_factory(email="user@test.com")
         patient = patient_factory(user=user)
-        assignment = ProviderHospitalAssignment.objects.create(provider=provider, hospital=h)
+        assignment = ProviderHospitalAssignment.objects.create(healthcare_provider=provider, hospital=h)
         now = timezone.now()
         return {
             "patient": patient,
@@ -99,7 +95,6 @@ class TestAppointmentSerializers:
             reason="Check-up",
         )
         s = AppointmentListSerializer(instance=appt)
-        assert s.data["reason"] == "Check-up"
         assert s.data["status"] == "REQUESTED"
         assert s.data["patient"]["user"]["email"] == "user@test.com"
 
@@ -122,7 +117,7 @@ class TestAppointmentSerializers:
         s = AppointmentCreateSerializer(
             data={
                 "patient": data["patient"].pk,
-                "healthcare_provider": data["provider"].pk,
+                "provider": data["provider"].pk,
                 "appointment_start_datetime_utc": start,
                 "appointment_end_datetime_utc": end,
                 "location": data["assignment"].pk,
@@ -155,7 +150,7 @@ class TestAppointmentSerializers:
         s = AppointmentCreateSerializer(
             data={
                 "patient": data["patient"].pk,
-                "healthcare_provider": data["provider"].pk,
+                "provider": data["provider"].pk,
                 "appointment_start_datetime_utc": start,
                 "appointment_end_datetime_utc": end,
                 "location": data["assignment"].pk,

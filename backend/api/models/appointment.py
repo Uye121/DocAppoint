@@ -53,7 +53,7 @@ class Slot(TimestampMixin, AuditMixin):
         BLOCKED = "BLOCKED", "Blocked" 
         UNAVAILABLE = "UNAVAILABLE", "Unavailable"
 
-    provider = models.ForeignKey(HealthcareProvider,on_delete=models.CASCADE, related_name="slots")
+    healthcare_provider = models.ForeignKey(HealthcareProvider,on_delete=models.CASCADE, related_name="slots")
     hospital = models.ForeignKey(Hospital, on_delete=models.CASCADE, related_name='slots')
     start = models.DateTimeField()
     end = models.DateTimeField()
@@ -66,21 +66,21 @@ class Slot(TimestampMixin, AuditMixin):
     class Meta(TimestampMixin.Meta, AuditMixin.Meta):
         constraints = [
             models.UniqueConstraint(
-                fields=["provider", "start"],
-                name="uniq_provider_start"
+                fields=["healthcare_provider", "start"],
+                name="uniq_healthcare_provider_start"
             ),
             models.CheckConstraint(
                 condition=models.Q(end__gt=models.F("start")),
                 name="slot_end_gt_start"
             ),
             models.UniqueConstraint(
-                fields=["provider", "start"],
+                fields=["healthcare_provider", "start"],
                 condition=models.Q(status="FREE"),
-                name="uniq_provider_start_free"
+                name="uniq_healthcare_provider_start_free"
             )
         ]
         indexes = [
-            models.Index(fields=["provider", "start", "status"]),
+            models.Index(fields=["healthcare_provider", "start", "status"]),
             models.Index(fields=["hospital", "start", "status"]),
         ]
 
@@ -108,6 +108,6 @@ class Slot(TimestampMixin, AuditMixin):
         start_local = self.start.astimezone(tz)
         end_local = self.end.astimezone(tz)
         return (
-            f"{self.provider} @ {self.hospital}  "
+            f"{self.healthcare_provider} @ {self.hospital}  "
             f"{start_local:%Y-%m-%d %H:%M}–{end_local:%H:%M} ({self.status})"
         )

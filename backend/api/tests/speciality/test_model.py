@@ -6,7 +6,7 @@ from ...models import Speciality
 
 User = get_user_model()
 
-pytestmark = pytest.mark.django_db
+pytestmark = pytest.mark.django_db(transaction=True)
 
 class TestSpecialityModel:
     def test_create(self, admin_staff_factory):

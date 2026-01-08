@@ -20,23 +20,23 @@ class Hospital(AuditMixin, models.Model):
     removed_at = models.DateTimeField(null=True, blank=True)
 
 class ProviderHospitalAssignment(models.Model):
-    provider = models.ForeignKey('HealthcareProvider', on_delete=models.CASCADE)
+    healthcare_provider = models.ForeignKey('HealthcareProvider', on_delete=models.CASCADE)
     hospital = models.ForeignKey(Hospital, on_delete=models.CASCADE)
     is_active = models.BooleanField(default=True)
     start_datetime_utc = models.DateTimeField(default=timezone.now)
     end_datetime_utc = models.DateTimeField(null=True, blank=True)
     
     class Meta:
-        unique_together = ['provider', 'hospital']
+        unique_together = ['healthcare_provider', 'hospital']
         indexes = [
-            models.Index(fields=["provider", "is_active"]),
+            models.Index(fields=["healthcare_provider", "is_active"]),
         ]
         # Provider can only be assigned to same hospital only after previous
         # assignment has ended
         constraints = [
             models.UniqueConstraint(
-                fields=['provider', 'hospital'],
+                fields=['healthcare_provider', 'hospital'],
                 condition=models.Q(end_datetime_utc__isnull=True),
-                name="unique_provider_hospital_assignment"
+                name="unique_healthcare_provider_hospital_assignment"
             )
         ]

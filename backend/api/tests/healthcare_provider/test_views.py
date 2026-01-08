@@ -6,7 +6,7 @@ from rest_framework import status
 
 User = get_user_model()
 
-pytestmark = pytest.mark.django_db
+pytestmark = pytest.mark.django_db(transaction=True)
 
 @pytest.fixture
 def api_client():
@@ -35,6 +35,7 @@ class TestProviderList:
         provider_factory(user__first_name="John", about="Cardio specialist")
         res = api_client.get(self.url, {"search": "John"})
         assert res.status_code == status.HTTP_200_OK
+        print(res.data)
         assert res.data[0]["firstName"] == "John"
 
 # ------------------------------------------------------------------
