@@ -5,12 +5,15 @@ from .patient import PatientSerializer
 from .healthcare_provider import HealthcareProviderListSerializer
 
 class SlotSerializer(serializers.ModelSerializer):
+    hospital_timezone = serializers.CharField(source="hospital.timezone", read_only=True)
+
     class Meta:
         model = Slot
         fields = [
             "id",
             "healthcare_provider",
             "hospital",
+            "hospital_timezone",
             "start",
             "end",
             "status",

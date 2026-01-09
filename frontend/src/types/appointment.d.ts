@@ -4,12 +4,17 @@ import type { User } from "./user";
 
 export interface Slot {
   id: string;
-  provider: Doctor;
   hospital: Hospital;
+  hospitalTimezone: string;
   start: string;
   end: string;
   status: "FREE" | "BOOKED" | "BLOCKED" | "UNAVAILABLE";
-  duration?: number;
+};
+
+export interface SlotRangePayload {
+  providerId: string;
+  startDate?: string;
+  endDate?: string;
 };
 
 export interface AppointmentListItem {

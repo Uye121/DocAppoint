@@ -1,8 +1,10 @@
 import json
 import os
 import mimetypes
+from datetime import time, timedelta
 from pathlib import Path
 from decimal import Decimal
+from django.utils import timezone
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -11,6 +13,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 
 from api.models import Speciality, Hospital
 from api.serializers import HealthcareProviderCreateSerializer, SystemAdminCreateSerializer
+from ...services.appointment import generate_daily_slots
 
 User = get_user_model()
 DOC_FILE = Path(f'{settings.MEDIA_ROOT}/doctor.json')
@@ -87,7 +90,7 @@ class Command(BaseCommand):
                 "name": "General Hospital",
                 "address": "123 Main St",
                 "phone_number": "555-1234",
-                "timezone": "UTC",
+                "timezone": "America/New_York",
                 "created_by": admin_user,
                 "updated_by": admin_user,
             }
@@ -151,5 +154,17 @@ class Command(BaseCommand):
             self.stdout.write(
                 self.style.SUCCESS(f"{'Created' if created else 'Existed'}: {provider}")
             )
+
+            # Populate two weeks of slots
+            today = timezone.now().date()
+            for offset in range(14):
+                generate_daily_slots(
+                    provider=provider,
+                    hospital=hospital,
+                    date=today + timedelta(days=offset),
+                    opening=time(9),
+                    closing=time(17),
+                    duration_min=30,
+                )
 
         self.stdout.write(self.style.SUCCESS("Providers seeded"))

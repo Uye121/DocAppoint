@@ -167,7 +167,7 @@ class SlotViewSet(viewsets.ModelViewSet):
         if not (start_str and end_str):
             today = timezone.now().date()
             start_date = today - timedelta(days=today.weekday())
-            start_date, end_date = today, start_date + timedelta(days=6)
+            end_date = start_date + timedelta(days=6)
         else:
             try:
                 start_date = timezone.datetime.strptime(start_str, "%Y-%m-%d").date()
@@ -187,7 +187,7 @@ class SlotViewSet(viewsets.ModelViewSet):
                 .filter(healthcare_provider_id=provider_id,
                         start__date__range=[start_date, end_date])
                 .order_by("start")
-                .values("id", "start", "end", hospital_name=F("hospital__name")))
+                .values("id", "start", "end", "status", hospital_name=F("hospital__name")))
 
         grouped_slots = {}
         for slot in slots:
@@ -197,11 +197,18 @@ class SlotViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"], url_path="free")
     def free(self, request):
-        self.filter_backends = [DjangoFilterBackend]
-        self.filterset_fields = ["healthcare_provider", "hospital", "status"]
-        qs = self.get_queryset().filter(
-            status=Slot.Status.FREE,
-            start__date=request.query_params.get("date"),
-        )
-        serializer = self.get_serializer(qs, many=True)
+        provider_id = request.query_params.get("provider")
+        date_str = request.query_params.get("date")
+        if not (provider_id and date_str):
+            return Response(
+                {"detail": "provider and date required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        slots = (self.get_queryset()
+                 .filter(healthcare_provider_id=provider_id,
+                         start__date=date_str,
+                         status=Slot.Status.FREE)
+                 .order_by("start"))
+        serializer = self.get_serializer(slots, many=True)
         return Response(serializer.data)

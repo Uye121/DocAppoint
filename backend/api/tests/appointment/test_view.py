@@ -200,7 +200,7 @@ class TestSlotViewSet:
             end=timezone.make_aware(timezone.datetime.combine(tomorrow, timezone.datetime.min.time())) + timedelta(hours=11),
             status=Slot.Status.BOOKED,
         )
-        res = api_client.get(self.url + "free/", {"date": tomorrow.isoformat()})
+        res = api_client.get(self.url + "free/", {"date": tomorrow.isoformat(), "provider": provider.pk})
         assert res.status_code == status.HTTP_200_OK
         assert len(res.data) == 1
 
@@ -354,7 +354,7 @@ class TestSlotRange:
     def test_range_default_week(self, api_client, provider):
         today = timezone.now().date()
         monday = today - timedelta(days=today.weekday())
-        sunday = monday + timedelta(days=6)
+        # sunday = monday + timedelta(days=6)
 
         for i in range(7):
             day = monday + timedelta(days=i)
@@ -375,8 +375,8 @@ class TestSlotRange:
         assert resp.status_code == status.HTTP_200_OK
 
         grouped = resp.data
-        expected_days = (sunday - today).days + 1
-        assert len(grouped) == expected_days
+        # expected_days = (sunday - today).days + 1
+        assert len(grouped) == 7
         for _, slots in grouped.items():
             assert len(slots) == 1
             assert slots[0]["hospital_name"] == provider.primary_hospital.name
