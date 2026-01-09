@@ -6,7 +6,6 @@ import { SyncLoader } from "react-spinners";
 import {
   eachDayOfInterval,
   format,
-  parseISO,
   startOfWeek,
   endOfWeek,
   formatISO,
@@ -214,7 +213,7 @@ const Appointments = (): React.JSX.Element | null => {
           )}
         </div>
 
-        <RelatedDoctors docId={docId} speciality={docInfo.speciality} />
+        <RelatedDoctors docId={docId} speciality={docInfo.specialityName} />
       </div>
     )
   );

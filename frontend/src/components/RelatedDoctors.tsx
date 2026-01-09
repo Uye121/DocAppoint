@@ -1,6 +1,6 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AppContext } from "../context/AppContext";
+import { useDoctor } from "../../hooks/useDoctor";
 import type { DoctorListItem } from "../types/doctor";
 
 interface RelatedDoctorsProps {
@@ -13,13 +13,13 @@ const RelatedDoctors = ({
   speciality,
 }: RelatedDoctorsProps): React.JSX.Element => {
   const navigate = useNavigate();
-  const { doctors } = useContext(AppContext);
+  const { doctors } = useDoctor();
   const [relDoc, setRelDoc] = useState<DoctorListItem[]>([]);
 
   useEffect(() => {
-    if (doctors.length && speciality) {
+    if (doctors?.length && speciality) {
       const doctorsData = doctors.filter(
-        (doc) => doc.speciality == speciality && doc.id != docId,
+        (doc) => doc.specialityName == speciality && doc.id.toString() != docId,
       );
       setRelDoc(doctorsData);
     }
