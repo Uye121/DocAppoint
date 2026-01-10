@@ -15,8 +15,9 @@ import { formatInTimeZone } from "date-fns-tz";
 import { assets } from "../assets/assets_frontend/assets";
 import { RelatedDoctors } from "../components";
 import { getDoctorById } from "../api/doctor";
-import { getSlotsByRange } from "../api/appointment";
-import type { Slot } from "../types/appointment";
+import { getSlotsByRange, scheduleAppointment } from "../api/appointment";
+import type { AppointmentPayload, Slot } from "../types/appointment";
+import { formatErrors } from "../../utils/errorMap";
 
 const Appointments = (): React.JSX.Element | null => {
   const now = new Date();
@@ -29,6 +30,13 @@ const Appointments = (): React.JSX.Element | null => {
     formatISO(now, { representation: "date" }),
   );
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
+  const [selectedStartTime, setSelectedStartTime] = useState<string | null>(
+    null,
+  );
+  const [selectedEndTime, setSelectedEndTime] = useState<string | null>(null);
+  const [location, setLocation] = useState<string | null>(null);
+  const [reason, setReason] = useState<string>("");
+  const [booked, setBooked] = useState<bool>(false);
 
   const { data: docInfo, isLoading } = useQuery({
     queryKey: ["doctor", docId],
@@ -48,21 +56,30 @@ const Appointments = (): React.JSX.Element | null => {
     enabled: !!docId,
   });
 
-  console.log("slots: ", docSlots);
-
   const days = eachDayOfInterval({ start: monday, end: sunday });
   const slots = docSlots[selectedDay] || [];
 
   const handleBook = () => {
     if (!selectedSlotId) return;
-    console.log("Book slot", selectedSlotId);
+
+    const payload: AppointmentPayload = {
+      provider: docId!,
+      appointmentStartDatetimeUtc: selectedStartTime!,
+      appointmentEndDatetimeUtc: selectedEndTime!,
+      location: location!,
+      reason: reason!,
+    };
+
+    scheduleAppointment(payload)
+      .then(() => setBooked(true))
+      .catch((err) => alert(formatErrors(err)));
   };
 
   if (isLoading)
     return (
       <div className="flex flex-col items-center">
         <SyncLoader size={30} color="#38BDF8" loading />
-        <p className="mt-4 text-zinc-600">Verifying your email...</p>
+        <p className="mt-4 text-zinc-600">Loading provider data...</p>
       </div>
     );
 
@@ -147,21 +164,43 @@ const Appointments = (): React.JSX.Element | null => {
               {slots.length ? (
                 slots.map((slot: Slot) => {
                   const isFree = slot.status === "FREE";
-                  const hospitalTz = slot.hospitalTimezone ?? "America/New_York";
-                  console.log("hos tz: ", hospitalTz);
-                  const hospitalNow = formatInTimeZone(new Date(), hospitalTz, "yyyy-MM-dd HH:mm:ss");
-                  const hospitalSlotStart = formatInTimeZone(slot.start, hospitalTz, "yyyy-MM-dd HH:mm:ss");
+                  const hospitalTz =
+                    slot.hospitalTimezone ?? "America/New_York";
+                  console.log(slot);
+                  const hospitalNow = formatInTimeZone(
+                    new Date(),
+                    hospitalTz,
+                    "yyyy-MM-dd HH:mm:ss",
+                  );
+                  const hospitalSlotStart = formatInTimeZone(
+                    slot.start,
+                    hospitalTz,
+                    "yyyy-MM-dd HH:mm:ss",
+                  );
                   const isPast = hospitalSlotStart < hospitalNow;
 
-                  const startLocal = formatInTimeZone(slot.start, userTimeZone, "HH:mm");
-                  const endLocal   = formatInTimeZone(slot.end, userTimeZone, "HH:mm");
-
-                  console.log("hos: " + hospitalSlotStart + " | " + "local: " + startLocal + " ");
+                  const startLocal = formatInTimeZone(
+                    slot.start,
+                    userTimeZone,
+                    "HH:mm",
+                  );
+                  const endLocal = formatInTimeZone(
+                    slot.end,
+                    userTimeZone,
+                    "HH:mm",
+                  );
 
                   return (
                     <button
                       key={slot.id}
-                      onClick={() => isFree && !isPast && setSelectedSlotId(slot.id)}
+                      onClick={() => {
+                        if (isFree && !isPast) {
+                          setSelectedSlotId(slot.id);
+                          setSelectedStartTime(slot.start);
+                          setSelectedEndTime(slot.end);
+                          setLocation(slot.hospitalId);
+                        }
+                      }}
                       disabled={!isFree || isPast}
                       className={
                         "w-full rounded border px-4 py-3 text-left text-sm " +
@@ -177,7 +216,7 @@ const Appointments = (): React.JSX.Element | null => {
                           {startLocal} – {endLocal}
                         </span>
                         <span className="text-xs text-gray-500">
-                          {slot.hospital_name}
+                          {slot.hospitalName}
                         </span>
                       </div>
                     </button>
@@ -189,10 +228,25 @@ const Appointments = (): React.JSX.Element | null => {
                 </p>
               )}
 
+              {selectedSlotId && (
+                <div className="mt-3">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Reason for visit <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    rows={3}
+                    className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    placeholder="Briefly describe the reason for your visit…"
+                  />
+                </div>
+              )}
+
               <div className="mt-4 text-center">
                 <button
                   onClick={handleBook}
-                  disabled={!selectedSlotId}
+                  disabled={!selectedSlotId || !reason.trim()}
                   className={[
                     "px-6 py-2 rounded text-white",
                     selectedSlotId

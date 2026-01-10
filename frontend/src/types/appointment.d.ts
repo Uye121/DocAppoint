@@ -1,10 +1,10 @@
 import type { Doctor } from "./doctor";
-import type { Hospital } from "./hospital";
 import type { User } from "./user";
 
 export interface Slot {
   id: string;
-  hospital: Hospital;
+  hospitalId: int;
+  hospitalName: string;
   hospitalTimezone: string;
   start: string;
   end: string;
@@ -31,4 +31,13 @@ export interface Appointment extends AppointmentListItem {
   reason: string;
   createdAt: string;
   updatedAt: string;
-}
+};
+
+export interface AppointmentPayload {
+  patient?: User;
+  provider: string;
+  appointmentStartDatetimeUtc: string;
+  appointmentEndDatetimeUtc: string;
+  location: string;
+  reason: string;
+};

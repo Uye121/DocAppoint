@@ -187,7 +187,11 @@ class SlotViewSet(viewsets.ModelViewSet):
                 .filter(healthcare_provider_id=provider_id,
                         start__date__range=[start_date, end_date])
                 .order_by("start")
-                .values("id", "start", "end", "status", hospital_name=F("hospital__name")))
+                .values("id", "start", "end", "status",
+                        hospitalId=F("hospital_id"),
+                        hospitalName=F("hospital__name"),
+                        hospitalTimezone=F("hospital__timezone"))
+                )
 
         grouped_slots = {}
         for slot in slots:

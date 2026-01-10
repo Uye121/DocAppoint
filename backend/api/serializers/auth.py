@@ -15,7 +15,7 @@ class ChangePasswordSerializer(CamelCaseMixin, serializers.Serializer):
         style={"input_type": "password"}
     )
 
-class LoginSerializer(serializers.Serializer):
+class LoginSerializer(CamelCaseMixin, serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(
         write_only=True,

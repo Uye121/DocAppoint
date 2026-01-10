@@ -109,7 +109,7 @@ class TestAppointmentSerializers:
         )
         s = AppointmentDetailSerializer(instance=appt)
         assert s.data["reason"] == "Detail"
-        assert "created_at" in s.data
+        assert "createdAt" in s.data
 
     def test_appointment_create_serializer_valid(self, data):
         start = timezone.now() + timedelta(hours=1)

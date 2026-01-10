@@ -3,8 +3,10 @@ from django.utils import timezone
 from ..models import Appointment, Slot, Patient, HealthcareProvider, ProviderHospitalAssignment
 from .patient import PatientSerializer
 from .healthcare_provider import HealthcareProviderListSerializer
+from ..mixin import CamelCaseMixin
 
-class SlotSerializer(serializers.ModelSerializer):
+class SlotSerializer(CamelCaseMixin, serializers.ModelSerializer):
+    hospital_id = serializers.PrimaryKeyRelatedField(source='hospital.id', read_only=True)
     hospital_timezone = serializers.CharField(source="hospital.timezone", read_only=True)
 
     class Meta:
@@ -12,7 +14,7 @@ class SlotSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "healthcare_provider",
-            "hospital",
+            "hospital_id",
             "hospital_timezone",
             "start",
             "end",
@@ -32,7 +34,7 @@ class SlotSerializer(serializers.ModelSerializer):
             )
         return attrs
 
-class AppointmentListSerializer(serializers.ModelSerializer):
+class AppointmentListSerializer(CamelCaseMixin, serializers.ModelSerializer):
     patient = PatientSerializer(read_only=True)
     provider = HealthcareProviderListSerializer(read_only=True, source="healthcare_provider")
 
@@ -48,7 +50,7 @@ class AppointmentListSerializer(serializers.ModelSerializer):
             "status",
         ]
 
-class AppointmentDetailSerializer(serializers.ModelSerializer):
+class AppointmentDetailSerializer(CamelCaseMixin, serializers.ModelSerializer):
     patient = PatientSerializer(read_only=True)
     provider = HealthcareProviderListSerializer(read_only=True, source="healthcare_provider")
     location = serializers.StringRelatedField()  # or nested if you want
@@ -83,7 +85,7 @@ class AppointmentDetailSerializer(serializers.ModelSerializer):
             )
         return attrs
 
-class AppointmentCreateSerializer(serializers.ModelSerializer):
+class AppointmentCreateSerializer(CamelCaseMixin, serializers.ModelSerializer):
     patient = serializers.PrimaryKeyRelatedField(
         queryset=Patient.objects.all(),
         required=False,

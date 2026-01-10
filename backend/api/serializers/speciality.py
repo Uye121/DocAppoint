@@ -1,8 +1,9 @@
 from rest_framework import serializers
 
 from ..models import Speciality
+from ..mixin import CamelCaseMixin
 
-class SpecialitySerializer(serializers.ModelSerializer):
+class SpecialitySerializer(CamelCaseMixin, serializers.ModelSerializer):
     class Meta:
         model = Speciality
         fields = (
@@ -16,7 +17,7 @@ class SpecialitySerializer(serializers.ModelSerializer):
         )
         read_only_fields = ("id", "created_at", "updated_by", "is_removed", "removed_at")
 
-class SpecialityListSerializer(serializers.ModelSerializer):
+class SpecialityListSerializer(CamelCaseMixin, serializers.ModelSerializer):
     class Meta:
         model = Speciality
         fields = (
@@ -26,7 +27,7 @@ class SpecialityListSerializer(serializers.ModelSerializer):
         )
 
 # Used for creating new specialities
-class SpecialityCreateSerializer(serializers.ModelSerializer):
+class SpecialityCreateSerializer(CamelCaseMixin, serializers.ModelSerializer):
     class Meta:
         model = Speciality
         fields = ("name", "image")

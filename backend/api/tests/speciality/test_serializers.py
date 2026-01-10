@@ -34,10 +34,10 @@ class TestSpecialitySerializers:
         assert data["id"] == speciality.id
         assert data["name"] == "Cardiology"
         assert "image" in data
-        assert data["is_removed"] is False
-        assert data["removed_at"] is None
-        assert data["created_by"] == user.id
-        assert data["updated_by"] == user.id
+        assert data["isRemoved"] is False
+        assert data["removedAt"] is None
+        assert data["createdBy"] == user.id
+        assert data["updatedBy"] == user.id
 
     def test_speciality_list_serializer(self, speciality):
         ser = SpecialityListSerializer(instance=speciality)
