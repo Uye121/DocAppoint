@@ -1,0 +1,156 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+import type { Patient } from "../types/patient";
+
+const PatientOnboard = () => {
+  const nav = useNavigate();
+  const [form, setForm] = useState<Patient>({});
+
+  const onSkip = () => {
+    nav("/");
+  };
+
+  const onSubmit = () => {
+    nav("/");
+  };
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value } = e.target;
+    setForm((f) => ({
+      ...f,
+      [name]:
+        name === "weight" || name === "height"
+          ? Number(value) || undefined
+          : value || undefined,
+    }));
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto bg-white rounded-lg border border-gray-300 p-6 shadow-sm">
+      <h2 className="text-xl font-semibold text-gray-900 mb-2">
+        Complete your profile
+      </h2>
+      <p className="text-sm text-gray-600 mb-6">
+        All fields are optional and can be filled later.
+      </p>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Blood type
+          </label>
+          <input
+            name="bloodType"
+            value={form.bloodType ?? ""}
+            onChange={handleChange}
+            className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            placeholder="e.g. O+"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Insurance
+          </label>
+          <input
+            name="insurance"
+            value={form.insurance ?? ""}
+            onChange={handleChange}
+            className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            placeholder="Provider / policy number"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Weight (kg)
+          </label>
+          <input
+            name="weight"
+            type="number"
+            value={form.weight ?? ""}
+            onChange={handleChange}
+            className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            placeholder="70"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Height (cm)
+          </label>
+          <input
+            name="height"
+            type="number"
+            value={form.height ?? ""}
+            onChange={handleChange}
+            className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            placeholder="175"
+          />
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Allergies
+        </label>
+        <textarea
+          name="allergies"
+          value={form.allergies ?? ""}
+          onChange={handleChange}
+          rows={3}
+          className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          placeholder="List any known allergies"
+        />
+      </div>
+
+      <div className="mt-4">
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Chronic conditions
+        </label>
+        <textarea
+          name="chronicConditions"
+          value={form.chronicConditions ?? ""}
+          onChange={handleChange}
+          rows={3}
+          className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          placeholder="e.g. Diabetes, Hypertension"
+        />
+      </div>
+
+      <div className="mt-4">
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Current medications
+        </label>
+        <textarea
+          name="currentMedications"
+          value={form.currentMedications ?? ""}
+          onChange={handleChange}
+          rows={3}
+          className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          placeholder="List any medicines you are taking"
+        />
+      </div>
+
+      <div className="mt-6 flex gap-3">
+        <button
+          onClick={() => onSubmit(form)}
+          className="px-5 py-2 rounded bg-primary text-white hover:bg-primary-dark"
+        >
+          Save profile
+        </button>
+        <button
+          onClick={onSkip}
+          className="px-5 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
+        >
+          Skip for now
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default PatientOnboard;

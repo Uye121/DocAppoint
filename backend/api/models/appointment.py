@@ -72,11 +72,6 @@ class Slot(TimestampMixin, AuditMixin):
             models.CheckConstraint(
                 condition=models.Q(end__gt=models.F("start")),
                 name="slot_end_gt_start"
-            ),
-            models.UniqueConstraint(
-                fields=["healthcare_provider", "start"],
-                condition=models.Q(status="FREE"),
-                name="uniq_healthcare_provider_start_free"
             )
         ]
         indexes = [

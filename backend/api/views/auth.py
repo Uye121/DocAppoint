@@ -87,7 +87,7 @@ class VerifyEmailView(generics.GenericAPIView):
 
         user.is_active = True
         user.save(update_fields=["is_active"])
-        return Response({"detail": "E-mail verified"}, status=status.HTTP_200_OK)
+        return Response({"detail": "E-mail verified", "onboardingComplete": False}, status=status.HTTP_200_OK)
 
 # @method_decorator(ratelimit(key="ip", rate="3/h", method="POST"), name='post')
 class ResendVerifyView(generics.GenericAPIView):

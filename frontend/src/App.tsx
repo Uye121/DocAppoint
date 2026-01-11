@@ -8,10 +8,12 @@ import {
   Home,
   Signup,
   Login,
+  PatientOnboard,
   UserProfile,
   UserAppointment,
   Verify,
   VerifyEmail,
+  Test,
 } from "./pages";
 import { Footer, Navbar, ProtectedRoutes } from "./components";
 import { SpecialitiesProvider, DoctorProvider } from "./context";
@@ -47,6 +49,7 @@ const App = (): React.JSX.Element => {
             <Route path="/appointment" element={<Appointments />} />
             <Route path="/my-appointments" element={<UserAppointment />} />
             <Route path="/appointment/:docId" element={<Appointments />} />
+            <Route path="/onboard" element={<PatientOnboard />} />
           </Route>
         </Route>
       </Routes>

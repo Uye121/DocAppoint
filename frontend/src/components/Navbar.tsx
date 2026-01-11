@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 
 import { assets } from "../assets/assets_frontend/assets";
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from "../../hooks/useAuth";
 
 const Navbar = (): React.JSX.Element => {
   const nav = useNavigate();

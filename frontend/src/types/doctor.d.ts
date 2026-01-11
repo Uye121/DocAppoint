@@ -16,7 +16,7 @@ export interface Doctor extends DoctorListItem {
   education: string;
   yearsOfExperience: number;
   about: string;
-  fees: number | string;
+  fees: string;
   addressLine1: string;
   addressLine2: string;
   city: string;
