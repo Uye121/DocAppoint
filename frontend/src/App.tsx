@@ -40,6 +40,7 @@ const App = (): React.JSX.Element => {
             }
           >
             <Route path="/" element={<Home />} />
+            <Route path="/onboard" element={<PatientOnboard />} />
             <Route path="/doctors" element={<Doctors />} />
             <Route path="/doctors/:speciality" element={<Doctors />} />
             <Route path="/about" element={<About />} />
@@ -48,7 +49,6 @@ const App = (): React.JSX.Element => {
             <Route path="/appointment" element={<Appointments />} />
             <Route path="/my-appointments" element={<UserAppointment />} />
             <Route path="/appointment/:docId" element={<Appointments />} />
-            <Route path="/onboard" element={<PatientOnboard />} />
           </Route>
         </Route>
       </Routes>

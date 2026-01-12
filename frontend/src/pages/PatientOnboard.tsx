@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import type { Patient } from "../types/patient";
-import { getMe } from "../api/auth";
 import { onboard } from "../api/patient";
 
 const PatientOnboard = () => {
@@ -13,8 +12,6 @@ const PatientOnboard = () => {
     e.preventDefault();
     onboard(form).then(() => nav("/"));
   };
-
-  getMe().then((data) => console.log(data));
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,

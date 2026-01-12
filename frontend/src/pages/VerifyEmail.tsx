@@ -17,12 +17,11 @@ const VerifyEmail = (): React.JSX.Element => {
 
     if (!token) {
       setStatus(VERIFY_STATUS.FAILURE);
-      return;
+    } else {
+      verifyEmail(token)
+        .then(() => setStatus(VERIFY_STATUS.SUCCESSFUL))
+        .catch(() => setStatus(VERIFY_STATUS.FAILURE));
     }
-
-    verifyEmail(token)
-      .then(() => setStatus(VERIFY_STATUS.SUCCESSFUL))
-      .catch(() => setStatus(VERIFY_STATUS.FAILURE));
   }, [searchParams]);
 
   const renderContent = (status: VerifyStatus) => {
@@ -40,9 +39,9 @@ const VerifyEmail = (): React.JSX.Element => {
             <h2 className="text-2xl font-semibold mb-2">Email confirmed!</h2>
             <button
               className="border px-10 md:px-16 py-8 mb-4 hover:bg-sky-400 hover:text-white"
-              onClick={() => nav("/login")}
+              onClick={() => nav("/onboard")}
             >
-              Go to login
+              Go to onboarding
             </button>
           </div>
         );

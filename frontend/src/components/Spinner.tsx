@@ -2,7 +2,7 @@ import React from "react";
 import { SyncLoader } from "react-spinners";
 
 interface SpinnerProps {
-  loadingText: string | undefined;
+  loadingText?: string;
 }
 
 const Spinner = ({ loadingText = "Loading data..." }: SpinnerProps): React.JSX.Element => (
