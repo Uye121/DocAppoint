@@ -13,7 +13,6 @@ import {
   UserAppointment,
   Verify,
   VerifyEmail,
-  Test,
 } from "./pages";
 import { Footer, Navbar, ProtectedRoutes } from "./components";
 import { SpecialitiesProvider, DoctorProvider } from "./context";

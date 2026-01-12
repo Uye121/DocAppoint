@@ -69,7 +69,6 @@ class TestVerifyEmail:
         user = user_factory(email="verify@user.com", is_active=False)
         token = build_verification_jwt(user)
         res = api_client.get(self.url, {"token": token})
-        print(res)
         assert res.status_code == status.HTTP_200_OK
         user.refresh_from_db()
         assert user.is_active

@@ -11,7 +11,12 @@ class UserSerializer(CamelCaseMixin, serializers.ModelSerializer):
         required=False,
         validators=[validate_password],
     )
-
+    has_patient_profile = serializers.SerializerMethodField()
+    has_provider_profile = serializers.SerializerMethodField()
+    has_admin_staff_profile = serializers.SerializerMethodField()
+    has_system_admin_profile = serializers.SerializerMethodField()
+    user_role = serializers.SerializerMethodField() 
+    
     class Meta:
         model = User
         fields = [
@@ -25,8 +30,37 @@ class UserSerializer(CamelCaseMixin, serializers.ModelSerializer):
             "address",
             "image",
             "password",
+            "has_patient_profile",
+            "has_provider_profile",
+            "has_admin_staff_profile",
+            "has_system_admin_profile",
+            "user_role",
         ]
         read_only_fields = ["id"]
+
+    def get_has_patient_profile(self, obj):
+        return hasattr(obj, 'patient')
+    
+    def get_has_provider_profile(self, obj):
+        return hasattr(obj, 'provider')
+    
+    def get_has_admin_staff_profile(self, obj):
+        return hasattr(obj, 'admin_staff')
+    
+    def get_has_system_admin_profile(self, obj):
+        return hasattr(obj, 'system_admin')
+    
+    def get_user_role(self, obj):
+        """Determine primary role based on hierarchy"""
+        if hasattr(obj, 'system_admin'):
+            return 'system_admin'
+        elif hasattr(obj, 'admin_staff'):
+            return 'admin_staff'
+        elif hasattr(obj, 'provider'):
+            return 'provider'
+        elif hasattr(obj, 'patient'):
+            return 'patient'
+        return 'unassigned'
 
     def validate(self, attrs):
         email = attrs.get("email")

@@ -34,8 +34,7 @@ const Login = (): React.JSX.Element => {
     } catch (err) {
       console.log(err);
 
-      console.log(axios.isAxiosError(err));
-      if (axios.isAxiosError(err)) {
+      if (axios.isAxiosError(err) && err?.response?.status == 400) {
         const errorMsg =
           err.response?.data?.detail || formatErrors(err.response?.data);
         setError(errorMsg);

@@ -2,18 +2,19 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import type { Patient } from "../types/patient";
+import { getMe } from "../api/auth";
+import { onboard } from "../api/patient";
 
 const PatientOnboard = () => {
   const nav = useNavigate();
   const [form, setForm] = useState<Patient>({});
 
-  const onSkip = () => {
-    nav("/");
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onboard(form).then(() => nav("/"));
   };
 
-  const onSubmit = () => {
-    nav("/");
-  };
+  getMe().then((data) => console.log(data));
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -29,7 +30,10 @@ const PatientOnboard = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto bg-white rounded-lg border border-gray-300 p-6 shadow-sm">
+    <form
+      className="max-w-2xl mx-auto bg-white rounded-lg border border-gray-300 p-6 shadow-sm"
+      onSubmit={handleSubmit}
+    >
       <h2 className="text-xl font-semibold text-gray-900 mb-2">
         Complete your profile
       </h2>
@@ -135,21 +139,17 @@ const PatientOnboard = () => {
         />
       </div>
 
-      <div className="mt-6 flex gap-3">
+      <div className="mt-6 flex">
         <button
-          onClick={() => onSubmit(form)}
-          className="px-5 py-2 rounded bg-primary text-white hover:bg-primary-dark"
+          onClick={handleSubmit}
+          className="w-full mt-6 h-11 rounded-md bg-primary text-white font-medium
+             disabled:opacity-60 disabled:cursor-not-allowed
+             hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary"
         >
           Save profile
         </button>
-        <button
-          onClick={onSkip}
-          className="px-5 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
-        >
-          Skip for now
-        </button>
       </div>
-    </div>
+    </form>
   );
 };
 

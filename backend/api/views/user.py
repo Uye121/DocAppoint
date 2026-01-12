@@ -3,6 +3,8 @@ from rest_framework import status, mixins, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
+from rest_framework.views import APIView
+
 from ..models import User
 from ..serializers import (
     UserSerializer,
@@ -33,7 +35,7 @@ class UserViewSet(
             return [AllowAny()]
         return [IsAuthenticated()]
 
-    def get_object(self):
+    def get(self):
         return self.request.user
     
     def perform_create(self, serializer):
@@ -54,3 +56,18 @@ class UserViewSet(
         user.set_password(serializer.validated_data["new_password"])
         user.save()
         return Response({"detail": "Password updated."}, status=status.HTTP_200_OK)
+    
+    @action(detail=False, methods=["get", "put", "patch"], url_path="me")
+    def me(self, request):        
+        user = request.user
+        
+        if request.method == "GET":
+            serializer = self.get_serializer(user)
+            return Response(serializer.data)
+        
+        elif request.method in ["PUT", "PATCH"]:
+            partial = request.method == "PATCH"
+            serializer = self.get_serializer(user, data=request.data, partial=partial)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)

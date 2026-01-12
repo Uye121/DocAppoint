@@ -10,7 +10,6 @@ import UserAppointment from './UserAppointment';
 import UserProfile from './UserProfile';
 import Verify from './Verify';
 import VerifyEmail from './VerifyEmail';
-import { Test } from './test';
 
 export {
     About,
@@ -25,5 +24,4 @@ export {
     UserProfile,
     Verify,
     VerifyEmail,
-    Test
 }
