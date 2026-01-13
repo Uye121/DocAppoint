@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.utils import timezone
-from ..models import Appointment, Slot, Patient, HealthcareProvider, ProviderHospitalAssignment
+from ..models import Appointment, Slot, Patient, HealthcareProvider, Hospital, ProviderHospitalAssignment
 from .patient import PatientSerializer
 from .healthcare_provider import HealthcareProviderListSerializer
 from ..mixin import CamelCaseMixin
@@ -96,7 +96,7 @@ class AppointmentCreateSerializer(CamelCaseMixin, serializers.ModelSerializer):
         queryset=HealthcareProvider.objects.all()
     )
     location = serializers.PrimaryKeyRelatedField(
-        queryset=ProviderHospitalAssignment.objects.all()
+        queryset=Hospital.objects.filter(is_removed=False)
     )
 
     class Meta:
@@ -122,4 +122,21 @@ class AppointmentCreateSerializer(CamelCaseMixin, serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {"appointment_end_datetime_utc": "End must be after start."}
             )
+        
+        provider = attrs.get("healthcare_provider")
+        hospital = attrs.get("location")
+
+        # Check for provider having active assignment for the hospital
+        is_active = ProviderHospitalAssignment.objects.filter(
+            healthcare_provider=provider,
+            hospital=hospital,
+            is_active=True,
+            end_datetime_utc__isnull=True,
+        ).exists()
+
+        if not is_active:
+            raise serializers.ValidationError(
+                {"location": "Provider is not affiliated with the hospital."}
+            )
+
         return attrs

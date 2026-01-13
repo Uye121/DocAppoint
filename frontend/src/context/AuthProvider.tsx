@@ -49,9 +49,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     await apiLogout();
     localStorage.clear();
     setUser(null);
-  }
+  };
 
-  return <AuthContext.Provider value={{ user, loading, login, signup, logout }}>
+  const refreshUser = async () => {
+    try {
+      const me = await getMe();
+      setUser(me);
+      return me;
+    } catch (err) {
+      console.log(err);
+      localStorage.clear();
+      setUser(null);
+      return null;
+    }
+  };
+
+  return <AuthContext.Provider value={{ user, loading, login, signup, logout, refreshUser }}>
     {children}
   </AuthContext.Provider>;
 };

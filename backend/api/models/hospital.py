@@ -19,14 +19,14 @@ class Hospital(AuditMixin, models.Model):
     is_removed = models.BooleanField(default=False, db_index=True)
     removed_at = models.DateTimeField(null=True, blank=True)
 
-class ProviderHospitalAssignment(models.Model):
+class ProviderHospitalAssignment(AuditMixin, models.Model):
     healthcare_provider = models.ForeignKey('HealthcareProvider', on_delete=models.CASCADE)
     hospital = models.ForeignKey(Hospital, on_delete=models.CASCADE)
     is_active = models.BooleanField(default=True)
     start_datetime_utc = models.DateTimeField(default=timezone.now)
     end_datetime_utc = models.DateTimeField(null=True, blank=True)
     
-    class Meta:
+    class Meta(AuditMixin.Meta):
         unique_together = ['healthcare_provider', 'hospital']
         indexes = [
             models.Index(fields=["healthcare_provider", "is_active"]),

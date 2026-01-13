@@ -3,14 +3,22 @@ import { useNavigate } from "react-router-dom";
 
 import type { Patient } from "../types/patient";
 import { onboard } from "../api/patient";
+import { useAuth } from "../../hooks/useAuth";
 
 const PatientOnboard = () => {
   const nav = useNavigate();
+  const { refreshUser } = useAuth();
   const [form, setForm] = useState<Patient>({});
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onboard(form).then(() => nav("/"));
+    try {
+      await onboard(form);
+      await refreshUser();
+      nav("/");
+    } catch(err) {
+      console.log(err);
+    }
   };
 
   const handleChange = (

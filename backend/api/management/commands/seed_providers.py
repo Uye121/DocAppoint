@@ -11,7 +11,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 
-from api.models import Speciality, Hospital
+from api.models import Speciality, Hospital, ProviderHospitalAssignment
 from api.serializers import HealthcareProviderCreateSerializer, SystemAdminCreateSerializer
 from ...services.appointment import generate_daily_slots
 
@@ -151,9 +151,27 @@ class Command(BaseCommand):
                     provider.save(update_fields=["primary_hospital"])
                     provider.user.is_active = True
                     provider.user.save(update_fields=["is_active"])
-                self.stdout.write(
-                    self.style.SUCCESS(f"{'Created' if created else 'Existed'}: {provider}")
-                )
+
+                    assigned, created = ProviderHospitalAssignment.objects.get_or_create(
+                        healthcare_provider=provider,
+                        hospital=hospital,
+                        defaults={
+                            "is_active": True,
+                            "start_datetime_utc": timezone.now(),
+                            "end_datetime_utc": None,
+                            "created_by": admin_user,
+                            "updated_by": admin_user,
+                        }
+                    )
+
+                    if created:
+                        self.stdout.write(
+                            self.style.SUCCESS(f"Assigned {provider} to {hospital}")
+                        )
+
+                    self.stdout.write(
+                        self.style.SUCCESS(f"{'Created' if created else 'Existed'}: {provider}")
+                    )
 
             # Populate two weeks of slots
             today = timezone.now().date()

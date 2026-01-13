@@ -1,14 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import {
-  eachDayOfInterval,
-  startOfWeek,
-  endOfWeek,
-  formatISO,
-} from "date-fns";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { eachDayOfInterval, startOfWeek, endOfWeek, formatISO } from "date-fns";
 
-import { DoctorCard, RelatedDoctors, Spinner, WeekSelector, SlotList } from "../components";
+import {
+  DoctorCard,
+  RelatedDoctors,
+  Spinner,
+  WeekSelector,
+  SlotList,
+} from "../components";
 import { getDoctorById } from "../api/doctor";
 import { getSlotsByRange, scheduleAppointment } from "../api/appointment";
 import type { AppointmentPayload, Slot } from "../types/appointment";
@@ -20,6 +21,7 @@ const Appointments = (): React.JSX.Element | null => {
   const sunday = endOfWeek(new Date(), { weekStartsOn: 1 });
   const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const { docId } = useParams<{ docId: string }>();
   const [selectedDay, setSelectedDay] = useState<string>(
@@ -27,7 +29,13 @@ const Appointments = (): React.JSX.Element | null => {
   );
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
   const [reason, setReason] = useState<string>("");
-  const [booked, setBooked] = useState<bool>(false);
+  const [booked, setBooked] = useState<boolean>(false);
+
+  useEffect(() => {
+    // Reset when selecting different days.
+    setBooked(false);
+    setReason("");
+  }, [selectedDay, selectedSlot]);
 
   const { data: docInfo, isLoading } = useQuery({
     queryKey: ["doctor", docId],
@@ -55,16 +63,20 @@ const Appointments = (): React.JSX.Element | null => {
 
     const payload: AppointmentPayload = {
       provider: docId!,
-      patient: user.patientId,
+      patient: user.id,
       appointmentStartDatetimeUtc: selectedSlot.start,
       appointmentEndDatetimeUtc: selectedSlot.end,
       location: selectedSlot.hospitalId,
       reason: reason!,
     };
-    console.log(payload);
 
     scheduleAppointment(payload)
-      .then(() => setBooked(true))
+      .then(() => {
+        setBooked(true);
+        queryClient.invalidateQueries({
+          queryKey: ["slots-range", docId, monday],
+        });
+      })
       .catch((err) => alert(err));
   };
 
@@ -114,6 +126,13 @@ const Appointments = (): React.JSX.Element | null => {
                     className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="Briefly describe the reason for your visit…"
                   />
+                </div>
+              )}
+
+              {booked && (
+                <div className="mt-3 p-3 rounded bg-green-50 text-green-800 text-sm">
+                  &#9989; Appointment requested successfully! You will receive a
+                  confirmation email once the provider confirms.
                 </div>
               )}
 

@@ -39,9 +39,9 @@ const VerifyEmail = (): React.JSX.Element => {
             <h2 className="text-2xl font-semibold mb-2">Email confirmed!</h2>
             <button
               className="border px-10 md:px-16 py-8 mb-4 hover:bg-sky-400 hover:text-white"
-              onClick={() => nav("/onboard")}
+              onClick={() => nav("/login")}
             >
-              Go to onboarding
+              Go to Login
             </button>
           </div>
         );

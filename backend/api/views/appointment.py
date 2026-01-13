@@ -3,10 +3,10 @@ from rest_framework import viewsets, serializers, permissions, status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.dateparse import parse_time
+from django.db import transaction
 from django.db.models import F
 
 from ..models import Appointment, Slot, HealthcareProvider
@@ -46,19 +46,40 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         user = self.request.user
 
-        if hasattr(user, "patient"):
-            serializer.save(patient=user.patient)
+        with transaction.atomic():
+            if hasattr(user, "patient"):
+                appointment = serializer.save(patient=user.patient)
+            elif hasattr(user, "provider"):
+                # provider books on behalf of a patient – patient id required
+                if not serializer.validated_data.get("patient"):
+                    raise serializers.ValidationError(
+                        {"patient": "Required when booking appointment for patient."}
+                    )
+                appointment = serializer.save()
+            else:
+                raise PermissionDenied("Only patients or providers can schedule appointments.")
 
-        elif hasattr(user, "provider"):
-            # provider books on behalf of a patient – patient id required
-            if not serializer.validated_data.get("patient"):
+            slot = (
+                Slot.objects.select_for_update()
+                    .filter(
+                        healthcare_provider=appointment.healthcare_provider,
+                        hospital=appointment.location,
+                        start__lte=appointment.appointment_start_datetime_utc,
+                        end__gte=appointment.appointment_end_datetime_utc,
+                        status=Slot.Status.FREE,
+                    )
+                    .first()
+            )
+
+            if not slot:
                 raise serializers.ValidationError(
-                    {"patient": "Required when booking appointment for patient."}
+                    {"detail": "No available slot for the requested time."}
                 )
-            serializer.save()
-
-        else:
-            raise PermissionDenied("Only patients or providers can schedule appointments.")
+        
+            slot.appointment = appointment
+            slot.status = Slot.Status.BOOKED
+            slot.save(update_fields=["appointment", "status"])
+        return appointment
         
     @action(detail=True, methods=["post"], url_path="confirm")
     def confirm(self, request, pk=None):

@@ -7,7 +7,7 @@ from django.utils.translation import gettext_lazy as _
 
 from ..mixin import TimestampMixin, AuditMixin
 from .users import Patient, HealthcareProvider
-from .hospital import Hospital, ProviderHospitalAssignment
+from .hospital import Hospital
 
 class Appointment(TimestampMixin):
     class Status(models.TextChoices):
@@ -21,7 +21,7 @@ class Appointment(TimestampMixin):
     healthcare_provider = models.ForeignKey(HealthcareProvider, on_delete=models.CASCADE, related_name="provider_appointments")
     appointment_start_datetime_utc= models.DateTimeField()
     appointment_end_datetime_utc= models.DateTimeField()
-    location = models.ForeignKey(ProviderHospitalAssignment, on_delete=models.PROTECT, related_name='appointments')
+    location = models.ForeignKey(Hospital, on_delete=models.PROTECT, related_name='appointments')
     reason = models.TextField()
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.REQUESTED)
     
@@ -50,11 +50,18 @@ class Slot(TimestampMixin, AuditMixin):
     class Status(models.TextChoices):
         FREE = "FREE", "Free"
         BOOKED = "BOOKED", "Booked"
-        BLOCKED = "BLOCKED", "Blocked" 
+        BLOCKED = "BLOCKED", "Blocked"
         UNAVAILABLE = "UNAVAILABLE", "Unavailable"
 
     healthcare_provider = models.ForeignKey(HealthcareProvider,on_delete=models.CASCADE, related_name="slots")
     hospital = models.ForeignKey(Hospital, on_delete=models.CASCADE, related_name='slots')
+    appointment = models.OneToOneField(
+        "Appointment",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="slot",
+    )
     start = models.DateTimeField()
     end = models.DateTimeField()
     status = models.CharField(max_length=12, choices=Status.choices, default=Status.FREE) 
