@@ -24,14 +24,19 @@ class Appointment(TimestampMixin):
     location = models.ForeignKey(Hospital, on_delete=models.PROTECT, related_name='appointments')
     reason = models.TextField()
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.REQUESTED)
+    cancelled_at = models.DateTimeField(null=True, blank=True, db_index=True)
     
     class Meta(TimestampMixin.Meta):
-        unique_together = ('patient', 'healthcare_provider', 'appointment_start_datetime_utc')
         constraints = [
+            models.UniqueConstraint(
+                fields=["patient", "healthcare_provider", "appointment_start_datetime_utc"],
+                condition=models.Q(cancelled_at__isnull=True),
+                name="uniq_active_appointment",
+            ),
             models.CheckConstraint(
                 name='appointment_end_datetime_utc_gt_start_datetime',
                 condition=models.Q(appointment_end_datetime_utc__gt=models.F('appointment_start_datetime_utc'))
-            )
+            ),
         ]
     
     def clean(self):

@@ -150,6 +150,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             appointment.appointment_start_datetime_utc = new_start
             appointment.appointment_end_datetime_utc = new_end
         elif new_status == Appointment.Status.CANCELLED:
+            appointment.cancelled_at = timezone.now()
             Slot.objects.filter(
                 healthcare_provider=appointment.healthcare_provider,
                 hospital=appointment.location,
@@ -161,6 +162,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         # save status (and new times if rescheduled)
         appointment.save(update_fields=[
             "status",
+            "cancelled_at",
             "appointment_start_datetime_utc",
             "appointment_end_datetime_utc",
         ])

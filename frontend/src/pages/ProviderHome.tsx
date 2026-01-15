@@ -128,7 +128,7 @@ const ProviderHome = (): React.JSX.Element => {
             <p className="text-sm text-gray-600">
               {appointments.filter((a) => {
                 const d = new Date(a.appointmentStartDatetimeUtc);
-                return d.toDateString() === new Date().toDateString();
+                return d.toDateString() === new Date().toDateString() && a.status === 'CONFIRMED'
               }).length}{" "}
               appointments
             </p>
