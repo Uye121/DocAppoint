@@ -1,33 +1,8 @@
-from django.db.models import Q
 from datetime import time, timedelta
 from django.utils import timezone
 from zoneinfo import ZoneInfo
 
-from ..models import Slot, Appointment
-
-def refresh_slot_status(provider, hospital, start, end):
-    """
-    Mark slots BOOKED when they overlap a CONFIRMED appointment.
-    """
-    overlap_q = Q(
-        healthcare_provider=provider,
-        hospital=hospital,
-        start__lt=end,
-        end__gt=start, 
-        status=Slot.Status.FREE,
-    )
-
-    # all appointments that collide
-    apps = Appointment.objects.filter(
-        healthcare_provider=provider,
-        location__hospital=hospital,
-        status=Appointment.Status.CONFIRMED,
-        appointment_start_datetime_utc__lt=end,
-        appointment_end_datetime_utc__gt=start,
-    )
-
-    if apps.exists():
-        Slot.objects.filter(overlap_q).update(status=Slot.Status.BOOKED)
+from ..models import Slot
 
 def generate_daily_slots(
     provider,

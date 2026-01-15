@@ -10,6 +10,8 @@ import UserAppointment from './UserAppointment';
 import UserProfile from './UserProfile';
 import Verify from './Verify';
 import VerifyEmail from './VerifyEmail';
+import ProviderHome from './ProviderHome';
+import Landing from './Landing';
 
 export {
     About,
@@ -24,4 +26,6 @@ export {
     UserProfile,
     Verify,
     VerifyEmail,
+    ProviderHome,
+    Landing,
 }

@@ -1,13 +1,14 @@
 from datetime import timedelta
-from rest_framework import viewsets, serializers, permissions, status
-from rest_framework.exceptions import PermissionDenied
-from rest_framework.response import Response
-from rest_framework.decorators import action
-from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from django.utils.dateparse import parse_time
 from django.db import transaction
 from django.db.models import F
+from django.utils.dateparse import parse_time
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework import viewsets, serializers, permissions, status
+from django.shortcuts import get_object_or_404
+from rest_framework.exceptions import PermissionDenied
+from django.core.exceptions import ObjectDoesNotExist
 
 from ..models import Appointment, Slot, HealthcareProvider
 from ..serializers import (
@@ -16,11 +17,11 @@ from ..serializers import (
     AppointmentCreateSerializer,
     SlotSerializer
 )
-from ..services.appointment import refresh_slot_status, generate_daily_slots
+from ..services.appointment import generate_daily_slots
 
 class AppointmentViewSet(viewsets.ModelViewSet):
     queryset = Appointment.objects.select_related(
-        "patient__user", "healthcare_provider__user", "location__hospital"
+        "patient__user", "healthcare_provider__user", "location"
     )
 
     def get_serializer_class(self):
@@ -81,24 +82,89 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             slot.save(update_fields=["appointment", "status"])
         return appointment
         
-    @action(detail=True, methods=["post"], url_path="confirm")
-    def confirm(self, request, pk=None):
+    @action(detail=True, methods=["post"], url_path="set-status")
+    def set_status(self, request, pk=None):
         appointment = self.get_object()
-        if appointment.status != Appointment.Status.REQUESTED:
+        new_status = request.data.get("status", Appointment.Status.CONFIRMED).upper()
+
+        allowed = {
+            Appointment.Status.REQUESTED: {
+                Appointment.Status.CONFIRMED,
+                Appointment.Status.CANCELLED,
+            },
+            Appointment.Status.CONFIRMED: {
+                Appointment.Status.CANCELLED,
+                Appointment.Status.RESCHEDULED,
+            }
+        }
+
+        # Reject not allowed status change
+        if new_status not in allowed.get(appointment.status, set()):
             return Response(
-                {"detail": "Only requested appointments can be confirmed."},
+                {"detail": "Prohibited status change."},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        appointment.status = Appointment.Status.CONFIRMED
-        appointment.save(update_fields=["status"])
+        appointment.status = new_status
+        
+        if new_status == Appointment.Status.RESCHEDULED:
+            new_start = request.data.get("new_start_datetime_utc")
+            new_end = request.data.get("new_end_datetime_utc")
 
-        refresh_slot_status(
-            appointment.healthcare_provider,
-            appointment.location.hospital,
-            appointment.appointment_start_datetime_utc,
-            appointment.appointment_end_datetime_utc,
-        )
-        return Response({"detail": "Appointment confirmed."})
+            if not new_start or not new_end:
+                return Response(
+                    {"detail": "New start and end times are required for rescheduling."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            with transaction.atomic():
+                # Check for available slots
+                slots = Slot.objects.select_for_update().filter(
+                    healthcare_provider=appointment.healthcare_provider,
+                    hospital=appointment.location,
+                    start__lt=new_end,
+                    end__gt=new_start,
+                    status=Slot.Status.FREE,
+                ).order_by('start')
+
+                if not slots.exists():
+                    return Response({"detail": "No available slot for the requested time."}, status=status.HTTP_400_BAD_REQUEST)
+
+                coverage_start = slots.first().start if slots else None
+                coverage_end   = slots.last().end   if slots else None
+                if not (coverage_start <= new_start and coverage_end >= new_end):
+                    return Response({"detail": "No continuous free block for the requested time."}, status=400)
+
+                slots.update(status=Slot.Status.BOOKED)
+            
+                # Release old slots
+                old_start = appointment.appointment_start_datetime_utc
+                old_end = appointment.appointment_end_datetime_utc
+                Slot.objects.filter(
+                    healthcare_provider=appointment.healthcare_provider,
+                    hospital=appointment.location,
+                    start__lt=old_end,
+                    end__gt=old_start,
+                    status=Slot.Status.BOOKED,
+                ).update(status=Slot.Status.FREE)
+
+            appointment.appointment_start_datetime_utc = new_start
+            appointment.appointment_end_datetime_utc = new_end
+        elif new_status == Appointment.Status.CANCELLED:
+            Slot.objects.filter(
+                healthcare_provider=appointment.healthcare_provider,
+                hospital=appointment.location,
+                start__lt=appointment.appointment_end_datetime_utc,
+                end__gt=appointment.appointment_start_datetime_utc,
+                status=Slot.Status.BOOKED,
+            ).update(status=Slot.Status.FREE)
+
+        # save status (and new times if rescheduled)
+        appointment.save(update_fields=[
+            "status",
+            "appointment_start_datetime_utc",
+            "appointment_end_datetime_utc",
+        ])
+        return Response({"detail": f"Appointment {new_status.lower()}."})
     
     @action(detail=False, methods=["post"], url_path="generate-slots")
     def generate_slots(self, request):

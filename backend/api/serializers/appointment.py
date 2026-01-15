@@ -66,8 +66,6 @@ class AppointmentDetailSerializer(CamelCaseMixin, serializers.ModelSerializer):
             "location",
             "reason",
             "status",
-            "created_at",
-            "updated_at",
         ]
         read_only_fields = ["created_at", "updated_at"]
 

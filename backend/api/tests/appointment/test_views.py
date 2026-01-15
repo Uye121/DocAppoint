@@ -204,9 +204,9 @@ class TestSlotViewSet:
         assert res.status_code == status.HTTP_200_OK
         assert len(res.data) == 1
 
-class TestAppointmentConfirm:
+class TestAppointmentSetStatus:
     url = "/api/appointment/"
-    
+
     @pytest.fixture
     def api_client(self):
         return APIClient()
@@ -216,14 +216,14 @@ class TestAppointmentConfirm:
         h = hospital_factory()
         provider = provider_factory()
         patient = patient_factory()
-        assignment = ProviderHospitalAssignment.objects.create(
+        ProviderHospitalAssignment.objects.create(
             healthcare_provider=provider, hospital=h
         )
         now = timezone.now()
         return {
             "patient": patient,
             "provider": provider,
-            "assignment": assignment,
+            "hospital": h,
             "start": now + timedelta(hours=1),
             "end": now + timedelta(hours=2),
         }
@@ -231,7 +231,7 @@ class TestAppointmentConfirm:
     def test_confirm_changes_status_and_blocks_slots(self, api_client, data):
         slot = Slot.objects.create(
             healthcare_provider=data["provider"],
-            hospital=data["assignment"].hospital,
+            hospital=data["hospital"],
             start=data["start"],
             end=data["end"],
             status=Slot.Status.FREE,
@@ -241,24 +241,43 @@ class TestAppointmentConfirm:
             healthcare_provider=data["provider"],
             appointment_start_datetime_utc=data["start"],
             appointment_end_datetime_utc=data["end"],
-            location=data["assignment"],
+            location=data["hospital"],
             reason="Check-up",
             status=Appointment.Status.REQUESTED,
         )
 
-        # any authenticated user that owns the appointment can confirm
         api_client.force_authenticate(user=data["patient"].user)
-        resp = api_client.post(f"{self.url}{appt.pk}/confirm/")
+        resp = api_client.post(f"{self.url}{appt.pk}/set-status/")
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["detail"] == "Appointment confirmed."
 
-        # appointment status flipped
         appt.refresh_from_db()
         assert appt.status == Appointment.Status.CONFIRMED
 
-        # overlapping FREE slot became BOOKED
         slot.refresh_from_db()
         assert slot.status == Slot.Status.BOOKED
+
+    def test_reject_requested_appointment(self, api_client, data):
+        appt = Appointment.objects.create(
+            patient=data["patient"],
+            healthcare_provider=data["provider"],
+            appointment_start_datetime_utc=data["start"],
+            appointment_end_datetime_utc=data["end"],
+            location=data["hospital"],
+            reason="Reject me",
+            status=Appointment.Status.REQUESTED,
+        )
+
+        api_client.force_authenticate(user=data["patient"].user)
+        resp = api_client.post(
+            f"{self.url}{appt.pk}/set-status/",
+            {"status": "CANCELLED"}
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["detail"] == "Appointment cancelled."
+
+        appt.refresh_from_db()
+        assert appt.status == Appointment.Status.CANCELLED
 
     def test_cannot_confirm_non_requested(self, api_client, data):
         appt = Appointment.objects.create(
@@ -266,14 +285,32 @@ class TestAppointmentConfirm:
             healthcare_provider=data["provider"],
             appointment_start_datetime_utc=data["start"],
             appointment_end_datetime_utc=data["end"],
-            location=data["assignment"],
+            location=data["hospital"],
             reason="Already confirmed",
             status=Appointment.Status.CONFIRMED,
         )
         api_client.force_authenticate(user=data["patient"].user)
-        resp = api_client.post(f"{self.url}{appt.pk}/confirm/")
+        resp = api_client.post(f"{self.url}{appt.pk}/set-status/")
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert "Only requested appointments can be confirmed." in resp.data["detail"]
+        assert "Cannot move from CONFIRMED to CONFIRMED" in resp.data["detail"]
+
+    def test_invalid_transition_returns_400(self, api_client, data):
+        appt = Appointment.objects.create(
+            patient=data["patient"],
+            healthcare_provider=data["provider"],
+            appointment_start_datetime_utc=data["start"],
+            appointment_end_datetime_utc=data["end"],
+            location=data["hospital"],
+            reason="Bad transition",
+            status=Appointment.Status.CONFIRMED,
+        )
+        api_client.force_authenticate(user=data["patient"].user)
+        resp = api_client.post(
+            f"{self.url}{appt.pk}/set-status/",
+            {"status": "REQUESTED"}
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "Cannot move from CONFIRMED to REQUESTED" in resp.data["detail"]
 
 class TestGenerateSlots:
     url = "/api/appointment/generate-slots/"

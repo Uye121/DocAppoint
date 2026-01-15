@@ -13,6 +13,8 @@ import {
   UserAppointment,
   Verify,
   VerifyEmail,
+  ProviderHome,
+  Landing,
 } from "./pages";
 import { Footer, Navbar, ProtectedRoutes } from "./components";
 import { SpecialitiesProvider, DoctorProvider } from "./context";
@@ -23,6 +25,7 @@ const App = (): React.JSX.Element => {
       <Navbar />
       <Routes>
         {/* public */}
+        <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/verify" element={<Verify />} />
@@ -39,7 +42,7 @@ const App = (): React.JSX.Element => {
               </SpecialitiesProvider>
             }
           >
-            <Route path="/" element={<Home />} />
+            <Route path="/patient-home" element={<Home />} />
             <Route path="/onboard" element={<PatientOnboard />} />
             <Route path="/doctors" element={<Doctors />} />
             <Route path="/doctors/:speciality" element={<Doctors />} />
@@ -49,6 +52,7 @@ const App = (): React.JSX.Element => {
             <Route path="/appointment" element={<Appointments />} />
             <Route path="/my-appointments" element={<UserAppointment />} />
             <Route path="/appointment/:docId" element={<Appointments />} />
+            <Route path="/provider-home" element={<ProviderHome />} />
           </Route>
         </Route>
       </Routes>

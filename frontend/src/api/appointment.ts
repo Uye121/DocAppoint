@@ -1,7 +1,7 @@
 import { api } from "./axios";
 import type {
-  AppointmentListItem,
   Appointment,
+  AppointmentListItem,
   AppointmentPayload,
   Slot,
   SlotRangePayload
@@ -26,6 +26,10 @@ export const getSlotsByRange = (payload: SlotRangePayload) => {
   return api
     .get<Slot>(`/slot/range/?${params.toString()}`)
     .then((res) => res.data);
-}
+};
   
+export const getProviderAppointments = async (providerId: string) =>
+  api.get<AppointmentListItem[]>(`/appointment/?provider=${providerId}`).then((res) => res.data);
 
+export const updateAppointmentStatus = async (id: string, status: string) =>
+  api.post(`/appointment/${id}/set-status/`, { status }).then((res) => res.data);
