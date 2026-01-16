@@ -3,16 +3,21 @@
 **DocAppoint** is a patient appointment dashboard with Django REST framework and React frontend with design based on the course [Build Full Stack Doctor Appointment Booking System](https://www.youtube.com/watch?v=eRTTlS0zaW8). The application is containerized with Docker in order to provide high portability, easy scalability, and consistent deployment. All logics are kept separate and data are shared only through REST. This app is work in-progress and will be updated reguarly.
 
 ### Features
-* Authentication:
+* Authentication/Authorization:
   * User login/logout and sign up
   * Account email verification
     * Resend verification email
   * Secure access via JWT
     * Background JWT refresh via frontend interceptor
+  * Onboard user as patient
+
+* User:
+  * Schedule appointment with doctors with custom notes
 
 * Doctors:
   * Paginated list of active doctors with filter
   * Detailed doctor profile (education, fees, speciality, etc.)
+  * Approve/Reject patient appointments
 
 * Company:
   * Display company information

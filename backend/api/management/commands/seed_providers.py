@@ -1,5 +1,6 @@
 import json
 import os
+import environ
 import mimetypes
 from datetime import time, timedelta
 from pathlib import Path
@@ -14,6 +15,16 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from api.models import Speciality, Hospital, ProviderHospitalAssignment
 from api.serializers import HealthcareProviderCreateSerializer, SystemAdminCreateSerializer
 from ...services.appointment import generate_daily_slots
+
+BASE_DIR = Path(__file__).resolve().parents[4]
+
+env = environ.Env()
+environ.Env.read_env(
+    os.path.join(BASE_DIR / '.env')
+)
+
+print(f"env: {env('PROVIDER_PASSWORD', default='failed')}")
+
 
 User = get_user_model()
 DOC_FILE = Path(f'{settings.MEDIA_ROOT}/doctor.json')
@@ -42,9 +53,9 @@ class Command(BaseCommand):
         doc_data = json.loads(DOC_FILE.read_text())
         spec_data = json.loads(SPEC_FILE.read_text())
 
-        admin_username = os.environ.get('ADMIN_USERNAME', 'admin')
-        admin_email = os.environ.get('ADMIN_EMAIL', 'admin@docappoint.com')
-        admin_password = os.environ.get('ADMIN_PASSWORD')
+        admin_username = env.str('ADMIN_USERNAME', default='admin')
+        admin_email = env.str('ADMIN_EMAIL', default='admin@docappoint.com')
+        admin_password = env.str('ADMIN_PASSWORD')
         payload = {
             'email': admin_email,
             'username': admin_username,
@@ -121,7 +132,7 @@ class Command(BaseCommand):
                 payload = {
                     "email": email,
                     "username": username,
-                    "password": "doc12345",
+                    "password": env('PROVIDER_PASSWORD', default='doc12345'),
                     "first_name": first_name,
                     "last_name": last_name,
                     "date_of_birth": None,
