@@ -9,7 +9,8 @@ from django.contrib.auth import authenticate
 from django.utils.decorators import method_decorator
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
-from django_ratelimit.exceptions import Ratelimited
+from rest_framework.authentication import BaseAuthentication
+from rest_framework.permissions import BasePermission
 
 from ..models import User
 from ..serializers import ChangePasswordSerializer, UserSerializer
@@ -18,10 +19,10 @@ from ..utils.tokens import check_verification_jwt
 
 logger = logging.getLogger(__name__)
 
-# @method_decorator(ratelimit(key="ip", rate="10/h", method="POST"), name='post')
+# @method_decorator(ratelimit(key="ip", rate="15/h", method="POST"), name='post')
 class LoginView(APIView):
-    authentication_classes = []
-    permission_classes = []
+    authentication_classes: list[type[BaseAuthentication]] = []
+    permission_classes: list[type[BasePermission]] = []
 
     def post(self, request):
         email = request.data.get("email")
@@ -68,8 +69,8 @@ class LoginView(APIView):
         )
 
 class VerifyEmailView(generics.GenericAPIView):
-    authentication_classes = []
-    permission_classes = []
+    authentication_classes: list[type[BaseAuthentication]] = []
+    permission_classes: list[type[BasePermission]] = []
 
     def get(self, request, *args, **kwargs):
         token = request.query_params.get("token")
@@ -91,8 +92,8 @@ class VerifyEmailView(generics.GenericAPIView):
 
 # @method_decorator(ratelimit(key="ip", rate="3/h", method="POST"), name='post')
 class ResendVerifyView(generics.GenericAPIView):
-    authentication_classes = []
-    permission_classes = []
+    authentication_classes: list[type[BaseAuthentication]] = []
+    permission_classes: list[type[BasePermission]] = []
 
     def post(self, request):
         email = request.data.get("email", "").strip().lower()

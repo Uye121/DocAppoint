@@ -125,6 +125,7 @@ class TestResendVerify:
     def test_resend_active_user(self, api_client, user_factory):
         user = user_factory(email="active@user.com", is_active=True)
         res = api_client.post(self.url, {"email": user.email}, format="json")
+        print(res.data)
         assert res.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_invalid_email(self, api_client):

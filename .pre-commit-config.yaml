@@ -1,0 +1,52 @@
+repos:
+  - repo: local
+    hooks:
+      # ---------- FRONTEND ----------
+      - id: fe-lint
+        name: FE eslint
+        entry: docker compose exec -T frontend npm run lint
+        language: system
+        pass_filenames: false
+
+      - id: fe-format
+        name: FE prettier
+        entry: docker compose exec -T frontend npm run format
+        language: system
+        pass_filenames: false
+
+      # ---------- BACKEND ----------
+      - id: be-ruff-check
+        name: BE ruff check
+        entry: docker compose exec -T backend ruff check --fix .
+        language: system
+        pass_filenames: false
+
+      - id: be-ruff-format
+        name: BE ruff format
+        entry: docker compose exec -T backend ruff format .
+        language: system
+        pass_filenames: false
+
+      - id: be-mypy
+        name: BE mypy
+        entry: docker compose exec -T backend mypy api
+        language: system
+        pass_filenames: false
+
+      - id: be-migrations
+        name: BE missing migrations
+        entry: docker compose exec -T backend python manage.py makemigrations --check --dry-run
+        language: system
+        pass_filenames: false
+
+      - id: be-django-check
+        name: BE django system check
+        entry: docker compose exec -T backend python manage.py check --deploy
+        language: system
+        pass_filenames: false
+
+      - id: be-test
+        name: BE fast tests
+        entry: docker compose exec -T backend pytest --lf --nf
+        language: system
+        pass_filenames: false

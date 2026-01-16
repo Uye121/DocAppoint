@@ -6,7 +6,11 @@ from .healthcare_provider import HealthcareProviderListSerializer
 from ..mixin import CamelCaseMixin
 
 class SlotSerializer(CamelCaseMixin, serializers.ModelSerializer):
-    hospital_id = serializers.PrimaryKeyRelatedField(source='hospital.id', read_only=True)
+    hospital_id = serializers.PrimaryKeyRelatedField(
+        queryset=Hospital.objects.all(),
+        write_only=True,
+        source='hospital'
+    )
     hospital_timezone = serializers.CharField(source="hospital.timezone", read_only=True)
 
     class Meta:

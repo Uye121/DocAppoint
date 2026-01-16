@@ -58,7 +58,7 @@ docker-backend-migrate:
 	$(DC) exec backend $(PYTHON) manage.py migrate
 
 docker-backend-test:
-	$(DC) exec backend pytest api/tests/appointment/test_views.py -v 
+	$(DC) exec backend pytest api/tests/auth/test_views.py -v 
 
 docker-backend-test-all:
 	$(DC) exec backend pytest --reuse-db
@@ -81,6 +81,15 @@ frontend-test:
 
 docker-frontend-dev:
 	$(DC) up -d frontend
+
+lint-fe:
+	$(DC) exec frontend npm run lint
+
+format-fe:
+	$(DC) exec frontend npm run format
+
+lint-be:
+	$(DC) exec backend pre-commit run --all-files
 
 # =============================================================================
 # DATABASE

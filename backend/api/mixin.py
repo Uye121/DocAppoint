@@ -30,9 +30,9 @@ class AuditMixin(models.Model):
         abstract = True
 
 class CamelCaseMixin(BaseSerializer):
-    def to_representation(self, instance: Any) -> dict[str, Any]:
+    def to_representation(self, instance: Any) -> Any:
         representation = super().to_representation(instance)
         return to_camelcase_data(representation)
 
-    def to_internal_value(self, data: dict[str, Any]) -> dict[str, Any]:
+    def to_internal_value(self, data: dict[str, Any]) -> Any:
         return super().to_internal_value(to_snake_case_data(data))

@@ -103,8 +103,7 @@ class TestHealthcareProviderCreateSerializer:
         assert not ps.is_valid()
         assert "license_number" in ps.errors
 
-    def test_password_blank_invalid(self, base_payload, speciality_factory):
-        sp = speciality_factory()
+    def test_password_blank_invalid(self, base_payload):
         payload = base_payload(password="")
         ps = HealthcareProviderCreateSerializer(data=payload)
         assert not ps.is_valid()

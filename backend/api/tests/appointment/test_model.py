@@ -16,7 +16,9 @@ pytestmark = pytest.mark.django_db(transaction=True)
 
 class TestAppointmentModel:
     @pytest.fixture
-    def data(self, patient_factory, provider_factory, hospital_factory):
+    def data(self, patient_factory, provider_factory, hospital_factory, admin_staff_factory):
+        a = admin_staff_factory()
+        
         h = hospital_factory()
         provider = provider_factory()
         provider.user.is_active = True
@@ -27,7 +29,9 @@ class TestAppointmentModel:
         patient.user.save(update_fields=["is_active"])
 
         assignment = ProviderHospitalAssignment.objects.create(
-            healthcare_provider=provider, hospital=h
+            healthcare_provider=provider, hospital=h,
+            created_by=a.user,
+            updated_by=a.user
         )
         now = timezone.now()
         return {
@@ -45,7 +49,7 @@ class TestAppointmentModel:
             healthcare_provider=data["provider"],
             appointment_start_datetime_utc=data["start"],
             appointment_end_datetime_utc=data["end"],
-            location=data["assignment"],
+            location=data["hospital"],
             reason="Check-up",
         )
         assert str(appt) == f"Appointment: {data['patient']} with {data['provider']} at {data['start']}"
@@ -58,7 +62,7 @@ class TestAppointmentModel:
                 healthcare_provider=data["provider"],
                 appointment_start_datetime_utc=timezone.now() - timedelta(minutes=1),
                 appointment_end_datetime_utc=timezone.now() + timedelta(hours=1),
-                location=data["assignment"],
+                location=data["hospital"],
                 reason="x",
             ).clean()
 
@@ -69,7 +73,7 @@ class TestAppointmentModel:
                 healthcare_provider=data["provider"],
                 appointment_start_datetime_utc=data["start"],
                 appointment_end_datetime_utc=data["start"] - timedelta(minutes=1),
-                location=data["assignment"],
+                location=data["hospital"],
                 reason="x",
             )
 

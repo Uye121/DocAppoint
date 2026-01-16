@@ -51,7 +51,6 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             if hasattr(user, "patient"):
                 appointment = serializer.save(patient=user.patient)
             elif hasattr(user, "provider"):
-                # provider books on behalf of a patient – patient id required
                 if not serializer.validated_data.get("patient"):
                     raise serializers.ValidationError(
                         {"patient": "Required when booking appointment for patient."}
@@ -158,6 +157,14 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                 end__gt=appointment.appointment_start_datetime_utc,
                 status=Slot.Status.BOOKED,
             ).update(status=Slot.Status.FREE)
+        elif new_status == Appointment.Status.CONFIRMED:
+            Slot.objects.filter(
+                healthcare_provider=appointment.healthcare_provider,
+                hospital=appointment.location,
+                start__lt=appointment.appointment_end_datetime_utc,
+                end__gt=appointment.appointment_start_datetime_utc,
+                status=Slot.Status.FREE,
+            ).update(status=Slot.Status.BOOKED)
 
         # save status (and new times if rescheduled)
         appointment.save(update_fields=[

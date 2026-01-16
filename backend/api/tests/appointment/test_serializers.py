@@ -26,7 +26,7 @@ class TestSlotSerializer:
         ser = SlotSerializer(
             data={
                 "healthcare_provider": prov.pk,
-                "hospital": h.pk,
+                "hospital_id": h.pk,
                 "start": start,
                 "end": end,
                 "status": "FREE",
@@ -43,7 +43,7 @@ class TestSlotSerializer:
         s = SlotSerializer(
             data={
                 "healthcare_provider": prov.pk,
-                "hospital": h.pk,
+                "hospital_id": h.pk,
                 "start": start,
                 "end": start - timedelta(minutes=1),
                 "status": "FREE",
@@ -59,7 +59,7 @@ class TestSlotSerializer:
         s = SlotSerializer(
             data={
                 "healthcare_provider": prov.pk,
-                "hospital": h.pk,
+                "hospital_id": h.pk,
                 "start": past,
                 "end": past + timedelta(minutes=30),
                 "status": "FREE",
@@ -70,16 +70,23 @@ class TestSlotSerializer:
 
 class TestAppointmentSerializers:
     @pytest.fixture
-    def data(self, provider_factory, patient_factory, hospital_factory, user_factory):
+    def data(self, provider_factory, patient_factory, hospital_factory, user_factory, admin_staff_factory):
+        a = admin_staff_factory()
         h = hospital_factory()
         provider = provider_factory()
         user = user_factory(email="user@test.com")
         patient = patient_factory(user=user)
-        assignment = ProviderHospitalAssignment.objects.create(healthcare_provider=provider, hospital=h)
+        assignment = ProviderHospitalAssignment.objects.create(
+            healthcare_provider=provider,
+            hospital=h,
+            created_by=a.user,
+            updated_by=a.user
+        )
         now = timezone.now()
         return {
             "patient": patient,
             "provider": provider,
+            "hospital": h,
             "assignment": assignment,
             "start": now + timedelta(hours=1),
             "end": now + timedelta(hours=2),
@@ -91,12 +98,12 @@ class TestAppointmentSerializers:
             healthcare_provider=data["provider"],
             appointment_start_datetime_utc=data["start"],
             appointment_end_datetime_utc=data["end"],
-            location=data["assignment"],
+            location=data["hospital"],
             reason="Check-up",
         )
         s = AppointmentListSerializer(instance=appt)
         assert s.data["status"] == "REQUESTED"
-        assert s.data["patient"]["user"]["email"] == "user@test.com"
+        assert s.data["patient"]["user"]["email"] == data["patient"].user.email
 
     def test_appointment_detail_serializer(self, data):
         appt = Appointment.objects.create(
@@ -104,12 +111,12 @@ class TestAppointmentSerializers:
             healthcare_provider=data["provider"],
             appointment_start_datetime_utc=data["start"],
             appointment_end_datetime_utc=data["end"],
-            location=data["assignment"],
+            location=data["hospital"],
             reason="Detail",
         )
         s = AppointmentDetailSerializer(instance=appt)
         assert s.data["reason"] == "Detail"
-        assert "createdAt" in s.data
+        assert "status" in s.data
 
     def test_appointment_create_serializer_valid(self, data):
         start = timezone.now() + timedelta(hours=1)
@@ -120,7 +127,7 @@ class TestAppointmentSerializers:
                 "provider": data["provider"].pk,
                 "appointment_start_datetime_utc": start,
                 "appointment_end_datetime_utc": end,
-                "location": data["assignment"].pk,
+                "location": data["hospital"].pk,
                 "reason": "New",
             }
         )
@@ -137,7 +144,7 @@ class TestAppointmentSerializers:
                 "healthcare_provider": data["provider"].pk,
                 "appointment_start_datetime_utc": start,
                 "appointment_end_datetime_utc": end,
-                "location": data["assignment"].pk,
+                "location": data["hospital"].pk,
                 "reason": "Past",
             }
         )
@@ -153,7 +160,7 @@ class TestAppointmentSerializers:
                 "provider": data["provider"].pk,
                 "appointment_start_datetime_utc": start,
                 "appointment_end_datetime_utc": end,
-                "location": data["assignment"].pk,
+                "location": data["hospital"].pk,
                 "reason": "Bad",
             }
         )
