@@ -68,9 +68,9 @@ const Navbar = (): React.JSX.Element => {
                     try {
                       await logout();
                     } catch (err) {
-                      console.error('Logout error: ', err);
+                      console.error("Logout error: ", err);
                     } finally {
-                      nav('/login');
+                      nav("/login");
                     }
                   }}
                   className="hover:text-black cursor-pointer"
@@ -83,7 +83,7 @@ const Navbar = (): React.JSX.Element => {
         ) : (
           <button
             onClick={() => {
-              if (location.pathname == '/signup') {
+              if (location.pathname == "/signup") {
                 nav("/login");
               } else {
                 nav("/signup");
@@ -91,7 +91,7 @@ const Navbar = (): React.JSX.Element => {
             }}
             className="bg-primary text-white px-8 py-3 rounded-full font-light hidden md:block"
           >
-            {location.pathname === '/login' ? "Create Account" : "Login"}
+            {location.pathname === "/login" ? "Create Account" : "Login"}
           </button>
         )}
         <img

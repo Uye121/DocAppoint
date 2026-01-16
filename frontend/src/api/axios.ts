@@ -22,13 +22,14 @@ let failedQueue: Array<(token: string | null) => void> = [];
 
 const processQueue = (token: string | null) => {
   failedQueue.forEach((cb) => cb(token));
-  failedQueue = []
+  failedQueue = [];
 };
 
 api.interceptors.response.use(
   (res) => res, // Success path
   async (err) => {
-    const originalRequest: AxiosRequestConfig & { _retry?: boolean } = err.config;
+    const originalRequest: AxiosRequestConfig & { _retry?: boolean } =
+      err.config;
 
     // Intercept unauthorized access and try to refresh the access token
     if (err.response?.status === 401 && !originalRequest._retry) {
@@ -36,9 +37,10 @@ api.interceptors.response.use(
       if (isRefreshing) {
         return new Promise<string>((resolve) => {
           failedQueue.push((token) => {
-            if (token) originalRequest.headers!.Authorization = `Bearer ${token}`;
+            if (token)
+              originalRequest.headers!.Authorization = `Bearer ${token}`;
 
-            resolve(api(originalRequest))
+            resolve(api(originalRequest));
           });
         });
       }
@@ -50,7 +52,7 @@ api.interceptors.response.use(
       try {
         const { data } = await axios.post<TokenPair>(
           `${BASE_URL}/auth/token/refresh`,
-          { refresh }
+          { refresh },
         );
 
         localStorage.setItem("access", data.access);
@@ -71,5 +73,5 @@ api.interceptors.response.use(
     }
 
     return Promise.reject(err);
-  }
+  },
 );

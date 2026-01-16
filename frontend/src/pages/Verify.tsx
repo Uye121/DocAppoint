@@ -5,7 +5,7 @@ const Verify = (): React.JSX.Element => {
   const nav = useNavigate();
 
   const handleRedirect = () => {
-    nav('/login');
+    nav("/login");
   };
 
   return (

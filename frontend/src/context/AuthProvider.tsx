@@ -1,13 +1,18 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-import type { AuthPayload } from '../types/auth';
-import type { User } from '../types/auth';
-import { login as apiLogin, signup as apiSignup, logout as apiLogout, getMe } from '../api/auth';
-import { AuthContext } from './AuthContext';
+import type { AuthPayload } from "../types/auth";
+import type { User } from "../types/auth";
+import {
+  login as apiLogin,
+  signup as apiSignup,
+  logout as apiLogout,
+  getMe,
+} from "../api/auth";
+import { AuthContext } from "./AuthContext";
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
-  children
+  children,
 }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -15,7 +20,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     const bootstrap = async () => {
-      if (!localStorage.getItem('access')) {
+      if (!localStorage.getItem("access")) {
         setLoading(false);
         return;
       }
@@ -35,14 +40,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const login = async (payload: AuthPayload) => {
     const { user, access, refresh } = await apiLogin(payload);
-    localStorage.setItem('access', access);
-    localStorage.setItem('refresh', refresh);
+    localStorage.setItem("access", access);
+    localStorage.setItem("refresh", refresh);
     setUser(user);
   };
 
   const signup = async (payload: AuthPayload) => {
     await apiSignup(payload);
-    nav('/verify');
+    nav("/verify");
   };
 
   const logout = async () => {
@@ -64,7 +69,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  return <AuthContext.Provider value={{ user, loading, login, signup, logout, refreshUser }}>
-    {children}
-  </AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{ user, loading, login, signup, logout, refreshUser }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 };

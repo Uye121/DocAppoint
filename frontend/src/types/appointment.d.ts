@@ -9,13 +9,13 @@ export interface Slot {
   start: string;
   end: string;
   status: "FREE" | "BOOKED" | "BLOCKED" | "UNAVAILABLE";
-};
+}
 
 export interface SlotRangePayload {
   providerId: string;
   startDate?: string;
   endDate?: string;
-};
+}
 
 export interface AppointmentListItem {
   id: string;
@@ -25,13 +25,13 @@ export interface AppointmentListItem {
   appointmentEndDatetimeUtc: string;
   location: string;
   status: "REQUESTED" | "CONFIRMED" | "COMPLETED" | "CANCELLED" | "RESCHEDULED";
-};
+}
 
 export interface Appointment extends AppointmentListItem {
   reason: string;
   createdAt: string;
   updatedAt: string;
-};
+}
 
 export interface AppointmentPayload {
   patient?: User;
@@ -40,4 +40,4 @@ export interface AppointmentPayload {
   appointmentEndDatetimeUtc: string;
   location: string;
   reason: string;
-};
+}

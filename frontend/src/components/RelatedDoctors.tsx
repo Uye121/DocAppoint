@@ -51,7 +51,9 @@ const RelatedDoctors = ({
                 <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                 <p>Online</p>
               </div>
-              <p className="text-gray-900 text-lg font-medium">{item.firstName + " " + item.lastName}</p>
+              <p className="text-gray-900 text-lg font-medium">
+                {item.firstName + " " + item.lastName}
+              </p>
               <p className="text-gray-600 text-sm">{item.specialityName}</p>
             </div>
           </div>

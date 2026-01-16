@@ -6,4 +6,4 @@ export interface Patient {
   insurance?: string;
   weight?: number;
   height?: number;
-};
+}

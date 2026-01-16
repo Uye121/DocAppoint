@@ -19,7 +19,7 @@ export const SpecialitiesProvider: React.FC<{ children: React.ReactNode }> = ({
       try {
         const data = await apiGetSpecialities();
         setSpecialities(data);
-      } catch(err: unknown) {
+      } catch (err: unknown) {
         setError(err?.message ?? "Failed to load specialities");
       } finally {
         setLoading(false);
@@ -32,7 +32,7 @@ export const SpecialitiesProvider: React.FC<{ children: React.ReactNode }> = ({
   const getSpecialities = async () => {
     const specs = await apiGetSpecialities();
     setSpecialities(specs);
-    return specs
+    return specs;
   };
 
   return (

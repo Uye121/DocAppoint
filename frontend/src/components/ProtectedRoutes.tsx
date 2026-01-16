@@ -10,7 +10,7 @@ const ProtectedRoutes = () => {
 
   if (!user) return <Navigate to="/login" replace state={{ from: location }} />;
 
-  if (location.pathname === '/onboard') return <Outlet />;
+  if (location.pathname === "/onboard") return <Outlet />;
 
   if (user.userRole === "unassigned") {
     return <Navigate to="/onboard" replace />;

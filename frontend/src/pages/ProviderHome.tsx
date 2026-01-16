@@ -2,7 +2,10 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { useAuth } from "../../hooks/useAuth";
-import { getProviderAppointments, updateAppointmentStatus } from "../api/appointment";
+import {
+  getProviderAppointments,
+  updateAppointmentStatus,
+} from "../api/appointment";
 // import { getPatientMedicalRecords, createMedicalRecord, updateMedicalRecord } from "../api/medicalRecord";
 import type { AppointmentListItem } from "../types";
 import { Spinner } from "../components";
@@ -10,7 +13,9 @@ import { Spinner } from "../components";
 const ProviderHome = (): React.JSX.Element => {
   const { user } = useAuth();
   const providerId = user?.id;
-  const [selectedAppt, setSelectedAppt] = useState<AppointmentListItem | null>(null);
+  const [selectedAppt, setSelectedAppt] = useState<AppointmentListItem | null>(
+    null,
+  );
   const [showRecords, setShowRecords] = useState(false);
   const [diagnosis, setDiagnosis] = useState("");
   const [notes, setNotes] = useState("");
@@ -18,7 +23,11 @@ const ProviderHome = (): React.JSX.Element => {
   const [editingRecord, setEditingRecord] = useState<number | null>(null);
 
   /* ---------- appointments ---------- */
-  const { data: appointments = [], isLoading, refetch: refetchAppts } = useQuery({
+  const {
+    data: appointments = [],
+    isLoading,
+    refetch: refetchAppts,
+  } = useQuery({
     queryKey: ["provider-appointments", providerId],
     queryFn: () => getProviderAppointments(providerId!),
     enabled: !!providerId,
@@ -62,8 +71,13 @@ const ProviderHome = (): React.JSX.Element => {
         {/* Left column – appointment tabs */}
         <div className="md:col-span-2 space-y-6">
           {["REQUESTED", "CONFIRMED", "RESCHEDULED"].map((st) => (
-            <section key={st} className="bg-white rounded-xl border border-gray-200 p-4">
-              <h3 className="font-semibold text-gray-800 mb-3">{st} Appointments</h3>
+            <section
+              key={st}
+              className="bg-white rounded-xl border border-gray-200 p-4"
+            >
+              <h3 className="font-semibold text-gray-800 mb-3">
+                {st} Appointments
+              </h3>
               <div className="space-y-3">
                 {appointments
                   .filter((a) => a.status === st)
@@ -74,10 +88,14 @@ const ProviderHome = (): React.JSX.Element => {
                     >
                       <div>
                         <p className="font-medium text-gray-900">
-                          {appt.patient.user.firstName} {appt.patient.user.lastName}
+                          {appt.patient.user.firstName}{" "}
+                          {appt.patient.user.lastName}
                         </p>
                         <p className="text-sm text-gray-600">
-                          {format(new Date(appt.appointmentStartDatetimeUtc), "PPp")}
+                          {format(
+                            new Date(appt.appointmentStartDatetimeUtc),
+                            "PPp",
+                          )}
                         </p>
                         <p className="text-xs text-gray-500">{appt.reason}</p>
                       </div>
@@ -109,12 +127,20 @@ const ProviderHome = (): React.JSX.Element => {
                             View Record
                           </button>
                         )}
-                        <span className={"px-2 py-1 rounded text-xs bg-yellow-200 text-yellow-800"}>{st}</span>
+                        <span
+                          className={
+                            "px-2 py-1 rounded text-xs bg-yellow-200 text-yellow-800"
+                          }
+                        >
+                          {st}
+                        </span>
                       </div>
                     </div>
                   ))}
                 {appointments.filter((a) => a.status === st).length === 0 && (
-                  <p className="text-sm text-gray-500">No {st.toLowerCase()} appointments.</p>
+                  <p className="text-sm text-gray-500">
+                    No {st.toLowerCase()} appointments.
+                  </p>
                 )}
               </div>
             </section>
@@ -126,10 +152,15 @@ const ProviderHome = (): React.JSX.Element => {
           <div className="bg-white rounded-xl border border-gray-200 p-4">
             <h3 className="font-semibold text-gray-800 mb-3">Today</h3>
             <p className="text-sm text-gray-600">
-              {appointments.filter((a) => {
-                const d = new Date(a.appointmentStartDatetimeUtc);
-                return d.toDateString() === new Date().toDateString() && a.status === 'CONFIRMED'
-              }).length}{" "}
+              {
+                appointments.filter((a) => {
+                  const d = new Date(a.appointmentStartDatetimeUtc);
+                  return (
+                    d.toDateString() === new Date().toDateString() &&
+                    a.status === "CONFIRMED"
+                  );
+                }).length
+              }{" "}
               appointments
             </p>
           </div>
@@ -142,18 +173,28 @@ const ProviderHome = (): React.JSX.Element => {
           <div className="bg-white rounded-xl w-full max-w-3xl max-h-[90vh] overflow-auto p-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">
-                Medical Records – {selectedAppt.patient.firstName} {selectedAppt.patient.lastName}
+                Medical Records – {selectedAppt.patient.firstName}{" "}
+                {selectedAppt.patient.lastName}
               </h2>
-              <button onClick={() => setShowRecords(false)} className="text-gray-500">✕</button>
+              <button
+                onClick={() => setShowRecords(false)}
+                className="text-gray-500"
+              >
+                ✕
+              </button>
             </div>
 
             {/* History */}
             <div className="mb-4">
               <h3 className="font-medium mb-2">History</h3>
-              {records.length === 0 && <p className="text-sm text-gray-500">No records yet.</p>}
+              {records.length === 0 && (
+                <p className="text-sm text-gray-500">No records yet.</p>
+              )}
               {records.map((r) => (
                 <div key={r.id} className="border rounded p-3 mb-2">
-                  <p className="text-sm font-medium">Diagnosis: {r.diagnosis}</p>
+                  <p className="text-sm font-medium">
+                    Diagnosis: {r.diagnosis}
+                  </p>
                   <p className="text-sm">Notes: {r.notes}</p>
                   <p className="text-sm">Prescriptions: {r.prescriptions}</p>
                   {r.healthcareProvider.id === user?.id && (
@@ -175,7 +216,9 @@ const ProviderHome = (): React.JSX.Element => {
 
             {/* Add / Edit form */}
             <div>
-              <h3 className="font-medium mb-2">{editingRecord ? "Edit" : "Add"} Record</h3>
+              <h3 className="font-medium mb-2">
+                {editingRecord ? "Edit" : "Add"} Record
+              </h3>
               <label className="block text-sm mb-1">Diagnosis *</label>
               <textarea
                 value={diagnosis}

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap");
 @import "tailwindcss";
 
 * {
@@ -6,12 +6,12 @@
 }
 
 @theme {
-  --color-primary: #6D28D9;
+  --color-primary: #6d28d9;
 }
 
 @layer utilities {
   .grid-cols-fluid {
-    grid-template-columns: repeat(auto-fill,minmax(200px,1fr))
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   }
 }
 
@@ -19,8 +19,8 @@
   @apply block;
 }
 
-@media (max-width:740px) {
+@media (max-width: 740px) {
   .active p {
-    @apply text-white bg-primary
+    @apply text-white bg-primary;
   }
 }

@@ -16,7 +16,7 @@ const PatientOnboard = () => {
       await onboard(form);
       await refreshUser();
       nav("/");
-    } catch(err) {
+    } catch (err) {
       console.log(err);
     }
   };

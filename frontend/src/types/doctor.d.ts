@@ -24,10 +24,10 @@ export interface Doctor extends DoctorListItem {
   zipCode: string;
   licenseNumber: string;
   certifications: string;
-  primaryHospital: number | Hospital | null;  
+  primaryHospital: number | Hospital | null;
   hospitals: number[] | Hospital[] | null;
   isRemoved: boolean;
-  removedAt: string | null; 
+  removedAt: string | null;
 }
 
 export interface DoctorCtx {

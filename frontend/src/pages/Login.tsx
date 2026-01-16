@@ -30,7 +30,7 @@ const Login = (): React.JSX.Element => {
 
     try {
       await login(form);
-      nav('/');
+      nav("/");
     } catch (err) {
       console.log(err);
 

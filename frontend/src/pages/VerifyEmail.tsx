@@ -73,8 +73,8 @@ const VerifyEmail = (): React.JSX.Element => {
                 </div>
                 <button
                   onClick={() => {
-                    resendVerify({ email })
-                    nav("/verify")
+                    resendVerify({ email });
+                    nav("/verify");
                   }}
                   className="w-full bg-sky-500 text-white py-2.5 rounded hover:bg-sky-600 transition mb-3"
                 >
