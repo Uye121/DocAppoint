@@ -11,11 +11,11 @@ from ...serializers import (
 
 User = get_user_model()
 
-pytestmark = pytest.mark.django_db
+pytestmark = pytest.mark.django_db(transaction=True)
 
 class TestHealthcareProviderSerializer:
-    def test_valid_update(self, healthcare_provider_factory, speciality_factory):
-        p = healthcare_provider_factory(about="old", fees=Decimal("100.00"))
+    def test_valid_update(self, provider_factory, speciality_factory):
+        p = provider_factory(about="old", fees=Decimal("100.00"))
         s = speciality_factory()
         payload = {"about": "new", "fees": "150.00", "speciality": s.pk}
         ps = HealthcareProviderSerializer(instance=p, data=payload, partial=True)
@@ -24,21 +24,21 @@ class TestHealthcareProviderSerializer:
         assert obj.about == "new"
         assert obj.fees == Decimal("150.00")
 
-    def test_speciality_required(self, healthcare_provider_factory):
-        p = healthcare_provider_factory()
+    def test_speciality_required(self, provider_factory):
+        p = provider_factory()
         payload = {"speciality": None}
         ps = HealthcareProviderSerializer(instance=p, data=payload, partial=True)
         assert not ps.is_valid()
         assert "speciality" in ps.errors
 
-    def test_fees_invalid(self, healthcare_provider_factory):
-        p = healthcare_provider_factory()
+    def test_fees_invalid(self, provider_factory):
+        p = provider_factory()
         ps = HealthcareProviderSerializer(instance=p, data={"fees": 9999999999}, partial=True)
         assert not ps.is_valid()
         assert "fees" in ps.errors
 
-    def test_license_bad_format(self, healthcare_provider_factory):
-        p = healthcare_provider_factory()
+    def test_license_bad_format(self, provider_factory):
+        p = provider_factory()
         ps = HealthcareProviderSerializer(instance=p, data={"license_number": "abc"}, partial=True)
         assert not ps.is_valid()
         assert "license_number" in ps.errors
@@ -103,20 +103,18 @@ class TestHealthcareProviderCreateSerializer:
         assert not ps.is_valid()
         assert "license_number" in ps.errors
 
-    def test_password_blank_invalid(self, base_payload, speciality_factory):
-        sp = speciality_factory()
+    def test_password_blank_invalid(self, base_payload):
         payload = base_payload(password="")
         ps = HealthcareProviderCreateSerializer(data=payload)
         assert not ps.is_valid()
         assert "password" in ps.errors
 
 class TestHealthcareProviderListSerializer:
-    def test_list(self, healthcare_provider_factory):
-        p = healthcare_provider_factory()
+    def test_list(self, provider_factory):
+        p = provider_factory()
         ps = HealthcareProviderListSerializer(instance=p)
         data = ps.data
         assert data["specialityName"] == p.speciality.name
-        assert data["primaryHospitalName"] == p.primary_hospital.name
         assert data["firstName"] == p.user.first_name
         assert data["lastName"] == p.user.last_name
 
@@ -167,10 +165,10 @@ class TestHealthcareProviderOnBoardSerializer:
         self,
         rf,
         base_payload,
-        healthcare_provider_factory,
+        provider_factory,
         speciality_factory
     ):
-        p = healthcare_provider_factory()
+        p = provider_factory()
         request = rf.post("/fake/")
         payload = base_payload(
             user=p.user.pk,

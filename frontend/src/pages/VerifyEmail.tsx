@@ -17,12 +17,11 @@ const VerifyEmail = (): React.JSX.Element => {
 
     if (!token) {
       setStatus(VERIFY_STATUS.FAILURE);
-      return;
+    } else {
+      verifyEmail(token)
+        .then(() => setStatus(VERIFY_STATUS.SUCCESSFUL))
+        .catch(() => setStatus(VERIFY_STATUS.FAILURE));
     }
-
-    verifyEmail(token)
-      .then(() => setStatus(VERIFY_STATUS.SUCCESSFUL))
-      .catch(() => setStatus(VERIFY_STATUS.FAILURE));
   }, [searchParams]);
 
   const renderContent = (status: VerifyStatus) => {
@@ -42,7 +41,7 @@ const VerifyEmail = (): React.JSX.Element => {
               className="border px-10 md:px-16 py-8 mb-4 hover:bg-sky-400 hover:text-white"
               onClick={() => nav("/login")}
             >
-              Go to login
+              Go to Login
             </button>
           </div>
         );
@@ -74,8 +73,8 @@ const VerifyEmail = (): React.JSX.Element => {
                 </div>
                 <button
                   onClick={() => {
-                    resendVerify({ email })
-                    nav("/verify")
+                    resendVerify({ email });
+                    nav("/verify");
                   }}
                   className="w-full bg-sky-500 text-white py-2.5 rounded hover:bg-sky-600 transition mb-3"
                 >

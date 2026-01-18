@@ -1,6 +1,6 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AppContext } from "../context/AppContext";
+import { useDoctor } from "../../hooks/useDoctor";
 import type { DoctorListItem } from "../types/doctor";
 
 interface RelatedDoctorsProps {
@@ -13,13 +13,13 @@ const RelatedDoctors = ({
   speciality,
 }: RelatedDoctorsProps): React.JSX.Element => {
   const navigate = useNavigate();
-  const { doctors } = useContext(AppContext);
+  const { doctors } = useDoctor();
   const [relDoc, setRelDoc] = useState<DoctorListItem[]>([]);
 
   useEffect(() => {
-    if (doctors.length && speciality) {
+    if (doctors?.length && speciality) {
       const doctorsData = doctors.filter(
-        (doc) => doc.speciality == speciality && doc.id != docId,
+        (doc) => doc.specialityName == speciality && doc.id.toString() != docId,
       );
       setRelDoc(doctorsData);
     }
@@ -51,7 +51,9 @@ const RelatedDoctors = ({
                 <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                 <p>Online</p>
               </div>
-              <p className="text-gray-900 text-lg font-medium">{item.firstName + " " + item.lastName}</p>
+              <p className="text-gray-900 text-lg font-medium">
+                {item.firstName + " " + item.lastName}
+              </p>
               <p className="text-gray-600 text-sm">{item.specialityName}</p>
             </div>
           </div>

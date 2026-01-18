@@ -36,4 +36,5 @@ export interface AuthCtx {
   login: (payload: AuthPayload) => Promise<void>;
   signup: (payload: AuthPayload) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }

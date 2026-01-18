@@ -1,5 +1,5 @@
 export interface Hospital {
-  id: number; 
+  id: number;
   name: string;
   address: string;
   phoneNumber: string;

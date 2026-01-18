@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from ..models import Hospital
+from ..mixin import CamelCaseMixin
 
-class HospitalSerializer(serializers.ModelSerializer):
+class HospitalSerializer(CamelCaseMixin, serializers.ModelSerializer):
     class Meta:
         model = Hospital
         fields = (

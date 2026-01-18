@@ -8,12 +8,15 @@ import {
   Home,
   Signup,
   Login,
+  PatientOnboard,
   UserProfile,
   UserAppointment,
   Verify,
   VerifyEmail,
+  ProviderHome,
+  Landing,
 } from "./pages";
-import { Footer, Navbar, ProtectedRoutes } from "./components";
+import { Footer, Navbar, ProtectedRoutes, RoleGuard } from "./components";
 import { SpecialitiesProvider, DoctorProvider } from "./context";
 
 const App = (): React.JSX.Element => {
@@ -22,6 +25,7 @@ const App = (): React.JSX.Element => {
       <Navbar />
       <Routes>
         {/* public */}
+        <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/verify" element={<Verify />} />
@@ -38,7 +42,15 @@ const App = (): React.JSX.Element => {
               </SpecialitiesProvider>
             }
           >
-            <Route path="/" element={<Home />} />
+            <Route
+              path="/patient-home"
+              element={
+                <RoleGuard allowed={["patient"]}>
+                  <Home />
+                </RoleGuard>
+              }
+            />
+            <Route path="/onboard" element={<PatientOnboard />} />
             <Route path="/doctors" element={<Doctors />} />
             <Route path="/doctors/:speciality" element={<Doctors />} />
             <Route path="/about" element={<About />} />
@@ -47,6 +59,14 @@ const App = (): React.JSX.Element => {
             <Route path="/appointment" element={<Appointments />} />
             <Route path="/my-appointments" element={<UserAppointment />} />
             <Route path="/appointment/:docId" element={<Appointments />} />
+            <Route
+              path="/provider-home"
+              element={
+                <RoleGuard allowed={["provider"]}>
+                  <ProviderHome />
+                </RoleGuard>
+              }
+            />
           </Route>
         </Route>
       </Routes>

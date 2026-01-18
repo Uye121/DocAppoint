@@ -5,9 +5,7 @@ const About = (): React.JSX.Element => {
   return (
     <div>
       <div className="text-center text-2xl pt-10 text-gray-500">
-        <p>
-          ABOUT US
-        </p>
+        <p>ABOUT US</p>
       </div>
       <div className="my-10 flex flex-col md:flex-row gap-12">
         <img src={assets.about_image} alt="" />

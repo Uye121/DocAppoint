@@ -3,28 +3,28 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../hooks/useAuth";
-import { formatErrors } from '../../utils/errorMap';
+import { formatErrors } from "../../utils/errorMap";
 import type { AuthPayload } from "../types/auth";
 
 const Signup = (): React.JSX.Element => {
   const nav = useNavigate();
   const { signup } = useAuth();
   const [form, setForm] = useState<AuthPayload>({
-    email: '',
-    password: '',
-    username: '',
-    firstName: '',
-    lastName: '',
-   });
+    email: "",
+    password: "",
+    username: "",
+    firstName: "",
+    lastName: "",
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleRedirect = () => {
-    nav('/login');
+    nav("/login");
   };
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) =>
-    setForm({ ...form, [event.target.name]: event.target.value })
+    setForm({ ...form, [event.target.name]: event.target.value });
 
   const handleSubmit = async (event: React.SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -32,17 +32,18 @@ const Signup = (): React.JSX.Element => {
 
     try {
       await signup(form);
-      nav('/verify');
+      nav("/verify");
     } catch (err) {
       console.log(err);
 
       if (axios.isAxiosError(err)) {
-        const errorMsg = err.response?.data?.detail || formatErrors(err.response?.data)
+        const errorMsg =
+          err.response?.data?.detail || formatErrors(err.response?.data);
         setError(errorMsg);
       } else if (err instanceof Error) {
         setError(err?.message);
       } else {
-        setError('Unexpected error ocurred');
+        setError("Unexpected error ocurred");
       }
     }
     setLoading(false);
@@ -59,9 +60,7 @@ const Signup = (): React.JSX.Element => {
             {error}
           </div>
         )}
-        <p className="text-2xl font-semibold">
-          Create Account
-        </p>
+        <p className="text-2xl font-semibold">Create Account</p>
         <div className="w-full">
           <p>Username</p>
           <input

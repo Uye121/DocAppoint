@@ -36,17 +36,18 @@ const SpecialtyMenu = (): React.JSX.Element => {
         your appointment hassle-free.
       </p>
       <div className="flex sm:justify-center gap-4 pt-5 w-full overflow-scroll">
-        {specialities && specialities.map((item: Speciality, index: number) => (
-          <Link
-            onClick={() => scrollTo(0, 0)}
-            className="flex flex-col items-center text-xs cursor-pointer flex-shrink-0 hover:translate-y-[-10px] transition-all duration-500"
-            key={index}
-            to={`/doctors/${item.name}`}
-          >
-            <img className="w-16 sm:w-24 mb-2" src={item.image} alt="" />
-            <p>{item.name}</p>
-          </Link>
-        ))}
+        {specialities &&
+          specialities.map((item: Speciality, index: number) => (
+            <Link
+              onClick={() => scrollTo(0, 0)}
+              className="flex flex-col items-center text-xs cursor-pointer flex-shrink-0 hover:translate-y-[-10px] transition-all duration-500"
+              key={index}
+              to={`/doctors/${item.name}`}
+            >
+              <img className="w-16 sm:w-24 mb-2" src={item.image} alt="" />
+              <p>{item.name}</p>
+            </Link>
+          ))}
       </div>
     </div>
   );

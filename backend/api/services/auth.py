@@ -2,13 +2,11 @@ from django.utils import timezone
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
-from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AbstractUser
 
 from ..utils.tokens import build_verification_jwt
 
-User = get_user_model()
-
-def send_verification_email(user: User) -> None:
+def send_verification_email(user: AbstractUser) -> None:
     """
     Build and send a one-time verification email to user
     """

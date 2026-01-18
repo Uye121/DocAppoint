@@ -20,6 +20,7 @@ services:
       sh -c "python manage.py makemigrations api &&
              python manage.py migrate &&
              python manage.py seed_providers &&
+             python manage.py purge_old_slots &&
              python manage.py runserver 0.0.0.0:8000"
     deploy:
       resources:

@@ -5,7 +5,7 @@ from rest_framework import status
 
 User = get_user_model()
 
-pytestmark = pytest.mark.django_db
+pytestmark = pytest.mark.django_db(transaction=True)
 
 @pytest.fixture
 def api_client():
@@ -60,12 +60,12 @@ class TestUserSignUp:
 # profile
 # ==================================================================
 class TestUserProfile:
-    detail_url = "/api/users/me/"
+    url = "/api/users/me/"
 
     def test_retrieve_own_profile(self, api_client, user_factory):
         user = user_factory()
         api_client.force_authenticate(user=user)
-        res = api_client.get("/api/users/me/")
+        res = api_client.get(self.url)
         assert res.status_code == status.HTTP_200_OK
         assert res.data["email"] == user.email
         assert res.data["username"] == user.username
@@ -74,14 +74,14 @@ class TestUserProfile:
         user = user_factory(first_name="Old")
         api_client.force_authenticate(user=user)
         payload = {"first_name": "Updated", "phone_number": "+123456"}
-        res = api_client.patch("/api/users/me/", payload, format="json")
+        res = api_client.patch(self.url, payload, format="json")
         assert res.status_code == status.HTTP_200_OK
         user.refresh_from_db()
         assert user.first_name == "Updated"
         assert user.phone_number == "+123456"
 
     def test_anonymous_denied(self, api_client):
-        res = api_client.get("/api/users/me/")
+        res = api_client.get(self.url)
         assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
 # ==================================================================

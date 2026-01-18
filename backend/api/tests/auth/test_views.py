@@ -10,7 +10,7 @@ from ...utils.tokens import build_verification_jwt
 
 User = get_user_model()
 
-pytestmark = pytest.mark.django_db
+pytestmark = pytest.mark.django_db(transaction=True)
 
 @pytest.fixture
 def api_client():
@@ -69,7 +69,6 @@ class TestVerifyEmail:
         user = user_factory(email="verify@user.com", is_active=False)
         token = build_verification_jwt(user)
         res = api_client.get(self.url, {"token": token})
-        print(res)
         assert res.status_code == status.HTTP_200_OK
         user.refresh_from_db()
         assert user.is_active
@@ -126,6 +125,7 @@ class TestResendVerify:
     def test_resend_active_user(self, api_client, user_factory):
         user = user_factory(email="active@user.com", is_active=True)
         res = api_client.post(self.url, {"email": user.email}, format="json")
+        print(res.data)
         assert res.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_invalid_email(self, api_client):

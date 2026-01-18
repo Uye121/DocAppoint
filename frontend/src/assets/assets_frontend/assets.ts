@@ -1,7 +1,7 @@
 import appointment_img from "./appointment_img.png";
 import header_img from "./header_img.png";
 import group_profiles from "./group_profiles.png";
-import profile_pic from "./profile_pic.png";
+import profile_pic from "./profile.jpg";
 import contact_image from "./contact_image.png";
 import about_image from "./about_image.png";
 import logo from "./logo.svg";
@@ -15,6 +15,7 @@ import info_icon from "./info_icon.svg";
 import upload_icon from "./upload_icon.png";
 import stripe_logo from "./stripe_logo.png";
 import razorpay_logo from "./razorpay_logo.png";
+import doc0 from "./doc0.png";
 import doc1 from "./doc1.png";
 import doc2 from "./doc2.png";
 import doc3 from "./doc3.png";
@@ -55,6 +56,7 @@ export const assets = {
   upload_icon,
   stripe_logo,
   razorpay_logo,
+  doc0,
 } as const;
 
 export const specialityData = [

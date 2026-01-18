@@ -5,7 +5,7 @@ from rest_framework import status
 
 User = get_user_model()
 
-pytestmark = pytest.mark.django_db
+pytestmark = pytest.mark.django_db(transaction=True)
 
 @pytest.fixture
 def api_client():
