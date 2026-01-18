@@ -72,10 +72,10 @@ const Appointments = (): React.JSX.Element | null => {
 
     scheduleAppointment(payload)
       .then(() => {
-        setBooked(true);
         queryClient.invalidateQueries({
           queryKey: ["slots-range", docId, monday],
         });
+        setBooked(true);
       })
       .catch((err) => alert(err));
   };

@@ -10,6 +10,7 @@ import TopDoctors from "./TopDoctors";
 import ProtectedRoutes from "./ProtectedRoutes";
 import WeekSelector from "./WeekSelector";
 import SlotList from "./SlotList";
+import RoleGuard from "./RoleGuard";
 
 export {
   Banner,
@@ -24,4 +25,5 @@ export {
   ProtectedRoutes,
   WeekSelector,
   SlotList,
+  RoleGuard,
 };

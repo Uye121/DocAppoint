@@ -16,7 +16,7 @@ import {
   ProviderHome,
   Landing,
 } from "./pages";
-import { Footer, Navbar, ProtectedRoutes } from "./components";
+import { Footer, Navbar, ProtectedRoutes, RoleGuard } from "./components";
 import { SpecialitiesProvider, DoctorProvider } from "./context";
 
 const App = (): React.JSX.Element => {
@@ -42,7 +42,14 @@ const App = (): React.JSX.Element => {
               </SpecialitiesProvider>
             }
           >
-            <Route path="/patient-home" element={<Home />} />
+            <Route
+              path="/patient-home"
+              element={
+                <RoleGuard allowed={["patient"]}>
+                  <Home />
+                </RoleGuard>
+              }
+            />
             <Route path="/onboard" element={<PatientOnboard />} />
             <Route path="/doctors" element={<Doctors />} />
             <Route path="/doctors/:speciality" element={<Doctors />} />
@@ -52,7 +59,14 @@ const App = (): React.JSX.Element => {
             <Route path="/appointment" element={<Appointments />} />
             <Route path="/my-appointments" element={<UserAppointment />} />
             <Route path="/appointment/:docId" element={<Appointments />} />
-            <Route path="/provider-home" element={<ProviderHome />} />
+            <Route
+              path="/provider-home"
+              element={
+                <RoleGuard allowed={["provider"]}>
+                  <ProviderHome />
+                </RoleGuard>
+              }
+            />
           </Route>
         </Route>
       </Routes>

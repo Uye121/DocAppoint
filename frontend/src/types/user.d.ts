@@ -9,5 +9,9 @@ export interface User {
   address?: string | null;
   image?: string | null;
   isActive: boolean;
-  isStaff: boolean;
+  hasAdminStaffProfile: boolean;
+  hasPatientProfile: boolean;
+  hasProviderProfile: boolean;
+  hasSystemAdminProfile: boolean;
+  userRole: string;
 }

@@ -31,6 +31,8 @@ const ProviderHome = (): React.JSX.Element => {
     queryKey: ["provider-appointments", providerId],
     queryFn: () => getProviderAppointments(providerId!),
     enabled: !!providerId,
+    staleTime: 3,
+    refetchOnWindowFocus: true,
   });
 
   /* ---------- medical records ---------- */
