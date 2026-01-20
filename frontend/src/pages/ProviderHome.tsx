@@ -90,8 +90,7 @@ const ProviderHome = (): React.JSX.Element => {
                     >
                       <div>
                         <p className="font-medium text-gray-900">
-                          {appt.patient.user.firstName}{" "}
-                          {appt.patient.user.lastName}
+                          {appt.patientName}
                         </p>
                         <p className="text-sm text-gray-600">
                           {format(

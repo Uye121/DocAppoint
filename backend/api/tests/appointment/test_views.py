@@ -34,14 +34,15 @@ class TestAppointmentViewSet:
             created_by=a.user,
             updated_by=a.user
         )
-        now = timezone.now()
-        today = timezone.now().date()
+        now = timezone.now().replace(second=0, microsecond=0)
+        today = (timezone.now() + timedelta(days=1)).date()
+        anchor = now + timedelta(hours=1)
 
         generate_daily_slots(
             provider=provider,
             hospital=h,
-            opening=(now - timedelta(hours=-1)).time(),
-            closing=(now + timedelta(hours=2)).time(),
+            opening=anchor.time(),
+            closing=(anchor + timedelta(hours=3)).time(),
             date=today,
         )
 
@@ -50,7 +51,7 @@ class TestAppointmentViewSet:
             "provider": provider,
             "assignment": assignment,
             "hospital": h,
-            "anchor": now,
+            "anchor": anchor,
             "start": now + timedelta(hours=1),
             "end": now + timedelta(hours=2),
         }
@@ -92,13 +93,17 @@ class TestAppointmentViewSet:
     def test_patient_can_book_self(self, api_client, data):
         api_client.force_authenticate(user=data["patient"].user)
         
-        start = data["anchor"] + timedelta(hours=1)
-        end = start + timedelta(minutes=30)
+        free_slot = Slot.objects.filter(
+            healthcare_provider=data["provider"],
+            hospital=data["hospital"],
+            status=Slot.Status.FREE,
+        ).first()
+
         payload = {
             "patient": data["patient"].pk,
             "provider": data["provider"].pk,
-            "appointment_start_datetime_utc": start.isoformat(),
-            "appointment_end_datetime_utc": end.isoformat(),
+            "appointment_start_datetime_utc": free_slot.start.isoformat(),
+            "appointment_end_datetime_utc": free_slot.end.isoformat(),
             "location": data["hospital"].pk,
             "reason": "Check-up",
         }
@@ -110,15 +115,20 @@ class TestAppointmentViewSet:
 
     def test_provider_can_book_for_patient(self, api_client, data):
         api_client.force_authenticate(user=data["provider"].user)
-        start = data["anchor"] + timedelta(hours=1)
-        end = start + timedelta(minutes=30)
+
+        free_slot = Slot.objects.filter(
+            healthcare_provider=data["provider"],
+            hospital=data["hospital"],
+            status=Slot.Status.FREE,
+        ).first()
+
         payload = {
             "patient": data["patient"].pk,
             "provider": data["provider"].pk,
-            "appointment_start_datetime_utc": start.isoformat(),
-            "appointment_end_datetime_utc": end.isoformat(),
+            "appointment_start_datetime_utc": free_slot.start.isoformat(),
+            "appointment_end_datetime_utc": free_slot.end.isoformat(),
             "location": data["hospital"].pk,
-            "reason": "Provider booked",
+            "reason": "Check-up",
         }
         res = api_client.post(self.url, payload, format="json")
         assert res.status_code == status.HTTP_201_CREATED

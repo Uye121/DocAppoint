@@ -1,17 +1,15 @@
 import { api } from "./axios";
 import type {
-  Appointment,
+  // Appointment,
   AppointmentListItem,
   AppointmentPayload,
   Slot,
   SlotRangePayload,
 } from "../types/appointment";
 
-export const getAppointments = () =>
-  api.get<AppointmentListItem[]>("/appointment/").then((res) => res.data);
-
-export const getAppointmentById = (id: string) =>
-  api.get<Appointment>(`/appointment/${id}`).then((res) => res.data);
+// TODO: update once start getting data about appointment
+// export const getAppointmentById = (id: string) =>
+//   api.get<Appointment>(`/appointment/${id}`).then((res) => res.data);
 
 export const scheduleAppointment = (payload: AppointmentPayload) =>
   api
@@ -25,6 +23,7 @@ export const getSlotsByRange = (payload: SlotRangePayload) => {
     params.set("start_date", payload.startDate);
     params.set("end_date", payload.endDate);
   }
+
   return api
     .get<Slot>(`/slot/range/?${params.toString()}`)
     .then((res) => res.data);

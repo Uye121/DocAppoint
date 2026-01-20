@@ -1,10 +1,8 @@
-import type { Speciality } from "./speciality";
 import type { User } from "./user";
-import type { Hospital } from "./hospital";
 
 export interface DoctorListItem {
   id: number;
-  speciality: number | Speciality;
+  speciality: number;
   specialityName: string;
   firstName: string;
   lastName: string;
@@ -12,22 +10,25 @@ export interface DoctorListItem {
 }
 
 export interface Doctor extends DoctorListItem {
-  user: User;
-  education: string;
-  yearsOfExperience: number;
   about: string;
-  fees: string;
   addressLine1: string;
   addressLine2: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  licenseNumber: string;
   certifications: string;
-  primaryHospital: number | Hospital | null;
-  hospitals: number[] | Hospital[] | null;
+  city: string;
+  education: string;
+  fees: string;
+  hospitals: number[] | null;
+  id: string;
   isRemoved: boolean;
+  licenseNumber: string;
+  primaryHospital: number | null;
   removedAt: string | null;
+  speciality: number | null;
+  specialityName: string | null;
+  state: string;
+  user: User;
+  yearsOfExperience: number;
+  zipCode: string;
 }
 
 export interface DoctorCtx {

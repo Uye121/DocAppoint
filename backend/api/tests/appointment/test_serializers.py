@@ -103,7 +103,7 @@ class TestAppointmentSerializers:
         )
         s = AppointmentListSerializer(instance=appt)
         assert s.data["status"] == "REQUESTED"
-        assert s.data["patient"]["user"]["email"] == data["patient"].user.email
+        assert s.data["patientName"] == f"{data['patient'].user.first_name} {data['patient'].user.last_name}"
 
     def test_appointment_detail_serializer(self, data):
         appt = Appointment.objects.create(

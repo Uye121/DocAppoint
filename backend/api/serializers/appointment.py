@@ -39,25 +39,35 @@ class SlotSerializer(CamelCaseMixin, serializers.ModelSerializer):
         return attrs
 
 class AppointmentListSerializer(CamelCaseMixin, serializers.ModelSerializer):
-    patient = PatientSerializer(read_only=True)
-    provider = HealthcareProviderListSerializer(read_only=True, source="healthcare_provider")
+    patient_id = serializers.CharField(source='patient.user.id', read_only=True)
+    provider_id = serializers.CharField(source='healthcare_provider.user.id', read_only=True)
+    patient_name = serializers.SerializerMethodField()
+    provider_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Appointment
         fields = [
             "id",
-            "patient",
-            "provider",
+            "patient_id",
+            "provider_id",
+            "patient_name",
+            "provider_name",
             "appointment_start_datetime_utc",
             "appointment_end_datetime_utc",
             "location",
             "status",
         ]
 
+    def get_patient_name(self, obj: Appointment) -> str:
+        return f"{obj.patient.user.first_name} {obj.patient.user.last_name}"
+
+    def get_provider_name(self, obj: Appointment) -> str:
+        return f"{obj.healthcare_provider.user.first_name} {obj.healthcare_provider.user.last_name}"
+
 class AppointmentDetailSerializer(CamelCaseMixin, serializers.ModelSerializer):
     patient = PatientSerializer(read_only=True)
     provider = HealthcareProviderListSerializer(read_only=True, source="healthcare_provider")
-    location = serializers.StringRelatedField()  # or nested if you want
+    location = serializers.StringRelatedField() 
 
     class Meta:
         model = Appointment

@@ -1,8 +1,7 @@
-import React, { useContext } from "react";
-import { AppContext } from "../context/AppContext";
+import React from "react";
 
 const UserAppointment = (): React.JSX.Element => {
-  const { doctors } = useContext(AppContext);
+  const doctors = [];
   return (
     <div>
       <p className="pb-3 mt-12 font-medium text-zinc-700 border-b">

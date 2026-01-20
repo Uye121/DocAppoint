@@ -50,6 +50,7 @@ api.interceptors.response.use(
       const refresh = localStorage.getItem("refresh");
 
       try {
+        // Use a different axios instance to prevent possible infinite loop
         const { data } = await axios.post<TokenPair>(
           `${BASE_URL}/auth/token/refresh/`,
           { refresh },
