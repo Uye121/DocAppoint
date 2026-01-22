@@ -17,12 +17,12 @@ const RelatedDoctors = ({
   const [relDoc, setRelDoc] = useState<DoctorListItem[]>([]);
 
   useEffect(() => {
-    if (doctors?.length && speciality) {
-      const doctorsData = doctors.filter(
-        (doc) => doc.specialityName == speciality && doc.id.toString() != docId,
-      );
-      setRelDoc(doctorsData);
-    }
+    if (!doctors?.length || !speciality) return;
+
+    const doctorsData = doctors.filter(
+      (doc) => doc.specialityName == speciality && doc.id.toString() != docId,
+    );
+    setRelDoc(doctorsData);
   }, [doctors, speciality, docId]);
 
   return (

@@ -17,6 +17,7 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
     {children}
   </AuthContext.Provider>
 );
+
 describe("useAuth", () => {
   it("returns context value when inside AuthProvider", () => {
     const value = renderHookInProvider(useAuth, { provider: wrapper });

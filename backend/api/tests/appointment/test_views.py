@@ -36,13 +36,15 @@ class TestAppointmentViewSet:
         )
         now = timezone.now().replace(second=0, microsecond=0)
         today = (timezone.now() + timedelta(days=1)).date()
+        open_time = time(9, 0)
+        close_time = time(17, 0)
         anchor = now + timedelta(hours=1)
 
         generate_daily_slots(
             provider=provider,
             hospital=h,
-            opening=anchor.time(),
-            closing=(anchor + timedelta(hours=3)).time(),
+            opening=open_time,
+            closing=close_time,
             date=today,
         )
 
