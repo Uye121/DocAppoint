@@ -40,7 +40,7 @@ describe("SpecialitiesProvider", () => {
       new Error("network"),
     );
 
-    const { result } = renderHook(() => useContext(SpecialityContext), {
+    const { result } = renderHook(() => useContext(SpecialityContext)!, {
       wrapper,
     });
 
