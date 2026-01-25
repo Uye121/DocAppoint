@@ -48,10 +48,14 @@ const PatientOnboard = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="bloodType"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Blood type
           </label>
           <input
+            id="bloodType"
             name="bloodType"
             value={form.bloodType ?? ""}
             onChange={handleChange}
@@ -61,10 +65,14 @@ const PatientOnboard = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="insurance"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Insurance
           </label>
           <input
+            id="insurance"
             name="insurance"
             value={form.insurance ?? ""}
             onChange={handleChange}
@@ -74,10 +82,14 @@ const PatientOnboard = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="weight"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Weight (kg)
           </label>
           <input
+            id="weight"
             name="weight"
             type="number"
             value={form.weight ?? ""}
@@ -88,10 +100,14 @@ const PatientOnboard = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="height"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Height (cm)
           </label>
           <input
+            id="height"
             name="height"
             type="number"
             value={form.height ?? ""}
@@ -103,10 +119,14 @@ const PatientOnboard = () => {
       </div>
 
       <div className="mt-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="allergies"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Allergies
         </label>
         <textarea
+          id="allergies"
           name="allergies"
           value={form.allergies ?? ""}
           onChange={handleChange}
@@ -117,10 +137,14 @@ const PatientOnboard = () => {
       </div>
 
       <div className="mt-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="chronicConditions"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Chronic conditions
         </label>
         <textarea
+          id="chronicConditions"
           name="chronicConditions"
           value={form.chronicConditions ?? ""}
           onChange={handleChange}
@@ -131,10 +155,14 @@ const PatientOnboard = () => {
       </div>
 
       <div className="mt-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="currentMedications"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Current medications
         </label>
         <textarea
+          id="currentMedications"
           name="currentMedications"
           value={form.currentMedications ?? ""}
           onChange={handleChange}

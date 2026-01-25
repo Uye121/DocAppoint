@@ -185,7 +185,6 @@ const ProviderHome = (): React.JSX.Element => {
               </button>
             </div>
 
-            {/* History */}
             <div className="mb-4">
               <h3 className="font-medium mb-2">History</h3>
               {records.length === 0 && (
@@ -215,7 +214,6 @@ const ProviderHome = (): React.JSX.Element => {
               ))}
             </div>
 
-            {/* Add / Edit form */}
             <div>
               <h3 className="font-medium mb-2">
                 {editingRecord ? "Edit" : "Add"} Record

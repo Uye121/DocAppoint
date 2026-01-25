@@ -43,7 +43,7 @@ const Signup = (): React.JSX.Element => {
       } else if (err instanceof Error) {
         setError(err?.message);
       } else {
-        setError("Unexpected error ocurred");
+        setError("Unexpected error occurred");
       }
     }
     setLoading(false);
@@ -60,10 +60,11 @@ const Signup = (): React.JSX.Element => {
             {error}
           </div>
         )}
-        <p className="text-2xl font-semibold">Create Account</p>
+        <h2 className="text-2xl font-semibold">Create Account</h2>
         <div className="w-full">
-          <p>Username</p>
+          <label htmlFor="username">Username</label>
           <input
+            id="username"
             type="text"
             name="username"
             className="border border-zinc-300 rounded w-full p-2 mt-1"
@@ -73,8 +74,9 @@ const Signup = (): React.JSX.Element => {
           />
         </div>
         <div className="w-full">
-          <p>First Name</p>
+          <label htmlFor="firstName">First Name</label>
           <input
+            id="firstName"
             type="text"
             name="firstName"
             className="border border-zinc-300 rounded w-full p-2 mt-1"
@@ -84,8 +86,9 @@ const Signup = (): React.JSX.Element => {
           />
         </div>
         <div className="w-full">
-          <p>Last Name</p>
+          <label htmlFor="lastName">Last Name</label>
           <input
+            id="lastName"
             type="text"
             name="lastName"
             className="border border-zinc-300 rounded w-full p-2 mt-1"
@@ -95,8 +98,9 @@ const Signup = (): React.JSX.Element => {
           />
         </div>
         <div className="w-full">
-          <p>Email</p>
+          <label htmlFor="email">Email</label>
           <input
+            id="email"
             type="email"
             name="email"
             className="border border-zinc-300 rounded w-full p-2 mt-1"
@@ -106,8 +110,9 @@ const Signup = (): React.JSX.Element => {
           />
         </div>
         <div className="w-full">
-          <p>Password</p>
+          <label htmlFor="password">Password</label>
           <input
+            id="password"
             type="password"
             name="password"
             className="border border-zinc-300 rounded w-full p-2 mt-1"

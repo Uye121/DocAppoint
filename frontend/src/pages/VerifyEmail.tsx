@@ -59,10 +59,14 @@ const VerifyEmail = (): React.JSX.Element => {
                 </p>
 
                 <div className="w-full mb-5">
-                  <label className="block text-sm text-zinc-700 mb-1">
+                  <label
+                    htmlFor="email"
+                    className="block text-sm text-zinc-700 mb-1"
+                  >
                     Email
                   </label>
                   <input
+                    id="email"
                     type="email"
                     name="email"
                     required
