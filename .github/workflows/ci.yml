@@ -201,6 +201,7 @@ jobs:
           DJANGO_SECRET_KEY: test-secret-key-for-ci
           EMAIL_VERIFY_SECRET: test-email-secret-for-ci
           REDIS_URL: test-redis-secret-for-ci
+          DJANGO_SETTINGS_MODULE: backend.api.settings.development
         run: poetry run python manage.py makemigrations --check --dry-run
 
   backend-test:
@@ -263,9 +264,13 @@ jobs:
           POSTGRES_PASSWORD: password
           POSTGRES_HOST: localhost
           POSTGRES_DB: docappoint_test
+          DJANGO_SETTINGS_MODULE: backend.api.settings.development
         run: |
           echo "=== Checking INSTALLED_APPS ==="
           poetry run python -c "
+          import os
+          print(f'DJANGO_SETTINGS_MODULE: {os.environ.get(\"DJANGO_SETTINGS_MODULE\", \"Not set\")}')
+          
           from django.conf import settings
           print('INSTALLED_APPS containing \"api\":')
           for app in settings.INSTALLED_APPS:
@@ -273,7 +278,10 @@ jobs:
                   print(f'  - {app}')
           
           # Check if api is in INSTALLED_APPS
-          if 'api' in [app.split('.')[-1] for app in settings.INSTALLED_APPS]:
+          app_names = [app.split('.')[-1] for app in settings.INSTALLED_APPS]
+          print(f'All app names: {app_names}')
+          
+          if 'api' in app_names:
               print('✓ api is in INSTALLED_APPS')
           else:
               print('✗ api is NOT in INSTALLED_APPS')
@@ -284,10 +292,14 @@ jobs:
           
           echo "=== Checking migration files ==="
           if [ -d "backend/api/migrations" ]; then
+              echo "Migrations directory exists:"
               ls -la backend/api/migrations/
           else
-              echo "No migrations directory found!"
+              echo "✗ No migrations directory found at backend/api/migrations/"
           fi
+          
+          echo "=== Current showmigrations ==="
+          poetry run python manage.py showmigrations
 
       - name: Run migrations
         env:
@@ -300,6 +312,7 @@ jobs:
           POSTGRES_PASSWORD: password
           POSTGRES_HOST: localhost
           POSTGRES_DB: docappoint_test
+          DJANGO_SETTINGS_MODULE: backend.api.settings.development
         run: |
           poetry run python manage.py showmigrations
           poetry run python manage.py flush --noinput
@@ -316,6 +329,7 @@ jobs:
           ADMIN_PASSWORD: testpwdforciadm1n
           EMAIL_VERIFY_SECRET: test-email-secret-for-ci
           DJANGO_SECRET_KEY: test-secret-key-for-ci
+          DJANGO_SETTINGS_MODULE: backend.api.settings.development
         run: poetry run pytest --cov=api --cov-report=xml --cov-report=html
 
   # ==========================================
