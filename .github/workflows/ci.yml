@@ -264,7 +264,8 @@ jobs:
           POSTGRES_HOST: localhost
           POSTGRES_DB: docappoint_test
         run: |
-          poetry run python manage.py makemigrations
+          poetry run python manage.py showmigrations
+          poetry run python manage.py reset_db --noinput
           poetry run python manage.py migrate
       
       - name: Run tests
