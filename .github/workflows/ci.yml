@@ -258,6 +258,8 @@ jobs:
           DATABASE_URL: postgres://postgres:password@localhost:5432/docappoint_test
           REDIS_URL: redis://localhost:6379/0
           SECRET_KEY: test-secret-key
+          DJANGO_SECRET_KEY: test-secret-key-for-ci
+          EMAIL_VERIFY_SECRET: test-email-secret-for-ci
         run: poetry run python manage.py migrate
       
       - name: Run tests
