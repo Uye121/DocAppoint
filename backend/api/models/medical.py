@@ -1,5 +1,4 @@
 from django.db import models
-from django.utils.translation import gettext_lazy as _
 
 from ..mixin import TimestampMixin, AuditMixin
 from .users import Patient, HealthcareProvider

@@ -1,4 +1,3 @@
-from django.utils import timezone
 from rest_framework import mixins, viewsets, permissions
 from ..models import Speciality
 from ..serializers import (

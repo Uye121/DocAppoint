@@ -2,9 +2,8 @@ import pytest
 from rest_framework import status
 from rest_framework.test import APIRequestFactory, force_authenticate
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.contrib.auth import get_user_model
 
-from ...models import Speciality, AdminStaff
+from ...models import Speciality
 from ...views import SpecialityViewSet
 
 pytestmark = pytest.mark.django_db(transaction=True)

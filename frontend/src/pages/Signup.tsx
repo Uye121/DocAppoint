@@ -1,9 +1,8 @@
-import axios from "axios";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../hooks/useAuth";
-import { formatErrors } from "../../utils/errorMap";
+import { getErrorMessage } from "../../utils/errorMap";
 import type { AuthPayload } from "../types/auth";
 
 const Signup = (): React.JSX.Element => {
@@ -34,19 +33,10 @@ const Signup = (): React.JSX.Element => {
       await signup(form);
       nav("/verify");
     } catch (err) {
-      console.log(err);
-
-      if (axios.isAxiosError(err)) {
-        const errorMsg =
-          err.response?.data?.detail || formatErrors(err.response?.data);
-        setError(errorMsg);
-      } else if (err instanceof Error) {
-        setError(err?.message);
-      } else {
-        setError("Unexpected error occurred");
-      }
+      setError(getErrorMessage(err));
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (

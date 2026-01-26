@@ -5,7 +5,7 @@ import type { DoctorListItem } from "../types/doctor";
 
 interface RelatedDoctorsProps {
   docId: string | undefined;
-  speciality: string;
+  speciality: string | null;
 }
 
 const RelatedDoctors = ({

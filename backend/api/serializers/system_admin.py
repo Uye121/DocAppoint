@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from django.contrib.auth import password_validation
-from django.db import IntegrityError
 
 from ..models import User, SystemAdmin
 from ..mixin import CamelCaseMixin

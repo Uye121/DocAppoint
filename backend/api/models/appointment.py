@@ -3,7 +3,6 @@ from zoneinfo import ZoneInfo
 from django.db import models
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-from django.utils.translation import gettext_lazy as _
 
 from ..mixin import TimestampMixin, AuditMixin
 from .users import Patient, HealthcareProvider

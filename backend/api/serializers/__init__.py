@@ -1,5 +1,4 @@
 from .admin_staff import AdminStaffSerializer, AdminStaffCreateSerializer, AdminStaffOnBoardSerializer
-from .auth import ChangePasswordSerializer, LoginSerializer
 from .healthcare_provider import (
     HealthcareProviderSerializer, HealthcareProviderCreateSerializer,
     HealthcareProviderListSerializer, HealthcareProviderOnBoardSerializer
@@ -18,12 +17,11 @@ from .appointment import (
 
 __all__ = [
     'AdminStaffSerializer', 'AdminStaffCreateSerializer', 'AdminStaffOnBoardSerializer',
-    'ChangePasswordSerializer', 'UserSerializer', 'LoginSerializer', 'HealthcareProviderSerializer',
-    'HealthcareProviderCreateSerializer', 'HealthcareProviderListSerializer',
-    'HealthcareProviderOnBoardSerializer', 'PatientSerializer', 'PatientCreateSerializer',
-    'PatientOnBoardSerializer', 'SpecialitySerializer', 'SpecialityListSerializer',
-    'SpecialityCreateSerializer', 'SystemAdminSerializer', 'SystemAdminCreateSerializer',
-    'SystemAdminOnBoardSerializer', 'UserSerializer', 'ChangePasswordSerializer',
-    'LoginSerializer', 'SlotSerializer', 'AppointmentListSerializer', 'AppointmentDetailSerializer',
-    'AppointmentCreateSerializer'
+    'UserSerializer', 'HealthcareProviderSerializer', 'HealthcareProviderCreateSerializer',
+    'HealthcareProviderListSerializer', 'HealthcareProviderOnBoardSerializer', 'PatientSerializer',
+    'PatientCreateSerializer', 'PatientOnBoardSerializer', 'SpecialitySerializer',
+    'SpecialityListSerializer', 'SpecialityCreateSerializer', 'SystemAdminSerializer',
+    'SystemAdminCreateSerializer', 'SystemAdminOnBoardSerializer', 'UserSerializer',
+    'ChangePasswordSerializer', 'LoginSerializer', 'SlotSerializer', 'AppointmentListSerializer',
+    'AppointmentDetailSerializer', 'AppointmentCreateSerializer'
 ]

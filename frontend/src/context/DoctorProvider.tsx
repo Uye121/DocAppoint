@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import type { DoctorListItem } from "../types/doctor";
 import { getDoctors as apiGetDoctors } from "../api/doctor";
 import { DoctorContext } from "./DoctorContext";
+import { getErrorMessage } from "../../utils/errorMap";
 
 export const DoctorProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -20,7 +21,7 @@ export const DoctorProvider: React.FC<{ children: React.ReactNode }> = ({
         const data = await apiGetDoctors();
         setDoctors(data);
       } catch (err: unknown) {
-        setError(err?.message ?? "Failed to load doctors");
+        setError(getErrorMessage(err));
       } finally {
         setLoading(false);
       }

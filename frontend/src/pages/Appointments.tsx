@@ -63,7 +63,7 @@ const Appointments = (): React.JSX.Element | null => {
 
     const payload: AppointmentPayload = {
       provider: docId!,
-      patient: user.id,
+      patient: user!.id,
       appointmentStartDatetimeUtc: selectedSlot.start,
       appointmentEndDatetimeUtc: selectedSlot.end,
       location: selectedSlot.hospitalId,

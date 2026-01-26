@@ -2,15 +2,15 @@ import React, { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { SyncLoader } from "react-spinners";
 
-import type { ResendVerifyPayload } from "../types/auth";
-import { VERIFY_STATUS, type VerifyStatus } from "../types/auth";
+import type { VerifyStatus } from "../types/auth";
+import { VERIFY_STATUS } from "../types/auth";
 import { verifyEmail, resendVerify } from "../api/auth";
 
 const VerifyEmail = (): React.JSX.Element => {
   const [searchParams] = useSearchParams();
   const nav = useNavigate();
   const [status, setStatus] = useState<VerifyStatus>(VERIFY_STATUS.LOADING);
-  const [email, setEmail] = useState<ResendVerifyPayload | null>(null);
+  const [email, setEmail] = useState<string>("");
 
   useEffect(() => {
     const token = searchParams.get("token");

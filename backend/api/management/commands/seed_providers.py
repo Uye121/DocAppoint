@@ -74,7 +74,7 @@ class Command(BaseCommand):
                 admin_user.set_password(admin_password)
                 admin_user.save()
         except Exception:
-            self.stdout.write(self.style.WARNING(f"System admin already created"))
+            self.stdout.write(self.style.WARNING("System admin already created"))
             admin_user = User.objects.get(
                 email=admin_email,
                 username=admin_username

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import type { Speciality } from "../types/speciality";
 import { getSpecialities as apiGetSpecialities } from "../api/speciality";
 import { SpecialityContext } from "./SpecialityContext";
+import { getErrorMessage } from "../../utils/errorMap";
 
 export const SpecialitiesProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -20,7 +21,7 @@ export const SpecialitiesProvider: React.FC<{ children: React.ReactNode }> = ({
         const data = await apiGetSpecialities();
         setSpecialities(data);
       } catch (err: unknown) {
-        setError(err?.message ?? "Failed to load specialities");
+        setError(getErrorMessage(err, "Failed to load specialities"));
       } finally {
         setLoading(false);
       }

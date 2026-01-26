@@ -55,6 +55,7 @@ class AppointmentListSerializer(CamelCaseMixin, serializers.ModelSerializer):
             "appointment_start_datetime_utc",
             "appointment_end_datetime_utc",
             "location",
+            "reason",
             "status",
         ]
 
