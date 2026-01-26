@@ -197,7 +197,7 @@ jobs:
       
       - name: Check for missing migrations
         env:
-          DATABASE_URL: postgres://postgres:password@localhost:5432/docappoint
+          DATABASE_URL: postgres://postgres:password@localhost:5432/docappoint_test
           DJANGO_SECRET_KEY: test-secret-key-for-ci
           EMAIL_VERIFY_SECRET: test-email-secret-for-ci
           REDIS_URL: test-redis-secret-for-ci
@@ -210,10 +210,10 @@ jobs:
       postgres:
         image: postgres:14
         env:
-          POSTGRES_NAME: docappoint
+          POSTGRES_NAME: docappoint_test
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: password
-          POSTGRES_HOST: postgres
+          POSTGRES_HOST: localhost
           POSTGRES_DB: docappoint_test
         options: >-
           --health-cmd pg_isready
