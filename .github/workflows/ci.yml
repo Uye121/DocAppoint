@@ -212,7 +212,6 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: password
-          POSTGRES_HOST: localhost
           POSTGRES_DB: docappoint_test
         options: >-
           --health-cmd pg_isready
@@ -221,6 +220,8 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
+        tmpfs:
+          - /var/lib/postgresql/data
       redis:
         image: redis:7-alpine
         ports:
@@ -259,10 +260,10 @@ jobs:
           SECRET_KEY: test-secret-key
           DJANGO_SECRET_KEY: test-secret-key-for-ci
           EMAIL_VERIFY_SECRET: test-email-secret-for-ci
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: password
-          POSTGRES_HOST: localhost
-          POSTGRES_DB: docappoint_test
+          # POSTGRES_USER: postgres
+          # POSTGRES_PASSWORD: password
+          # POSTGRES_HOST: localhost
+          # POSTGRES_DB: docappoint_test
         run: poetry run python manage.py migrate
       
       - name: Run tests
