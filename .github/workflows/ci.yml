@@ -252,6 +252,43 @@ jobs:
       - name: Install dependencies
         run: poetry install --no-interaction --no-root --no-ansi
 
+      - name: Debug - Check api app
+        env:
+          DATABASE_URL: postgres://postgres:password@localhost:5432/docappoint_test
+          REDIS_URL: redis://localhost:6379/0
+          SECRET_KEY: test-secret-key
+          DJANGO_SECRET_KEY: test-secret-key-for-ci
+          EMAIL_VERIFY_SECRET: test-email-secret-for-ci
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_HOST: localhost
+          POSTGRES_DB: docappoint_test
+        run: |
+          echo "=== Checking INSTALLED_APPS ==="
+          poetry run python -c "
+          from django.conf import settings
+          print('INSTALLED_APPS containing \"api\":')
+          for app in settings.INSTALLED_APPS:
+              if 'api' in app:
+                  print(f'  - {app}')
+          
+          # Check if api is in INSTALLED_APPS
+          if 'api' in [app.split('.')[-1] for app in settings.INSTALLED_APPS]:
+              print('✓ api is in INSTALLED_APPS')
+          else:
+              print('✗ api is NOT in INSTALLED_APPS')
+          
+          # Check AUTH_USER_MODEL
+          print(f'\\nAUTH_USER_MODEL: {getattr(settings, \"AUTH_USER_MODEL\", \"Not set\")}')
+          "
+          
+          echo "=== Checking migration files ==="
+          if [ -d "backend/api/migrations" ]; then
+              ls -la backend/api/migrations/
+          else
+              echo "No migrations directory found!"
+          fi
+
       - name: Run migrations
         env:
           DATABASE_URL: postgres://postgres:password@localhost:5432/docappoint_test
