@@ -17,13 +17,15 @@ User = get_user_model()
 
 pytestmark = pytest.mark.django_db(transaction=True)
 
+
 @pytest.fixture
 def cleanup_images():
     """Fixture to clean up image files after test"""
     yield
-    if hasattr(settings, 'TEST_MEDIA_ROOT'):
+    if hasattr(settings, "TEST_MEDIA_ROOT"):
         if os.path.exists(settings.TEST_MEDIA_ROOT):
             shutil.rmtree(settings.TEST_MEDIA_ROOT, ignore_errors=True)
+
 
 def _dummy_image(name="1x1.png"):
     img = Image.new("RGBA", (1, 1), (255, 0, 0, 0))
@@ -32,6 +34,7 @@ def _dummy_image(name="1x1.png"):
     file.seek(0)
     return SimpleUploadedFile(name, file.read(), content_type="image/png")
 
+
 class TestSystemAdminSerializer:
     def test_list(self, system_admin_factory):
         sa = system_admin_factory()
@@ -39,6 +42,7 @@ class TestSystemAdminSerializer:
         data = ser.data
         assert data["user"]["id"] == str(sa.user.pk)
         assert data["role"] == sa.role
+
 
 class TestSystemAdminCreateSerializer:
     def test_create_minimal(self):
@@ -100,7 +104,6 @@ class TestSystemAdminCreateSerializer:
         assert not ser.is_valid()
         assert "role" in ser.errors
 
-
     def test_role_whitespace_only_invalid(self):
         payload = {
             "email": "sys@new.com",
@@ -113,6 +116,7 @@ class TestSystemAdminCreateSerializer:
         ser = SystemAdminCreateSerializer(data=payload)
         assert not ser.is_valid()
         assert "role" in ser.errors
+
 
 class TestSystemAdminOnBoardSerializer:
     def test_create_first_time(self, rf, user_factory):
@@ -139,7 +143,7 @@ class TestSystemAdminOnBoardSerializer:
         user = user_factory()
         request = rf.post("/fake/")
         request.user = user
-        payload = {} 
+        payload = {}
         ser = SystemAdminOnBoardSerializer(data=payload, context={"request": request})
         assert not ser.is_valid()
         assert "role" in ser.errors
@@ -149,7 +153,9 @@ class TestSystemAdminOnBoardSerializer:
         request = rf.patch("/fake/")
         request.user = sa.user
         payload = {"role": "new"}
-        ser = SystemAdminOnBoardSerializer(instance=sa, data=payload, partial=True, context={"request": request})
+        ser = SystemAdminOnBoardSerializer(
+            instance=sa, data=payload, partial=True, context={"request": request}
+        )
         assert ser.is_valid(), ser.errors
         obj = ser.save()
         assert obj.role == "new"

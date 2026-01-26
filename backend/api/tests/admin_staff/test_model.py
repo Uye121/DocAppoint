@@ -7,10 +7,11 @@ User = get_user_model()
 
 pytestmark = pytest.mark.django_db(transaction=True)
 
+
 class TestModel:
     def test_admin_staff_creation(self, admin_staff_factory):
         a = admin_staff_factory()
-        assert isinstance(a.user_id, uuid.UUID) 
+        assert isinstance(a.user_id, uuid.UUID)
         assert hasattr(a.user, "admin_staff")
         assert a.hospital is not None
 

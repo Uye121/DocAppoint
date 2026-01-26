@@ -14,6 +14,7 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
@@ -33,7 +34,7 @@ from .views import (
     HealthcareProviderViewSet,
     SpecialityViewSet,
     AppointmentViewSet,
-    SlotViewSet
+    SlotViewSet,
 )
 
 router = DefaultRouter()
@@ -51,16 +52,18 @@ authpatterns = [
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("verify/", VerifyEmailView.as_view(), name="verify_email"),
     path("resend-verify/", ResendVerifyView.as_view(), name="resend_verify"),
-    path("password-reset/", include("django_rest_passwordreset.urls")), # TODO: to be modified
+    path(
+        "password-reset/", include("django_rest_passwordreset.urls")
+    ),  # TODO: to be modified
     path("logout/", LogoutView.as_view(), name="logout"),
     path("change-password/", ChangePasswordView.as_view(), name="change_password"),
-    path("me/", UserView.as_view(), name="user_info")
+    path("me/", UserView.as_view(), name="user_info"),
 ]
 
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('api/auth/', include(authpatterns)),
+    path("admin/", admin.site.urls),
+    path("api/auth/", include(authpatterns)),
     path("api/", include(router.urls)),
     # path("api/providers/", include(providerpatterns)),
     # path("api/specialities/", include(specialitypatterns)),

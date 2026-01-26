@@ -1,6 +1,6 @@
 import environ
 
-from .base import * # noqa: F403
+from .base import *  # noqa: F403
 
 DEBUG = False
 
@@ -21,7 +21,7 @@ SECURE_HSTS_PRELOAD = True
 # EMAIL_HOST_PASSWORD = 'your-app-password'
 
 # Auth
-PASSWORD_RESET_TIMEOUT = 60 * 30 # 30 min
+PASSWORD_RESET_TIMEOUT = 60 * 30  # 30 min
 
 env = environ.Env(
     REDIS_URL=(str, "redis://127.0.0.1:6379/1"),

@@ -15,6 +15,7 @@ from ...services.appointment import generate_daily_slots
 User = get_user_model()
 pytestmark = pytest.mark.django_db(transaction=True)
 
+
 class TestAppointmentViewSet:
     url = "/api/appointment/"
 
@@ -23,7 +24,9 @@ class TestAppointmentViewSet:
         return APIClient()
 
     @pytest.fixture
-    def data(self, hospital_factory, provider_factory, patient_factory, admin_staff_factory):
+    def data(
+        self, hospital_factory, provider_factory, patient_factory, admin_staff_factory
+    ):
         a = admin_staff_factory()
         h = hospital_factory()
         provider = provider_factory()
@@ -32,7 +35,7 @@ class TestAppointmentViewSet:
             healthcare_provider=provider,
             hospital=h,
             created_by=a.user,
-            updated_by=a.user
+            updated_by=a.user,
         )
         now = timezone.now().replace(second=0, microsecond=0)
         today = (timezone.now() + timedelta(days=1)).date()
@@ -94,7 +97,7 @@ class TestAppointmentViewSet:
     # --------------- creation ---------------
     def test_patient_can_book_self(self, api_client, data):
         api_client.force_authenticate(user=data["patient"].user)
-        
+
         free_slot = Slot.objects.filter(
             healthcare_provider=data["provider"],
             hospital=data["hospital"],
@@ -164,7 +167,11 @@ class TestAppointmentViewSet:
         }
         res = api_client.post(self.url, payload, format="json")
         assert res.status_code == status.HTTP_400_BAD_REQUEST
-        assert "Cannot schedule an appointment in the past." in res.data["appointment_start_datetime_utc"][0]
+        assert (
+            "Cannot schedule an appointment in the past."
+            in res.data["appointment_start_datetime_utc"][0]
+        )
+
 
 class TestSlotViewSet:
     url = "/api/slot/"
@@ -183,8 +190,14 @@ class TestSlotViewSet:
         slot = Slot.objects.create(
             healthcare_provider=provider,
             hospital=provider.primary_hospital,
-            start=timezone.make_aware(timezone.datetime.combine(tomorrow, timezone.datetime.min.time())) + timedelta(hours=9),
-            end=timezone.make_aware(timezone.datetime.combine(tomorrow, timezone.datetime.min.time())) + timedelta(hours=10),
+            start=timezone.make_aware(
+                timezone.datetime.combine(tomorrow, timezone.datetime.min.time())
+            )
+            + timedelta(hours=9),
+            end=timezone.make_aware(
+                timezone.datetime.combine(tomorrow, timezone.datetime.min.time())
+            )
+            + timedelta(hours=10),
             status=Slot.Status.FREE,
         )
         res = api_client.get(self.url)
@@ -199,10 +212,12 @@ class TestSlotViewSet:
             "healthcare_provider": provider.pk,
             "hospital_id": provider.primary_hospital.pk,
             "start": timezone.make_aware(
-                timezone.datetime.combine(tomorrow, timezone.datetime.min.time()) + timedelta(hours=9)
+                timezone.datetime.combine(tomorrow, timezone.datetime.min.time())
+                + timedelta(hours=9)
             ).isoformat(),
             "end": timezone.make_aware(
-                timezone.datetime.combine(tomorrow, timezone.datetime.min.time()) + timedelta(hours=10)
+                timezone.datetime.combine(tomorrow, timezone.datetime.min.time())
+                + timedelta(hours=10)
             ).isoformat(),
             "status": "FREE",
         }
@@ -218,20 +233,35 @@ class TestSlotViewSet:
         Slot.objects.create(
             healthcare_provider=provider,
             hospital=provider.primary_hospital,
-            start=timezone.make_aware(timezone.datetime.combine(tomorrow, timezone.datetime.min.time())) + timedelta(hours=9),
-            end=timezone.make_aware(timezone.datetime.combine(tomorrow, timezone.datetime.min.time())) + timedelta(hours=10),
+            start=timezone.make_aware(
+                timezone.datetime.combine(tomorrow, timezone.datetime.min.time())
+            )
+            + timedelta(hours=9),
+            end=timezone.make_aware(
+                timezone.datetime.combine(tomorrow, timezone.datetime.min.time())
+            )
+            + timedelta(hours=10),
             status=Slot.Status.FREE,
         )
         Slot.objects.create(
             healthcare_provider=provider,
             hospital=provider.primary_hospital,
-            start=timezone.make_aware(timezone.datetime.combine(tomorrow, timezone.datetime.min.time())) + timedelta(hours=10),
-            end=timezone.make_aware(timezone.datetime.combine(tomorrow, timezone.datetime.min.time())) + timedelta(hours=11),
+            start=timezone.make_aware(
+                timezone.datetime.combine(tomorrow, timezone.datetime.min.time())
+            )
+            + timedelta(hours=10),
+            end=timezone.make_aware(
+                timezone.datetime.combine(tomorrow, timezone.datetime.min.time())
+            )
+            + timedelta(hours=11),
             status=Slot.Status.BOOKED,
         )
-        res = api_client.get(self.url + "free/", {"date": tomorrow.isoformat(), "provider": provider.pk})
+        res = api_client.get(
+            self.url + "free/", {"date": tomorrow.isoformat(), "provider": provider.pk}
+        )
         assert res.status_code == status.HTTP_200_OK
         assert len(res.data) == 1
+
 
 class TestAppointmentSetStatus:
     url = "/api/appointment/"
@@ -241,7 +271,9 @@ class TestAppointmentSetStatus:
         return APIClient()
 
     @pytest.fixture
-    def data(self, provider_factory, hospital_factory, patient_factory, admin_staff_factory):
+    def data(
+        self, provider_factory, hospital_factory, patient_factory, admin_staff_factory
+    ):
         a = admin_staff_factory()
         h = hospital_factory()
         provider = provider_factory()
@@ -250,7 +282,7 @@ class TestAppointmentSetStatus:
             healthcare_provider=provider,
             hospital=h,
             created_by=a.user,
-            updated_by=a.user
+            updated_by=a.user,
         )
         now = timezone.now()
         return {
@@ -280,7 +312,9 @@ class TestAppointmentSetStatus:
         )
 
         api_client.force_authenticate(user=data["patient"].user)
-        res = api_client.post(f"{self.url}{appt.pk}/set-status/", { "status": "CONFIRMED" })
+        res = api_client.post(
+            f"{self.url}{appt.pk}/set-status/", {"status": "CONFIRMED"}
+        )
         assert res.status_code == status.HTTP_200_OK
         assert res.data["detail"] == "Appointment confirmed."
 
@@ -303,8 +337,7 @@ class TestAppointmentSetStatus:
 
         api_client.force_authenticate(user=data["patient"].user)
         res = api_client.post(
-            f"{self.url}{appt.pk}/set-status/",
-            {"status": "CANCELLED"}
+            f"{self.url}{appt.pk}/set-status/", {"status": "CANCELLED"}
         )
         assert res.status_code == status.HTTP_200_OK
         assert res.data["detail"] == "Appointment cancelled."
@@ -323,7 +356,9 @@ class TestAppointmentSetStatus:
             status=Appointment.Status.CONFIRMED,
         )
         api_client.force_authenticate(user=data["patient"].user)
-        res = api_client.post(f"{self.url}{appt.pk}/set-status/", { "status": "CONFIRMED" })
+        res = api_client.post(
+            f"{self.url}{appt.pk}/set-status/", {"status": "CONFIRMED"}
+        )
         print(res.data)
         assert res.status_code == status.HTTP_400_BAD_REQUEST
         assert "Prohibited status change" in res.data["detail"]
@@ -340,12 +375,12 @@ class TestAppointmentSetStatus:
         )
         api_client.force_authenticate(user=data["patient"].user)
         res = api_client.post(
-            f"{self.url}{appt.pk}/set-status/",
-            {"status": "REQUESTED"}
+            f"{self.url}{appt.pk}/set-status/", {"status": "REQUESTED"}
         )
         print(res.data)
         assert res.status_code == status.HTTP_400_BAD_REQUEST
         assert "Prohibited status change" in res.data["detail"]
+
 
 class TestGenerateSlots:
     url = "/api/appointment/generate-slots/"
@@ -412,6 +447,7 @@ class TestGenerateSlots:
         assert res.status_code == status.HTTP_400_BAD_REQUEST
         assert "closing must be after opening." in res.data["detail"]
 
+
 class TestSlotRange:
     url = "/api/slot/range/"
 
@@ -422,7 +458,7 @@ class TestSlotRange:
     @pytest.fixture
     def provider(self, provider_factory):
         return provider_factory()
-    
+
     def test_range_default_week(self, api_client, provider):
         today = timezone.now().date()
         monday = today - timedelta(days=today.weekday())
@@ -434,10 +470,12 @@ class TestSlotRange:
                 healthcare_provider=provider,
                 hospital=provider.primary_hospital,
                 start=timezone.make_aware(
-                    timezone.datetime.combine(day, timezone.datetime.min.time()) + timedelta(hours=9)
+                    timezone.datetime.combine(day, timezone.datetime.min.time())
+                    + timedelta(hours=9)
                 ),
                 end=timezone.make_aware(
-                    timezone.datetime.combine(day, timezone.datetime.min.time()) + timedelta(hours=9, minutes=30)
+                    timezone.datetime.combine(day, timezone.datetime.min.time())
+                    + timedelta(hours=9, minutes=30)
                 ),
                 status=Slot.Status.FREE,
             )

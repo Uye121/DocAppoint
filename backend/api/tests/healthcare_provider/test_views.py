@@ -8,9 +8,11 @@ User = get_user_model()
 
 pytestmark = pytest.mark.django_db(transaction=True)
 
+
 @pytest.fixture
 def api_client():
     return APIClient()
+
 
 # ------------------------------------------------------------------
 #  public list  (GET /api/provider/)
@@ -23,10 +25,10 @@ class TestProviderList:
         api_client.force_authenticate(user=user)
 
         provider_factory(is_removed=False)
-        provider_factory(is_removed=True) 
+        provider_factory(is_removed=True)
         res = api_client.get(self.url)
         assert res.status_code == status.HTTP_200_OK
-        assert len(res.data) == 1 
+        assert len(res.data) == 1
 
     def test_search_smoke(self, api_client, provider_factory, user_factory):
         user = user_factory()
@@ -37,6 +39,7 @@ class TestProviderList:
         assert res.status_code == status.HTTP_200_OK
         print(res.data)
         assert res.data[0]["firstName"] == "John"
+
 
 # ------------------------------------------------------------------
 #  public sign-up  (POST /api/provider/)
@@ -63,14 +66,11 @@ class TestProviderSignUp:
             }
             payload.update(overrides)
             return payload
+
         return _payload
 
     def test_create_minimal(
-        self,
-        api_client,
-        base_payload,
-        speciality_factory,
-        admin_staff_factory
+        self, api_client, base_payload, speciality_factory, admin_staff_factory
     ):
         s = speciality_factory()
         a = admin_staff_factory()
@@ -83,11 +83,7 @@ class TestProviderSignUp:
         assert user.provider.fees == 120
 
     def test_user_create_denied(
-        self,
-        base_payload,
-        api_client,
-        speciality_factory,
-        user_factory
+        self, base_payload, api_client, speciality_factory, user_factory
     ):
         s = speciality_factory()
         u = user_factory()
@@ -106,8 +102,9 @@ class TestProviderSignUp:
         assert res.status_code == status.HTTP_400_BAD_REQUEST
         assert "speciality" in res.data
 
+
 # ------------------------------------------------------------------
-#  onboard existing user 
+#  onboard existing user
 # ------------------------------------------------------------------
 class TestProviderOnBoard:
     url = "/api/provider/onboard/"
@@ -128,6 +125,7 @@ class TestProviderOnBoard:
             }
             payload.update(overrides)
             return payload
+
         return _payload
 
     def test_success(
@@ -136,7 +134,7 @@ class TestProviderOnBoard:
         base_payload,
         admin_staff_factory,
         speciality_factory,
-        user_factory
+        user_factory,
     ):
         a = admin_staff_factory()
         user = user_factory()
@@ -148,11 +146,7 @@ class TestProviderOnBoard:
         assert float(user.provider.fees) == 99.99
 
     def test_user_onboard_denied(
-        self,
-        base_payload,
-        api_client,
-        user_factory,
-        speciality_factory
+        self, base_payload, api_client, user_factory, speciality_factory
     ):
         user = user_factory()
         api_client.force_authenticate(user=user)
@@ -166,7 +160,7 @@ class TestProviderOnBoard:
         api_client,
         provider_factory,
         admin_staff_factory,
-        speciality_factory
+        speciality_factory,
     ):
         a = admin_staff_factory()
         prov = provider_factory()
@@ -175,12 +169,13 @@ class TestProviderOnBoard:
         payload = base_payload(user=prov.user.pk, speciality=speciality_factory().pk)
         res = api_client.post(self.url, payload, format="json")
         assert res.status_code == status.HTTP_400_BAD_REQUEST
-        print('res: ', res.data)
+        print("res: ", res.data)
         assert "already exists" in res.data["user"][0]
 
     def test_anonymous_denied(self, api_client):
         res = api_client.post(self.url, {}, format="json")
         assert res.status_code == status.HTTP_401_UNAUTHORIZED
+
 
 # ------------------------------------------------------------------
 #  profile R / U  (GET/PATCH /api/provider/me/)
@@ -209,16 +204,13 @@ class TestProviderProfile:
         res = api_client.get(self.me_url)
         assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
+
 # ------------------------------------------------------------------
 #  staff soft-delete
 # ------------------------------------------------------------------
 class TestProviderSoftDelete:
     def test_staff_can_soft_delete(
-        self,
-        api_client,
-        provider_factory,
-        admin_staff_factory,
-        hospital_factory
+        self, api_client, provider_factory, admin_staff_factory, hospital_factory
     ):
         h = hospital_factory()
         staff = admin_staff_factory(hospital=h)

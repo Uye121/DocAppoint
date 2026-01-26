@@ -14,12 +14,14 @@ User = get_user_model()
 
 pytestmark = pytest.mark.django_db(transaction=True)
 
+
 def _dummy_image(name="1x1.png"):
     img = Image.new("RGBA", (1, 1), (255, 0, 0, 0))
     file = io.BytesIO()
     img.save(file, format="PNG")
     file.seek(0)
     return SimpleUploadedFile(name, file.read(), content_type="image/png")
+
 
 class TestAdminStaffSerializer:
     def test_list(self, admin_staff_factory):
@@ -29,6 +31,7 @@ class TestAdminStaffSerializer:
         assert data["user"]["id"] == str(a.user.pk)
         assert data["hospital"] == a.hospital.pk
         assert data["hospitalName"] == a.hospital.name
+
 
 class TestAdminStaffCreateSerializer:
     def test_create_minimal(self, hospital_factory):
@@ -90,6 +93,7 @@ class TestAdminStaffCreateSerializer:
         assert not ss.is_valid()
         assert "hospital" in ss.errors
 
+
 class TestAdminStaffOnBoardSerializer:
     def test_create_first_time(self, rf, user_factory, hospital_factory):
         user = user_factory()
@@ -115,7 +119,7 @@ class TestAdminStaffOnBoardSerializer:
         user = user_factory()
         request = rf.post("/fake/")
         request.user = user
-        payload = {} 
+        payload = {}
         ss = AdminStaffOnBoardSerializer(data=payload, context={"request": request})
         assert not ss.is_valid()
         assert "hospital" in ss.errors
@@ -126,7 +130,9 @@ class TestAdminStaffOnBoardSerializer:
         request = rf.patch("/fake/")
         request.user = staff.user
         payload = {"hospital": new_hosp.pk}
-        ss = AdminStaffOnBoardSerializer(instance=staff, data=payload, context={"request": request})
+        ss = AdminStaffOnBoardSerializer(
+            instance=staff, data=payload, context={"request": request}
+        )
         assert ss.is_valid(), ss.errors
         obj = ss.save()
         assert obj.hospital == new_hosp

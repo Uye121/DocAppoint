@@ -4,17 +4,13 @@ from zoneinfo import ZoneInfo
 
 from ..models import Slot
 
+
 def generate_daily_slots(
-    provider,
-    hospital,
-    date,
-    duration_min=30,
-    opening=time(9),
-    closing=time(17)
+    provider, hospital, date, duration_min=30, opening=time(9), closing=time(17)
 ):
     tz = ZoneInfo(hospital.timezone)
     start_dt = timezone.make_aware(timezone.datetime.combine(date, opening), tz)
-    end_dt   = timezone.make_aware(timezone.datetime.combine(date, closing), tz)
+    end_dt = timezone.make_aware(timezone.datetime.combine(date, closing), tz)
 
     slot_start = start_dt
     slots = []

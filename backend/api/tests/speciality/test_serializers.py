@@ -13,6 +13,7 @@ User = get_user_model()
 
 pytestmark = pytest.mark.django_db(transaction=True)
 
+
 class TestSpecialitySerializers:
     @pytest.fixture
     def admin_user(self, admin_staff_factory):

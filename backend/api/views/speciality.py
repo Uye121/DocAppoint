@@ -7,6 +7,7 @@ from ..serializers import (
 )
 from ..permissions import IsStaffOrAdmin
 
+
 class SpecialityViewSet(
     mixins.CreateModelMixin,
     mixins.RetrieveModelMixin,
@@ -18,9 +19,8 @@ class SpecialityViewSet(
     Features:
         - Authenticated user can view specialities
     """
-    queryset = Speciality.objects.filter(
-        is_removed=False
-    )
+
+    queryset = Speciality.objects.filter(is_removed=False)
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -41,6 +41,4 @@ class SpecialityViewSet(
         )
 
     def perform_update(self, serializer):
-        serializer.save(
-            updated_by=self.request.user
-        )
+        serializer.save(updated_by=self.request.user)

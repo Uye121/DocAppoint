@@ -13,13 +13,15 @@ User = get_user_model()
 
 pytestmark = pytest.mark.django_db(transaction=True)
 
+
 @pytest.fixture
 def cleanup_images():
     """Fixture to clean up image files after test"""
     yield
-    if hasattr(settings, 'TEST_MEDIA_ROOT'):
+    if hasattr(settings, "TEST_MEDIA_ROOT"):
         if os.path.exists(settings.TEST_MEDIA_ROOT):
             shutil.rmtree(settings.TEST_MEDIA_ROOT, ignore_errors=True)
+
 
 def _dummy_image(name="1x1.png"):
     img = Image.new("RGBA", (1, 1), (255, 0, 0, 0))
@@ -27,6 +29,7 @@ def _dummy_image(name="1x1.png"):
     img.save(file, format="PNG")
     file.seek(0)
     return SimpleUploadedFile(name, file.read(), content_type="image/png")
+
 
 class TestUserSerializer:
     def test_read(self, user_factory):
@@ -51,7 +54,7 @@ class TestUserSerializer:
         u = ser.save()
         assert u.email == "neo@example.com"
         assert u.check_password("Complex123!")
-        assert not u.is_active 
+        assert not u.is_active
 
     def test_create_with_image(self):
         payload = {
@@ -138,13 +141,13 @@ class TestUserSerializer:
         ser = UserSerializer(instance=u, data=payload, partial=True)
         assert ser.is_valid(), ser.errors
         obj = ser.save()
-        assert obj.password != old_hash 
+        assert obj.password != old_hash
         assert obj.check_password("NewComplex456!")
 
     def test_update_email_duplicate(self, user_factory):
         user_factory(email="first@example.com")
         u2 = user_factory(email="second@example.com")
-        payload = {"email": "FIRST@example.com"} 
+        payload = {"email": "FIRST@example.com"}
         ser = UserSerializer(instance=u2, data=payload, partial=True)
         assert not ser.is_valid()
         assert "email" in ser.errors

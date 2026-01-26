@@ -14,11 +14,14 @@ from api.models import (
 User = get_user_model()
 pytestmark = pytest.mark.django_db(transaction=True)
 
+
 class TestAppointmentModel:
     @pytest.fixture
-    def data(self, patient_factory, provider_factory, hospital_factory, admin_staff_factory):
+    def data(
+        self, patient_factory, provider_factory, hospital_factory, admin_staff_factory
+    ):
         a = admin_staff_factory()
-        
+
         h = hospital_factory()
         provider = provider_factory()
         provider.user.is_active = True
@@ -29,9 +32,10 @@ class TestAppointmentModel:
         patient.user.save(update_fields=["is_active"])
 
         assignment = ProviderHospitalAssignment.objects.create(
-            healthcare_provider=provider, hospital=h,
+            healthcare_provider=provider,
+            hospital=h,
             created_by=a.user,
-            updated_by=a.user
+            updated_by=a.user,
         )
         now = timezone.now()
         return {
@@ -52,7 +56,10 @@ class TestAppointmentModel:
             location=data["hospital"],
             reason="Check-up",
         )
-        assert str(appt) == f"Appointment: {data['patient']} with {data['provider']} at {data['start']}"
+        assert (
+            str(appt)
+            == f"Appointment: {data['patient']} with {data['provider']} at {data['start']}"
+        )
         assert appt.status == Appointment.Status.REQUESTED
 
     def test_past_start_blocked(self, data):
@@ -76,6 +83,7 @@ class TestAppointmentModel:
                 location=data["hospital"],
                 reason="x",
             )
+
 
 class TestSlotModel:
     @pytest.fixture

@@ -7,15 +7,17 @@ User = get_user_model()
 
 pytestmark = pytest.mark.django_db(transaction=True)
 
+
 @pytest.fixture
 def api_client():
     return APIClient()
+
 
 # ==================================================================
 # sign-up
 # ==================================================================
 class TestUserSignUp:
-    url = "/api/users/" 
+    url = "/api/users/"
 
     def test_create_minimal(self, api_client):
         payload = {
@@ -29,7 +31,7 @@ class TestUserSignUp:
         assert res.status_code == status.HTTP_201_CREATED, res.data
         user = User.objects.get(email="new@user.com")
         assert user.check_password("Complex123!")
-        assert not user.is_active 
+        assert not user.is_active
 
     def test_email_duplicate_case_insensitive(self, api_client, user_factory):
         user_factory(email="EXIST@example.com")
@@ -55,6 +57,7 @@ class TestUserSignUp:
         res = api_client.post(self.url, payload, format="json")
         assert res.status_code == status.HTTP_400_BAD_REQUEST
         assert "password" in res.data
+
 
 # ==================================================================
 # profile
@@ -83,6 +86,7 @@ class TestUserProfile:
     def test_anonymous_denied(self, api_client):
         res = api_client.get(self.url)
         assert res.status_code == status.HTTP_401_UNAUTHORIZED
+
 
 # ==================================================================
 # change-password

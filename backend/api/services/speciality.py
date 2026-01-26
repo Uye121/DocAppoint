@@ -5,6 +5,7 @@ from django.utils import timezone
 
 from ..models import Speciality
 
+
 class SpecialityService:
     @staticmethod
     def get_all_specialities(active_only: bool = True) -> List[Speciality]:
@@ -12,7 +13,7 @@ class SpecialityService:
         queryset = Speciality.objects.all()
         if active_only:
             queryset = queryset.filter(is_removed=False)
-        return queryset.order_by('name')
+        return queryset.order_by("name")
 
     @staticmethod
     def get_speciality_by_id(speciality_id: int) -> Optional[Speciality]:
@@ -26,32 +27,28 @@ class SpecialityService:
     def create_speciality(name: str, image) -> Speciality:
         if Speciality.objects.filter(name__iexact=name, is_removed=False).exists():
             raise ValidationError("Speciality with this name already exists")
-        
-        speciality = Speciality.objects.create(
-            name=name,
-            image=image
-        )
+
+        speciality = Speciality.objects.create(name=name, image=image)
         return speciality
 
     @staticmethod
-    @transaction.atomic 
+    @transaction.atomic
     def update_speciality(
-        speciality: Speciality,
-        name: Optional[str] = None,
-        image=None
+        speciality: Speciality, name: Optional[str] = None, image=None
     ) -> Speciality:
         # Check non-soft-deleted speciality on name change
         if name and name != speciality.name:
-            if Speciality.objects.filter(
-                name__iexact=name, 
-                is_removed=False
-            ).exclude(id=speciality.id).exists():
+            if (
+                Speciality.objects.filter(name__iexact=name, is_removed=False)
+                .exclude(id=speciality.id)
+                .exists()
+            ):
                 raise ValidationError("Speciality with this name already exists")
             speciality.name = name
-        
+
         if image is not None:
             speciality.image = image
-            
+
         speciality.save()
         return speciality
 
@@ -62,7 +59,7 @@ class SpecialityService:
             raise ValidationError(
                 "Cannot delete speciality that has active healthcare providers"
             )
-        
+
         speciality.is_removed = True
         speciality.removed_at = timezone.now()
         speciality.save()

@@ -9,6 +9,7 @@ User = get_user_model()
 
 pytestmark = pytest.mark.django_db(transaction=True)
 
+
 # ==================================================================
 #  ChangePasswordSerializer
 # ==================================================================
@@ -29,6 +30,7 @@ class TestChangePasswordSerializer:
         ss = ChangePasswordSerializer(data=payload)
         assert not ss.is_valid()
         assert "new_password" in ss.errors
+
 
 # ==================================================================
 #  LoginSerializer

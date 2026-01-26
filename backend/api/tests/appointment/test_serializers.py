@@ -17,6 +17,7 @@ from ...serializers import (
 User = get_user_model()
 pytestmark = pytest.mark.django_db(transaction=True)
 
+
 class TestSlotSerializer:
     def test_valid_slot(self, provider_factory, hospital_factory):
         prov = provider_factory()
@@ -68,9 +69,17 @@ class TestSlotSerializer:
         assert not s.is_valid()
         assert "Cannot create/modify a slot in the past." in str(s.errors["end"])
 
+
 class TestAppointmentSerializers:
     @pytest.fixture
-    def data(self, provider_factory, patient_factory, hospital_factory, user_factory, admin_staff_factory):
+    def data(
+        self,
+        provider_factory,
+        patient_factory,
+        hospital_factory,
+        user_factory,
+        admin_staff_factory,
+    ):
         a = admin_staff_factory()
         h = hospital_factory()
         provider = provider_factory()
@@ -80,7 +89,7 @@ class TestAppointmentSerializers:
             healthcare_provider=provider,
             hospital=h,
             created_by=a.user,
-            updated_by=a.user
+            updated_by=a.user,
         )
         now = timezone.now()
         return {
@@ -103,7 +112,10 @@ class TestAppointmentSerializers:
         )
         s = AppointmentListSerializer(instance=appt)
         assert s.data["status"] == "REQUESTED"
-        assert s.data["patientName"] == f"{data['patient'].user.first_name} {data['patient'].user.last_name}"
+        assert (
+            s.data["patientName"]
+            == f"{data['patient'].user.first_name} {data['patient'].user.last_name}"
+        )
 
     def test_appointment_detail_serializer(self, data):
         appt = Appointment.objects.create(
@@ -149,7 +161,9 @@ class TestAppointmentSerializers:
             }
         )
         assert not s.is_valid()
-        assert "Cannot schedule an appointment in the past." in str(s.errors["appointment_start_datetime_utc"])
+        assert "Cannot schedule an appointment in the past." in str(
+            s.errors["appointment_start_datetime_utc"]
+        )
 
     def test_create_serializer_end_before_start(self, data):
         start = timezone.now() + timedelta(hours=1)
@@ -165,4 +179,6 @@ class TestAppointmentSerializers:
             }
         )
         assert not s.is_valid()
-        assert "End must be after start." in str(s.errors["appointment_end_datetime_utc"])
+        assert "End must be after start." in str(
+            s.errors["appointment_end_datetime_utc"]
+        )
