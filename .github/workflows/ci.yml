@@ -252,6 +252,13 @@ jobs:
       
       - name: Install dependencies
         run: poetry install --no-interaction --no-root --no-ansi
+
+      - name: Run migrations
+        env:
+          DATABASE_URL: postgres://postgres:password@localhost:5432/docappoint_test
+          REDIS_URL: redis://localhost:6379/0
+          SECRET_KEY: test-secret-key
+        run: poetry run python manage.py migrate
       
       - name: Run tests
         env:
