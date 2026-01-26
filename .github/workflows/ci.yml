@@ -259,6 +259,10 @@ jobs:
           SECRET_KEY: test-secret-key
           DJANGO_SECRET_KEY: test-secret-key-for-ci
           EMAIL_VERIFY_SECRET: test-email-secret-for-ci
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_HOST: localhost
+          POSTGRES_DB: docappoint_test
         run: poetry run python manage.py migrate
       
       - name: Run tests
