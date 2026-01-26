@@ -218,3 +218,4 @@ backups
 # misc
 notes.md
 tmp.json
+rest_client/*

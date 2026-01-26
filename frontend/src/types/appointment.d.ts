@@ -1,6 +1,3 @@
-import type { Doctor } from "./doctor";
-import type { User } from "./user";
-
 export interface Slot {
   id: string;
   hospitalId: int;
@@ -19,8 +16,10 @@ export interface SlotRangePayload {
 
 export interface AppointmentListItem {
   id: string;
-  patient: User;
-  provider: Doctor;
+  patientId: string;
+  providerId: string;
+  patientName: string;
+  providerName: string;
   appointmentStartDatetimeUtc: string;
   appointmentEndDatetimeUtc: string;
   location: string;
@@ -34,7 +33,7 @@ export interface Appointment extends AppointmentListItem {
 }
 
 export interface AppointmentPayload {
-  patient?: User;
+  patient?: string;
   provider: string;
   appointmentStartDatetimeUtc: string;
   appointmentEndDatetimeUtc: string;

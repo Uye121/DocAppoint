@@ -5,7 +5,7 @@ interface DoctorCardProps {
   firstName: string;
   lastName: string;
   education: string;
-  speciality: string;
+  speciality: string | null;
   yearsOfExperience: number;
   about: string;
   fees: string;

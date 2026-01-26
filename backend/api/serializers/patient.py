@@ -6,9 +6,6 @@ from ..mixin import CamelCaseMixin
 from .user import UserSerializer
 
 class PatientSerializer(CamelCaseMixin, serializers.ModelSerializer):
-    """
-    Thin read-only user info
-    """
     user = UserSerializer(read_only=True)
 
     class Meta:

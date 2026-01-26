@@ -90,8 +90,7 @@ const ProviderHome = (): React.JSX.Element => {
                     >
                       <div>
                         <p className="font-medium text-gray-900">
-                          {appt.patient.user.firstName}{" "}
-                          {appt.patient.user.lastName}
+                          {appt.patientName}
                         </p>
                         <p className="text-sm text-gray-600">
                           {format(
@@ -186,7 +185,6 @@ const ProviderHome = (): React.JSX.Element => {
               </button>
             </div>
 
-            {/* History */}
             <div className="mb-4">
               <h3 className="font-medium mb-2">History</h3>
               {records.length === 0 && (
@@ -216,7 +214,6 @@ const ProviderHome = (): React.JSX.Element => {
               ))}
             </div>
 
-            {/* Add / Edit form */}
             <div>
               <h3 className="font-medium mb-2">
                 {editingRecord ? "Edit" : "Add"} Record

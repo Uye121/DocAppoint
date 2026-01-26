@@ -40,72 +40,68 @@ const Doctors = (): React.JSX.Element => {
         <div
           className={`flex flex-col gap-4 text-sm text-gray-600 ${showFilter ? "flex" : "hidden sm:flex"}`}
         >
-          <p
+          <button
+            type="button"
             onClick={() =>
               speciality == "General physician"
                 ? navigate("/doctors")
                 : navigate("/doctors/General physician")
             }
-            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${speciality == "General Physician" ? "bg-indigo-100 text-black" : ""}`}
+            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all text-left ${speciality === "General Physician" ? "bg-indigo-100 text-black" : "bg-white"}`}
           >
             General Physician
-          </p>
-          <p
+          </button>
+          <button
+            type="button"
             onClick={() =>
               speciality == "Gynecologist"
                 ? navigate("/doctors")
                 : navigate("/doctors/Gynecologist")
             }
-            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${speciality == "Gynecologist" ? "bg-indigo-100 text-black" : ""}`}
+            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all text-left ${speciality === "Gynecologist" ? "bg-indigo-100 text-black" : "bg-white"}`}
           >
             Gynecologist
-          </p>
-          <p
+          </button>
+          <button
+            type="button"
             onClick={() =>
               speciality == "Dermatologist"
                 ? navigate("/doctors")
                 : navigate("/doctors/Dermatologist")
             }
-            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${speciality == "Dermatologist" ? "bg-indigo-100 text-black" : ""}`}
+            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all text-left ${speciality === "Dermatologist" ? "bg-indigo-100 text-black" : "bg-white"}`}
           >
             Dermatologist
-          </p>
-          <p
+          </button>
+          <button
+            type="button"
             onClick={() =>
               speciality == "Pediatricians"
                 ? navigate("/doctors")
                 : navigate("/doctors/Pediatricians")
             }
-            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${speciality == "Pediatricians" ? "bg-indigo-100 text-black" : ""}`}
+            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all text-left ${speciality === "Pediatricians" ? "bg-indigo-100 text-black" : "bg-white"}`}
           >
             Pediatricians
-          </p>
-          <p
+          </button>
+          <button
+            type="button"
             onClick={() =>
               speciality == "Neurologist"
                 ? navigate("/doctors")
                 : navigate("/doctors/Neurologist")
             }
-            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${speciality == "Neurologist" ? "bg-indigo-100 text-black" : ""}`}
+            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all text-left ${speciality === "Neurologist" ? "bg-indigo-100 text-black" : "bg-white"}`}
           >
             Neurologist
-          </p>
-          <p
-            onClick={() =>
-              speciality == "Gastroenterologist"
-                ? navigate("/doctors")
-                : navigate("/doctors/Gastroenterologist")
-            }
-            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${speciality == "Gastroenterologist" ? "bg-indigo-100 text-black" : ""}`}
-          >
-            Gastroenterologist
-          </p>
+          </button>
         </div>
         <div className="w-full grid grid-cols-fluid gap-4 gap-y-6">
           {filteredDoc.map((item: DoctorListItem, index: number) => (
-            <div
+            <button
+              type="button"
               onClick={() => navigate(`/appointment/${item.id}`)}
-              className="border border-blue-200 rounded-xl overflow-hidden cursor-pointer hover:translate-y-[-10px] transition-all duration-500"
+              className="border border-blue-200 rounded-xl overflow-hidden cursor-pointer hover:translate-y-[-10px] transition-all duration-500 text-left bg-white p-0"
               key={index}
             >
               <img
@@ -123,7 +119,7 @@ const Doctors = (): React.JSX.Element => {
                 </p>
                 <p className="text-gray-600 text-sm">{item.specialityName}</p>
               </div>
-            </div>
+            </button>
           ))}
         </div>
       </div>

@@ -21,8 +21,10 @@ const Login = (): React.JSX.Element => {
     nav("/signup");
   };
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) =>
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [event.target.name]: event.target.value });
+    setError(null);
+  };
 
   const handleSubmit = async (event: React.SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -50,10 +52,11 @@ const Login = (): React.JSX.Element => {
   return (
     <form onSubmit={handleSubmit} className="min-h-[80vh] flex items-center">
       <div className="flex flex-col gap-3 m-auto items-start p-8 min-w-[340px] sm:min-w-96 max-w-md border rounded-xl text-zinc-600 text-sm shadow-lg">
-        <p className="text-2xl font-semibold">Login</p>
+        <h2 className="text-2xl font-semibold">Login</h2>
         <div className="w-full">
-          <p>Email</p>
+          <label htmlFor="email">Email</label>
           <input
+            id="email"
             type="email"
             name="email"
             className="border border-zinc-300 rounded w-full p-2 mt-1"
@@ -63,8 +66,9 @@ const Login = (): React.JSX.Element => {
           />
         </div>
         <div className="w-full">
-          <p>Password</p>
+          <label htmlFor="password">Password</label>
           <input
+            id="password"
             type="password"
             name="password"
             className="border border-zinc-300 rounded w-full p-2 mt-1"

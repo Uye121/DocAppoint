@@ -6,7 +6,6 @@ import Spinner from "../components/Spinner";
 
 const Landing = (): React.JSX.Element => {
   const { user, loading } = useAuth();
-  console.log("user: ", user);
 
   if (loading) return <Spinner />;
 

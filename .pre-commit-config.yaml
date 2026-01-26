@@ -14,6 +14,12 @@ repos:
         language: system
         pass_filenames: false
 
+      - id: fe-test
+        name: FE vitest related
+        entry: docker compose exec -T frontend npm test -- --run --reporter=verbose
+        language: system
+        pass_filenames: false
+
       # ---------- BACKEND ----------
       - id: be-ruff-check
         name: BE ruff check

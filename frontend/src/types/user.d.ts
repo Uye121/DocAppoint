@@ -1,17 +1,16 @@
 export interface User {
-  id: number;
-  username: string;
+  address?: string | null;
+  dateOfBirth?: string | null;
   email: string;
   firstName: string;
-  lastName: string;
-  dateOfBirth?: string | null;
-  phoneNumber?: string | null;
-  address?: string | null;
-  image?: string | null;
-  isActive: boolean;
   hasAdminStaffProfile: boolean;
   hasPatientProfile: boolean;
   hasProviderProfile: boolean;
   hasSystemAdminProfile: boolean;
+  id: string;
+  image?: string | null;
+  lastName: string;
+  phoneNumber?: string | null;
   userRole: string;
+  userName: string;
 }
