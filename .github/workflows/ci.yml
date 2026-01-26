@@ -215,12 +215,6 @@ jobs:
           POSTGRES_PASSWORD: password
           POSTGRES_HOST: postgres
           POSTGRES_DB: docappoint_test
-          PROVIDER_PASSWORD: testpwdforci123
-          ADMIN_USERNAME: testuserforci123
-          ADMIN_EMAIL: testuserci@admin.com
-          ADMIN_PASSWORD: testpwdforciadm1n
-          EMAIL_VERIFY_SECRET: test-email-secret-for-ci
-          DJANGO_SECRET_KEY: test-secret-key-for-ci
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -264,6 +258,12 @@ jobs:
           DATABASE_URL: postgres://postgres:password@localhost:5432/docappoint_test
           REDIS_URL: redis://localhost:6379/0
           SECRET_KEY: test-secret-key
+          PROVIDER_PASSWORD: testpwdforci123
+          ADMIN_USERNAME: testuserforci123
+          ADMIN_EMAIL: testuserci@admin.com
+          ADMIN_PASSWORD: testpwdforciadm1n
+          EMAIL_VERIFY_SECRET: test-email-secret-for-ci
+          DJANGO_SECRET_KEY: test-secret-key-for-ci
         run: poetry run pytest --cov=api --cov-report=xml --cov-report=html
 
   # ==========================================
