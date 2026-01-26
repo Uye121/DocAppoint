@@ -198,6 +198,9 @@ jobs:
       - name: Check for missing migrations
         env:
           DATABASE_URL: postgres://postgres:password@localhost:5432/docappoint
+          DJANGO_SECRET_KEY: test-secret-key-for-ci
+          EMAIL_VERIFY_SECRET: test-email-secret-for-ci
+          REDIS_URL: test-redis-secret-for-ci
         run: poetry run python manage.py makemigrations --check --dry-run
 
   backend-test:
