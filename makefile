@@ -1,126 +1,240 @@
-
-# -----------------------------------------------------------------------------
-# Variables
-# -----------------------------------------------------------------------------
+# =============================================================================
+# VARIABLES
+# =============================================================================
+DC := docker compose
 BACKEND_DIR := backend
 FRONTEND_DIR := frontend
-PYTHON := python
-NPM := npm
-DC := docker compose
+IS_CI := $(if $(CI),true,)
 
 # =============================================================================
-# LIFECYCLE
+# DEVELOPMENT
 # =============================================================================
-.PHONY: dev stop restart clean
+.PHONY: dev dev-down dev-clean dev-restart
+
+## Start development environment
 dev:
 	$(DC) up --build
 
+## Start development in detached mode
 dev-detached:
 	$(DC) up --build -d
 
-watch:
-	$(DC) watch
-
-stop:
+## Stop development environment
+dev-down:
 	$(DC) down
 
-restart: stop dev
-
-clean:
+## Clean development environment
+dev-clean:
 	$(DC) down -v
 	rm -rf $(FRONTEND_DIR)/node_modules
-	find $(BACKEND_DIR) -type d -name __pycache__ -exec rm -rf {} +
-	find $(BACKEND_DIR) -type f -name "*.pyc" -delete
+
+## Restart development environment
+dev-restart: dev-down dev
+
+## Watch for changes
+dev-watch:
+	$(DC) watch
+
+# =============================================================================
+# SERVICE MANAGEMENT
+# =============================================================================
+.PHONY: services-build services-logs services-status
+
+## Build all services
+services-build:
+	$(DC) build
+
+## Follow service logs
+services-logs:
+	$(DC) logs -f
+
+## Show service status
+services-status:
+	$(DC) ps
 
 # =============================================================================
 # BACKEND
 # =============================================================================
-.PHONY: backend-dev backend-migrate backend-createsuperuser backend-test
-backend-dev:
-	cd $(BACKEND_DIR) && $(PYTHON) manage.py runserver
+.PHONY: backend backend-migrate backend-shell backend-createsuperuser backend-test
 
-backend-migrate:
-	cd $(BACKEND_DIR) && $(PYTHON) manage.py makemigrations
-	cd $(BACKEND_DIR) && $(PYTHON) manage.py migrate
-
-backend-createsuperuser:
-	cd $(BACKEND_DIR) && $(PYTHON) manage.py createsuperuser
-
-backend-test:
-	cd $(BACKEND_DIR) && $(PYTHON) manage.py test
-
-.PHONY: docker-backend-dev docker-backend-migrate backend-shell
-docker-backend-dev:
+## Start backend service
+backend:
 	$(DC) up -d backend
 
-docker-backend-migrate:
-	$(DC) exec backend $(PYTHON) manage.py makemigrations
-	$(DC) exec backend $(PYTHON) manage.py migrate
+## Run migrations
+backend-migrate:
+	$(DC) exec backend python manage.py makemigrations
+	$(DC) exec backend python manage.py migrate
 
-docker-backend-test:
-	$(DC) exec backend pytest api/tests/appointment/test_views.py -v 
+## Open Django shell
+backend-shell:
+	$(DC) exec backend python manage.py shell
 
-docker-backend-test-all:
+## Create superuser
+backend-createsuperuser:
+	$(DC) exec backend python manage.py createsuperuser
+
+## Run backend tests
+backend-test:
 	$(DC) exec backend pytest --reuse-db
 
-backend-shell:
-	$(DC) exec backend $(PYTHON) manage.py shell
+## Run specific test file
+backend-test-file:
+	$(DC) exec backend pytest $(FILE) -v
 
 # =============================================================================
 # FRONTEND
 # =============================================================================
-.PHONY: frontend-install frontend-dev frontend-test
-frontend-install:
-	cd $(FRONTEND_DIR) && $(NPM) install
+.PHONY: frontend
 
-frontend-dev:
-	cd $(FRONTEND_DIR) && $(NPM) run dev
-
-frontend-test:
-	cd $(FRONTEND_DIR) && $(NPM) run test
-
-docker-frontend-dev:
+## Start frontend service
+frontend:
 	$(DC) up -d frontend
-
-lint-fe:
-	$(DC) exec frontend npm run lint
-
-format-fe:
-	$(DC) exec frontend npm run format
-
-lint-be:
-	$(DC) exec backend pre-commit run --all-files
 
 # =============================================================================
 # DATABASE
 # =============================================================================
-.PHONY: db-shell db-backup db-restore db-down db-up
-db-shell:
-	$(DC) exec postgres psql -U postgres -d docappoint
+.PHONY: database database-shell database-backup
 
-db-backup:
-	$(DC) exec postgres pg_dump -U postgres docappoint > backup_$(shell date +%Y%m%d_%H%M%S).sql
-
-db-restore:
-	$(DC) exec -T db dropdb -U postgres --if-exists docappoint
-	$(DC) exec -T db createdb -U postgres docappoint
-	$(DC) exec -T db psql -U postgres docappoint < $(file)
-
-db-down:
-	$(DC) down -v
-
-db-up:
+## Start database service
+database:
 	$(DC) up -d postgres
 
+## Connect to database shell
+database-shell:
+	$(DC) exec postgres psql -U postgres -d docappoint
+
+## Backup database
+database-backup:
+	mkdir -p ./backup
+	$(DC) exec postgres pg_dump -U postgres docappoint > ./backup/backup_$(shell date +%Y%m%d_%H%M%S).sql
+
+clean-backups:
+	rm -f ./backup/*.sql
+
+## Restore database from file
+database-restore:
+	$(DC) exec -T postgres dropdb -U postgres --if-exists docappoint
+	$(DC) exec -T postgres createdb -U postgres docappoint
+	$(DC) exec -T postgres psql -U postgres docappoint < $(FILE)
+
 # =============================================================================
-# MISC / UTILITIES
-# ==============================================================================
-.PHONY: docker-build docker-logs status
-docker-build:
-	$(DC) build
+# CODE QUALITY 
+# =============================================================================
+.PHONY: lint format lint-be lint-fe format-be format-fe
 
-docker-logs:
-	$(DC) logs -f
+## Run all linting
+lint: lint-be lint-fe
 
-docker-status:
-	$(DC) ps
+## Run all formatting
+format: format-be format-fe
+
+## Lint backend
+lint-be:
+	$(DC) exec backend pre-commit run --all-files
+
+## Lint frontend
+lint-fe:
+	$(DC) exec frontend npm run lint
+
+## Format frontend
+format-fe:
+	$(DC) exec frontend npm run format
+
+## Format backend
+format-be:
+	$(DC) exec backend pre-commit run --all-files
+
+# =============================================================================
+# CI/CD COMMANDS
+# =============================================================================
+.PHONY: ci ci-fe ci-be
+
+## Run full CI suite locally (for debugging CI issues)
+ci: ci-fe ci-be
+
+## Frontend CI suite
+ci-fe: ci-fe-lint ci-fe-type-check ci-fe-test
+
+ci-fe-lint:
+	cd $(FRONTEND_DIR) && npm run lint
+
+ci-fe-type-check:
+	cd $(FRONTEND_DIR) && npm run type-check
+
+ci-fe-test:
+	cd $(FRONTEND_DIR) && npm run test:run
+ifneq ($(IS_CI),true)
+	cd $(FRONTEND_DIR) && npm run test:coverage
+endif
+
+## Backend CI suite
+ci-be: ci-be-lint ci-be-type-check ci-be-migrations-check ci-be-test
+
+ci-be-lint:
+	cd $(BACKEND_DIR) && poetry run ruff check .
+	cd $(BACKEND_DIR) && poetry run ruff format --check .
+
+ci-be-type-check:
+	cd $(BACKEND_DIR) && poetry run mypy api
+
+ci-be-migrations-check:
+	cd $(BACKEND_DIR) && DJANGO_SETTINGS_MODULE=api.settings.development poetry run python manage.py makemigrations --check --dry-run
+
+ci-be-test:
+	cd $(BACKEND_DIR) && DJANGO_SETTINGS_MODULE=api.settings.development poetry run pytest --cov=api --cov-report=xml --cov-report=html
+
+## Database setup for CI
+ci-db-setup:
+	cd $(FRONTEND_DIR) && npm ci
+	cd $(BACKEND_DIR) && poetry install --no-interaction --no-root --no-ansi
+	cd $(BACKEND_DIR) && DJANGO_SETTINGS_MODULE=api.settings.development poetry run python manage.py makemigrations api --noinput
+	cd $(BACKEND_DIR) && DJANGO_SETTINGS_MODULE=api.settings.development poetry run python manage.py migrate api
+	cd $(BACKEND_DIR) && DJANGO_SETTINGS_MODULE=api.settings.development poetry run python manage.py migrate
+
+# =============================================================================
+# HELP
+# =============================================================================
+.PHONY: help
+
+## Display this help message
+help:
+	@echo "Available commands:"
+	@echo ""
+	@echo "Development:"
+	@echo "  make dev              Start all services"
+	@echo "  make dev-down         Stop all services"
+	@echo "  make dev-clean        Stop and remove volumes"
+	@echo "  make dev-restart      Restart all services"
+	@echo "  make dev-watch        Watch for file changes"
+	@echo ""
+	@echo "Individual Services:"
+	@echo "  make backend          Start backend only"
+	@echo "  make frontend         Start frontend only"
+	@echo "  make database         Start database only"
+	@echo ""
+	@echo "Backend Operations:"
+	@echo "  make backend-migrate          Run migrations"
+	@echo "  make backend-shell            Open Django shell"
+	@echo "  make backend-createsuperuser  Create admin user"
+	@echo "  make backend-test             Run all tests"
+	@echo "  make backend-test-file FILE=path  Run specific test file"
+	@echo ""
+	@echo "Database Operations:"
+	@echo "  make database-shell           Connect to PostgreSQL"
+	@echo "  make database-backup          Create database backup"
+	@echo "  make database-restore FILE=   Restore from backup"
+	@echo ""
+	@echo "Code Quality:"
+	@echo "  make lint              Run all linting"
+	@echo "  make format            Run all formatting"
+	@echo ""
+	@echo "CI/CD (Local Debugging):"
+	@echo "  make ci                Run full CI suite locally"
+	@echo "  make ci-be             Run backend CI checks"
+	@echo "  make ci-fe             Run frontend CI checks"
+	@echo ""
+	@echo "Utilities:"
+	@echo "  make services-status   Show container status"
+	@echo "  make services-logs     Follow service logs"
+	@echo "  make services-build    Rebuild all images"

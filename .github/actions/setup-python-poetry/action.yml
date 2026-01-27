@@ -1,0 +1,33 @@
+name: 'Setup Python and Poetry'
+description: 'Sets up Python and Poetry with caching'
+
+inputs:
+  python-version:
+    description: 'Python version'
+    required: false
+    default: '3.11'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: latest
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: ./backend/.venv
+        key: venv-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('backend/poetry.lock') }}
+
+    - name: Install dependencies
+      shell: bash
+      run: cd backend && poetry install --no-interaction --no-root --no-ansi
