@@ -159,7 +159,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: password
-          POSTGRES_DB: docappoint
+          POSTGRES_DB: docappoint_test
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -197,7 +197,7 @@ jobs:
       
       - name: Check for missing migrations
         env:
-          DATABASE_URL: postgres://postgres:password@localhost:5432/docappoint
+          DATABASE_URL: postgres://postgres:password@localhost:5432/docappoint_test
           DJANGO_SECRET_KEY: test-secret-key-for-ci
           EMAIL_VERIFY_SECRET: test-email-secret-for-ci
           REDIS_URL: test-redis-secret-for-ci
@@ -213,7 +213,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: password
-          POSTGRES_DB: docappoint
+          POSTGRES_DB: docappoint_test
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -253,9 +253,9 @@ jobs:
       - name: Install dependencies
         run: poetry install --no-interaction --no-root --no-ansi
 
-      - name: Check Django configuration
+      - name: Generate migrations for api app
         env:
-          DATABASE_URL: postgres://postgres:password@localhost:5432/docappoint
+          DATABASE_URL: postgres://postgres:password@localhost:5432/docappoint_test
           REDIS_URL: redis://localhost:6379/0
           SECRET_KEY: test-secret-key
           DJANGO_SECRET_KEY: test-secret-key-for-ci
@@ -263,7 +263,37 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: password
           POSTGRES_HOST: localhost
-          POSTGRES_DB: docappoint
+          POSTGRES_DB: docappoint_test
+          DJANGO_SETTINGS_MODULE: api.settings.development
+        run: |
+          echo "=== Checking if api is in INSTALLED_APPS ==="
+          poetry run python -c "
+          from django.conf import settings
+          apps = [app for app in settings.INSTALLED_APPS if 'api' in app]
+          print('Apps with \"api\":', apps)
+          print('AUTH_USER_MODEL:', getattr(settings, 'AUTH_USER_MODEL', 'Not set'))
+          "
+          
+          echo "=== Generating api migrations ==="
+          poetry run python manage.py makemigrations api
+          
+          echo "=== Created migration files ==="
+          ls -la api/migrations/
+          
+          echo "=== Now showing all migrations ==="
+          poetry run python manage.py showmigrations
+
+      - name: Check Django configuration
+        env:
+          DATABASE_URL: postgres://postgres:password@localhost:5432/docappoint_test
+          REDIS_URL: redis://localhost:6379/0
+          SECRET_KEY: test-secret-key
+          DJANGO_SECRET_KEY: test-secret-key-for-ci
+          EMAIL_VERIFY_SECRET: test-email-secret-for-ci
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_HOST: localhost
+          POSTGRES_DB: docappoint_test
           DJANGO_SETTINGS_MODULE: api.settings.development
         run: |
           echo "=== Checking INSTALLED_APPS ==="
@@ -292,7 +322,7 @@ jobs:
 
       - name: Run migrations
         env:
-          DATABASE_URL: postgres://postgres:password@localhost:5432/docappoint
+          DATABASE_URL: postgres://postgres:password@localhost:5432/docappoint_test
           REDIS_URL: redis://localhost:6379/0
           SECRET_KEY: test-secret-key
           DJANGO_SECRET_KEY: test-secret-key-for-ci
@@ -300,26 +330,24 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: password
           POSTGRES_HOST: localhost
-          POSTGRES_DB: docappoint
+          POSTGRES_DB: docappoint_test
           DJANGO_SETTINGS_MODULE: api.settings.development
         run: |
-          # Generate ALL migrations fresh (including api)
-          poetry run python manage.py makemigrations
+          echo "=== Step 1: Generate api migrations ==="
+          poetry run python manage.py makemigrations api
           
-          # Show what we have
-          echo "=== All available migrations ==="
-          poetry run python manage.py showmigrations
+          echo "=== Step 2: Apply api migrations FIRST ==="
+          poetry run python manage.py migrate api
           
-          # Apply with --fake-initial to handle dependencies
-          echo "=== Applying migrations ==="
-          poetry run python manage.py migrate --fake-initial
-          
-          # Apply any remaining
+          echo "=== Step 3: Apply all other migrations ==="
           poetry run python manage.py migrate
+          
+          echo "=== Final migration state ==="
+          poetry run python manage.py showmigrations
       
       - name: Run tests
         env:
-          DATABASE_URL: postgres://postgres:password@localhost:5432/docappoint
+          DATABASE_URL: postgres://postgres:password@localhost:5432/docappoint_test
           REDIS_URL: redis://localhost:6379/0
           SECRET_KEY: test-secret-key
           PROVIDER_PASSWORD: testpwdforci123
