@@ -29,22 +29,8 @@ jobs:
           cache-dependency-path: ./frontend/package-lock.json
 
       - name: Install dependencies
-        run: |
-          cd frontend
-          echo "Current directory: $(pwd)"
-          echo "Files in directory:"
-          ls -la
-          echo "First 10 lines of package-lock.json:"
-          head -10 package-lock.json
-          echo "npm version: $(npm --version)"
-          echo "Node version: $(node --version)"
-          
-          # Check lockfile version
-          echo "Lockfile version from file:"
-          grep '"lockfileVersion"' package-lock.json
-          
-          # Try npm ci with verbose output
-          npm ci --verbose
+        working-directory: ./frontend
+        run: npm ci
       
       - name: Run ESLint
         run: make ci-fe-lint
@@ -62,6 +48,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       
       - name: Install dependencies
+        working-directory: ./frontend
         run: npm ci
       
       - name: Type check
@@ -81,6 +68,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       
       - name: Install dependencies
+        working-directory: ./frontend
         run: npm ci
       
       - name: Run unit tests
