@@ -159,7 +159,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: password
-          POSTGRES_DB: docappoint_test
+          POSTGRES_DB: docappoint
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -197,7 +197,7 @@ jobs:
       
       - name: Check for missing migrations
         env:
-          DATABASE_URL: postgres://postgres:password@localhost:5432/docappoint_test
+          DATABASE_URL: postgres://postgres:password@localhost:5432/docappoint
           DJANGO_SECRET_KEY: test-secret-key-for-ci
           EMAIL_VERIFY_SECRET: test-email-secret-for-ci
           REDIS_URL: test-redis-secret-for-ci
@@ -213,7 +213,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: password
-          POSTGRES_DB: docappoint_test
+          POSTGRES_DB: docappoint
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -255,7 +255,7 @@ jobs:
 
       - name: Check Django configuration
         env:
-          DATABASE_URL: postgres://postgres:password@localhost:5432/docappoint_test
+          DATABASE_URL: postgres://postgres:password@localhost:5432/docappoint
           REDIS_URL: redis://localhost:6379/0
           SECRET_KEY: test-secret-key
           DJANGO_SECRET_KEY: test-secret-key-for-ci
@@ -263,7 +263,7 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: password
           POSTGRES_HOST: localhost
-          POSTGRES_DB: docappoint_test
+          POSTGRES_DB: docappoint
           DJANGO_SETTINGS_MODULE: api.settings.development
         run: |
           echo "=== Checking INSTALLED_APPS ==="
@@ -292,7 +292,7 @@ jobs:
 
       - name: Run migrations
         env:
-          DATABASE_URL: postgres://postgres:password@localhost:5432/docappoint_test
+          DATABASE_URL: postgres://postgres:password@localhost:5432/docappoint
           REDIS_URL: redis://localhost:6379/0
           SECRET_KEY: test-secret-key
           DJANGO_SECRET_KEY: test-secret-key-for-ci
@@ -300,7 +300,7 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: password
           POSTGRES_HOST: localhost
-          POSTGRES_DB: docappoint_test
+          POSTGRES_DB: docappoint
           DJANGO_SETTINGS_MODULE: api.settings.development
         run: |
           # Generate ALL migrations fresh (including api)
@@ -319,7 +319,7 @@ jobs:
       
       - name: Run tests
         env:
-          DATABASE_URL: postgres://postgres:password@localhost:5432/docappoint_test
+          DATABASE_URL: postgres://postgres:password@localhost:5432/docappoint
           REDIS_URL: redis://localhost:6379/0
           SECRET_KEY: test-secret-key
           PROVIDER_PASSWORD: testpwdforci123
