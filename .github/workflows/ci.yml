@@ -253,7 +253,7 @@ jobs:
       - name: Install dependencies
         run: poetry install --no-interaction --no-root --no-ansi
 
-      - name: Debug - Check api app
+      - name: Check Django configuration
         env:
           DATABASE_URL: postgres://postgres:password@localhost:5432/docappoint_test
           REDIS_URL: redis://localhost:6379/0
@@ -268,38 +268,27 @@ jobs:
         run: |
           echo "=== Checking INSTALLED_APPS ==="
           poetry run python -c "
-          import os
-          print(f'DJANGO_SETTINGS_MODULE: {os.environ.get(\"DJANGO_SETTINGS_MODULE\", \"Not set\")}')
-          
           from django.conf import settings
-          print('INSTALLED_APPS containing \"api\":')
+          print('All INSTALLED_APPS:')
           for app in settings.INSTALLED_APPS:
-              if 'api' in app:
-                  print(f'  - {app}')
+              print(f'  - {app}')
           
-          # Check if api is in INSTALLED_APPS
-          app_names = [app.split('.')[-1] for app in settings.INSTALLED_APPS]
-          print(f'All app names: {app_names}')
-          
-          if 'api' in app_names:
-              print('✓ api is in INSTALLED_APPS')
+          api_apps = [app for app in settings.INSTALLED_APPS if 'api' in app]
+          if api_apps:
+              print(f'\\nFound api apps: {api_apps}')
           else:
-              print('✗ api is NOT in INSTALLED_APPS')
+              print('\\n✗ No app containing \"api\" found in INSTALLED_APPS!')
           
-          # Check AUTH_USER_MODEL
           print(f'\\nAUTH_USER_MODEL: {getattr(settings, \"AUTH_USER_MODEL\", \"Not set\")}')
           "
           
-          echo "=== Checking migration files ==="
-          if [ -d "backend/api/migrations" ]; then
-              echo "Migrations directory exists:"
-              ls -la backend/api/migrations/
+          echo "=== Checking for migration files ==="
+          if [ -d "api/migrations" ]; then
+              echo "Found migrations in api/migrations:"
+              ls -la api/migrations/
           else
-              echo "✗ No migrations directory found at backend/api/migrations/"
+              echo "✗ No api/migrations directory found!"
           fi
-          
-          echo "=== Current showmigrations ==="
-          poetry run python manage.py showmigrations
 
       - name: Run migrations
         env:
