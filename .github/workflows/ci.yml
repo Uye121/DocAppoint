@@ -31,7 +31,20 @@ jobs:
       - name: Install dependencies
         run: |
           cd frontend
-          npm ci
+          echo "Current directory: $(pwd)"
+          echo "Files in directory:"
+          ls -la
+          echo "First 10 lines of package-lock.json:"
+          head -10 package-lock.json
+          echo "npm version: $(npm --version)"
+          echo "Node version: $(node --version)"
+          
+          # Check lockfile version
+          echo "Lockfile version from file:"
+          grep '"lockfileVersion"' package-lock.json
+          
+          # Try npm ci with verbose output
+          npm ci --verbose
       
       - name: Run ESLint
         run: make ci-fe-lint
