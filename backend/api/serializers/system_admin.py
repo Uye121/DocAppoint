@@ -1,10 +1,10 @@
 from rest_framework import serializers
 from django.contrib.auth import password_validation
-from django.db import IntegrityError
 
 from ..models import User, SystemAdmin
 from ..mixin import CamelCaseMixin
 from .user import UserSerializer
+
 
 class SystemAdminSerializer(CamelCaseMixin, serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
@@ -13,11 +13,14 @@ class SystemAdminSerializer(CamelCaseMixin, serializers.ModelSerializer):
         model = SystemAdmin
         fields = ["user", "role"]
 
+
 class SystemAdminCreateSerializer(CamelCaseMixin, serializers.ModelSerializer):
     # user
     email = serializers.EmailField()
     username = serializers.CharField()
-    password = serializers.CharField(write_only=True, validators=[password_validation.validate_password])
+    password = serializers.CharField(
+        write_only=True, validators=[password_validation.validate_password]
+    )
     first_name = serializers.CharField()
     last_name = serializers.CharField()
     date_of_birth = serializers.DateField(required=False, allow_null=True)
@@ -48,9 +51,7 @@ class SystemAdminCreateSerializer(CamelCaseMixin, serializers.ModelSerializer):
 
         role = attrs.get("role")
         if not role or role.strip() == "":
-            raise serializers.ValidationError(
-                {"role": "Role is required."}
-            )
+            raise serializers.ValidationError({"role": "Role is required."})
 
         return attrs
 
@@ -71,22 +72,22 @@ class SystemAdminCreateSerializer(CamelCaseMixin, serializers.ModelSerializer):
         user = User.objects.create_user(**user_data, is_active=False, is_staff=True)
         sys_admin = SystemAdmin.objects.create(user=user, **validated_data)
         return sys_admin
-    
+
+
 class SystemAdminOnBoardSerializer(CamelCaseMixin, serializers.ModelSerializer):
     """
     Turn existing user into a system admin with PATCH or POST
     """
+
     class Meta:
         model = SystemAdmin
-        fields = [
-            "role"
-        ]
+        fields = ["role"]
 
     def validate(self, attrs):
         role = attrs.get("role")
         if not role or role.strip() == "":
             raise serializers.ValidationError({"role": "Role is required."})
-        
+
         user = self.context["request"].user
         # Check for existing user only during create
         if self.instance is None:

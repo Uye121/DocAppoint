@@ -14,7 +14,8 @@ const RoleGuard = ({ allowed, children }: Props) => {
   if (loading) return <Spinner />;
   if (!user) return <Navigate to="/login" replace state={{ from: location }} />;
 
-  if (!allowed.includes(user.userRole)) {
+  const userRole = user.userRole;
+  if (userRole === "unassigned" || !allowed.includes(userRole)) {
     return <Navigate to="/" replace />;
   }
   return <>{children}</>;

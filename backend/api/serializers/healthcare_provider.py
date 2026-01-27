@@ -6,10 +6,11 @@ from ..models import HealthcareProvider, Speciality, Hospital, User
 from ..mixin import CamelCaseMixin
 from .user import UserSerializer
 
+
 class HealthcareProviderSerializer(CamelCaseMixin, serializers.ModelSerializer):
-    id = serializers.PrimaryKeyRelatedField(source='user', read_only=True)
+    id = serializers.PrimaryKeyRelatedField(source="user", read_only=True)
     user = UserSerializer(read_only=True)
-    speciality_name = serializers.CharField(source='speciality.name', read_only=True)
+    speciality_name = serializers.CharField(source="speciality.name", read_only=True)
 
     class Meta:
         model = HealthcareProvider
@@ -17,7 +18,7 @@ class HealthcareProviderSerializer(CamelCaseMixin, serializers.ModelSerializer):
             "id",
             "user",
             "speciality",
-            "speciality_name", 
+            "speciality_name",
             "education",
             "years_of_experience",
             "about",
@@ -38,36 +39,35 @@ class HealthcareProviderSerializer(CamelCaseMixin, serializers.ModelSerializer):
 
     def validate(self, attrs):
         # Check for speciality set to None
-        if 'speciality' in attrs and attrs['speciality'] is None:
-            raise serializers.ValidationError(
-                {'speciality': 'Speciality is required.'}
-            )
-        
+        if "speciality" in attrs and attrs["speciality"] is None:
+            raise serializers.ValidationError({"speciality": "Speciality is required."})
+
         # Require speciality for full updates (PUT), but not partial updates (PATCH)
-        if not self.partial and 'speciality' not in attrs:
-            raise serializers.ValidationError(
-                {'speciality': 'Speciality is required.'}
-            )
-        
-        fees = attrs.get('fees')
+        if not self.partial and "speciality" not in attrs:
+            raise serializers.ValidationError({"speciality": "Speciality is required."})
+
+        fees = attrs.get("fees")
         if fees and fees <= 0:
             raise serializers.ValidationError(
-                {'fees': 'Fees must be greater than zero.'}
+                {"fees": "Fees must be greater than zero."}
             )
 
-        lic = attrs.get('license_number')
-        if lic and not re.match(r'^[A-Z0-9]{6,20}$', lic):
+        lic = attrs.get("license_number")
+        if lic and not re.match(r"^[A-Z0-9]{6,20}$", lic):
             raise serializers.ValidationError(
-                {'license_number': '6-20 alphanumeric characters required.'}
+                {"license_number": "6-20 alphanumeric characters required."}
             )
 
         return attrs
+
 
 class HealthcareProviderCreateSerializer(CamelCaseMixin, serializers.ModelSerializer):
     # user fields
     email = serializers.EmailField(write_only=True)
     username = serializers.CharField(write_only=True)
-    password = serializers.CharField(write_only=True, validators=[password_validation.validate_password])
+    password = serializers.CharField(
+        write_only=True, validators=[password_validation.validate_password]
+    )
     first_name = serializers.CharField(write_only=True)
     last_name = serializers.CharField(write_only=True)
     date_of_birth = serializers.DateField(required=False, allow_null=True)
@@ -101,7 +101,7 @@ class HealthcareProviderCreateSerializer(CamelCaseMixin, serializers.ModelSerial
             "date_of_birth",
             "image",
             "speciality",
-            "education", 
+            "education",
             "years_of_experience",
             "about",
             "fees",
@@ -116,33 +116,31 @@ class HealthcareProviderCreateSerializer(CamelCaseMixin, serializers.ModelSerial
         ]
 
     def validate(self, attrs):
-        email = attrs.get('email')
+        email = attrs.get("email")
         if email and User.objects.filter(email__iexact=email).exists():
             raise serializers.ValidationError(
-                {'email': 'A user with this email already exists.'}
-            )
-        
-        if not attrs.get('speciality'):
-            raise serializers.ValidationError(
-                {'speciality': 'Speciality is required.'}
-            )
-        
-        fees = attrs.get('fees')
-        if fees is not None and fees <= 0:
-            raise serializers.ValidationError(
-                {'fees': 'Fees must be greater than zero.'}
+                {"email": "A user with this email already exists."}
             )
 
-        lic = attrs.get('license_number')
-        if lic and not re.match(r'^[A-Z0-9]{6,20}$', lic):
+        if not attrs.get("speciality"):
+            raise serializers.ValidationError({"speciality": "Speciality is required."})
+
+        fees = attrs.get("fees")
+        if fees is not None and fees <= 0:
             raise serializers.ValidationError(
-                {'license_number': '6-20 alphanumeric characters required.'}
+                {"fees": "Fees must be greater than zero."}
+            )
+
+        lic = attrs.get("license_number")
+        if lic and not re.match(r"^[A-Z0-9]{6,20}$", lic):
+            raise serializers.ValidationError(
+                {"license_number": "6-20 alphanumeric characters required."}
             )
 
         return attrs
 
     def create(self, validated_data):
-        if not validated_data['password']:
+        if not validated_data["password"]:
             raise serializers.ValidationError({"password": "Password cannot be blank."})
 
         user_data = {
@@ -162,41 +160,42 @@ class HealthcareProviderCreateSerializer(CamelCaseMixin, serializers.ModelSerial
         provider = HealthcareProvider.objects.create(user=user, **validated_data)
         return provider
 
+
 class HealthcareProviderListSerializer(CamelCaseMixin, serializers.ModelSerializer):
-    id = serializers.PrimaryKeyRelatedField(source='user', read_only=True)
-    speciality_name = serializers.CharField(source='speciality.name', read_only=True)
-    first_name = serializers.CharField(source='user.first_name', read_only=True)
-    last_name = serializers.CharField(source='user.last_name', read_only=True)
-    image = serializers.ImageField(source='user.image', read_only=True)
+    id = serializers.PrimaryKeyRelatedField(source="user", read_only=True)
+    speciality_name = serializers.CharField(source="speciality.name", read_only=True)
+    first_name = serializers.CharField(source="user.first_name", read_only=True)
+    last_name = serializers.CharField(source="user.last_name", read_only=True)
+    image = serializers.ImageField(source="user.image", read_only=True)
 
     class Meta:
         model = HealthcareProvider
         fields = [
             "id",
             "speciality",
-            "speciality_name", 
+            "speciality_name",
             "first_name",
             "last_name",
-            "image"
+            "image",
         ]
+
 
 class HealthcareProviderOnBoardSerializer(CamelCaseMixin, serializers.ModelSerializer):
     """
     Turn existing user into a Healthcare provider with PATCH or POST
     """
+
     user = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(),
-        required=True,
-        help_text="User ID to onboard."
+        queryset=User.objects.all(), required=True, help_text="User ID to onboard."
     )
-    about = serializers.CharField(required=True) 
+    about = serializers.CharField(required=True)
 
     class Meta:
         model = HealthcareProvider
         fields = [
             "user",
             "speciality",
-            "education", 
+            "education",
             "years_of_experience",
             "about",
             "fees",
@@ -210,25 +209,23 @@ class HealthcareProviderOnBoardSerializer(CamelCaseMixin, serializers.ModelSeria
             "primary_hospital",
         ]
 
-    def validate(self, attrs):        
-        if not attrs.get('speciality'):
-            raise serializers.ValidationError(
-                {'speciality': 'Speciality is required.'}
-            )
-        
-        fees = attrs.get('fees')
+    def validate(self, attrs):
+        if not attrs.get("speciality"):
+            raise serializers.ValidationError({"speciality": "Speciality is required."})
+
+        fees = attrs.get("fees")
         if fees is not None and fees <= 0:
             raise serializers.ValidationError(
-                {'fees': 'Fees must be greater than zero.'}
+                {"fees": "Fees must be greater than zero."}
             )
 
-        lic = attrs.get('license_number')
-        if lic and not re.match(r'^[A-Z0-9]{6,20}$', lic):
+        lic = attrs.get("license_number")
+        if lic and not re.match(r"^[A-Z0-9]{6,20}$", lic):
             raise serializers.ValidationError(
-                {'license_number': '6-20 alphanumeric characters required.'}
+                {"license_number": "6-20 alphanumeric characters required."}
             )
-        
-        user_to_onboard = attrs.get('user')
+
+        user_to_onboard = attrs.get("user")
         if self.instance is None:
             if hasattr(user_to_onboard, "provider"):
                 raise serializers.ValidationError(
@@ -238,14 +235,11 @@ class HealthcareProviderOnBoardSerializer(CamelCaseMixin, serializers.ModelSeria
         return attrs
 
     def create(self, validated_data):
-        user = validated_data.pop('user')
-        return HealthcareProvider.objects.create(
-            user=user,
-            **validated_data
-        )
+        user = validated_data.pop("user")
+        return HealthcareProvider.objects.create(user=user, **validated_data)
 
     def update(self, instance, validated_data):
-        validated_data.pop('user', None) # prevent user update
+        validated_data.pop("user", None)  # prevent user update
         # in case provider row already exists
         for k, v in validated_data.items():
             setattr(instance, k, v)

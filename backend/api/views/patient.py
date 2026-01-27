@@ -9,6 +9,7 @@ from ..serializers import (
     PatientOnBoardSerializer,
 )
 
+
 class PatientViewSet(
     mixins.CreateModelMixin,
     mixins.RetrieveModelMixin,
@@ -23,6 +24,7 @@ class PatientViewSet(
         - Each patient can read / update their own profile
         - Staff can list all patients
     """
+
     queryset = Patient.objects.select_related("user")
     pagination_class = PageNumberPagination
 
@@ -54,7 +56,9 @@ class PatientViewSet(
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response({"detail": "Patient profile created."}, status=status.HTTP_201_CREATED)
+        return Response(
+            {"detail": "Patient profile created."}, status=status.HTTP_201_CREATED
+        )
 
     def list(self, request, *args, **kwargs):
         if not request.user.is_staff:

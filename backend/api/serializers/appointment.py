@@ -1,17 +1,25 @@
 from rest_framework import serializers
 from django.utils import timezone
-from ..models import Appointment, Slot, Patient, HealthcareProvider, Hospital, ProviderHospitalAssignment
+from ..models import (
+    Appointment,
+    Slot,
+    Patient,
+    HealthcareProvider,
+    Hospital,
+    ProviderHospitalAssignment,
+)
 from .patient import PatientSerializer
 from .healthcare_provider import HealthcareProviderListSerializer
 from ..mixin import CamelCaseMixin
 
+
 class SlotSerializer(CamelCaseMixin, serializers.ModelSerializer):
     hospital_id = serializers.PrimaryKeyRelatedField(
-        queryset=Hospital.objects.all(),
-        write_only=True,
-        source='hospital'
+        queryset=Hospital.objects.all(), write_only=True, source="hospital"
     )
-    hospital_timezone = serializers.CharField(source="hospital.timezone", read_only=True)
+    hospital_timezone = serializers.CharField(
+        source="hospital.timezone", read_only=True
+    )
 
     class Meta:
         model = Slot
@@ -38,9 +46,12 @@ class SlotSerializer(CamelCaseMixin, serializers.ModelSerializer):
             )
         return attrs
 
+
 class AppointmentListSerializer(CamelCaseMixin, serializers.ModelSerializer):
-    patient_id = serializers.CharField(source='patient.user.id', read_only=True)
-    provider_id = serializers.CharField(source='healthcare_provider.user.id', read_only=True)
+    patient_id = serializers.CharField(source="patient.user.id", read_only=True)
+    provider_id = serializers.CharField(
+        source="healthcare_provider.user.id", read_only=True
+    )
     patient_name = serializers.SerializerMethodField()
     provider_name = serializers.SerializerMethodField()
 
@@ -55,6 +66,7 @@ class AppointmentListSerializer(CamelCaseMixin, serializers.ModelSerializer):
             "appointment_start_datetime_utc",
             "appointment_end_datetime_utc",
             "location",
+            "reason",
             "status",
         ]
 
@@ -64,10 +76,13 @@ class AppointmentListSerializer(CamelCaseMixin, serializers.ModelSerializer):
     def get_provider_name(self, obj: Appointment) -> str:
         return f"{obj.healthcare_provider.user.first_name} {obj.healthcare_provider.user.last_name}"
 
+
 class AppointmentDetailSerializer(CamelCaseMixin, serializers.ModelSerializer):
     patient = PatientSerializer(read_only=True)
-    provider = HealthcareProviderListSerializer(read_only=True, source="healthcare_provider")
-    location = serializers.StringRelatedField() 
+    provider = HealthcareProviderListSerializer(
+        read_only=True, source="healthcare_provider"
+    )
+    location = serializers.StringRelatedField()
 
     class Meta:
         model = Appointment
@@ -85,7 +100,9 @@ class AppointmentDetailSerializer(CamelCaseMixin, serializers.ModelSerializer):
 
     def validate_appointment_start_datetime_utc(self, value):
         if value < timezone.now():
-            raise serializers.ValidationError("Cannot schedule an appointment in the past.")
+            raise serializers.ValidationError(
+                "Cannot schedule an appointment in the past."
+            )
         return value
 
     def validate(self, attrs):
@@ -97,6 +114,7 @@ class AppointmentDetailSerializer(CamelCaseMixin, serializers.ModelSerializer):
             )
         return attrs
 
+
 class AppointmentCreateSerializer(CamelCaseMixin, serializers.ModelSerializer):
     patient = serializers.PrimaryKeyRelatedField(
         queryset=Patient.objects.all(),
@@ -104,8 +122,7 @@ class AppointmentCreateSerializer(CamelCaseMixin, serializers.ModelSerializer):
         write_only=True,
     )
     provider = serializers.PrimaryKeyRelatedField(
-        source="healthcare_provider",
-        queryset=HealthcareProvider.objects.all()
+        source="healthcare_provider", queryset=HealthcareProvider.objects.all()
     )
     location = serializers.PrimaryKeyRelatedField(
         queryset=Hospital.objects.filter(is_removed=False)
@@ -124,7 +141,9 @@ class AppointmentCreateSerializer(CamelCaseMixin, serializers.ModelSerializer):
 
     def validate_appointment_start_datetime_utc(self, value):
         if value < timezone.now():
-            raise serializers.ValidationError("Cannot schedule an appointment in the past.")
+            raise serializers.ValidationError(
+                "Cannot schedule an appointment in the past."
+            )
         return value
 
     def validate(self, attrs):
@@ -134,7 +153,7 @@ class AppointmentCreateSerializer(CamelCaseMixin, serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {"appointment_end_datetime_utc": "End must be after start."}
             )
-        
+
         provider = attrs.get("healthcare_provider")
         hospital = attrs.get("location")
 

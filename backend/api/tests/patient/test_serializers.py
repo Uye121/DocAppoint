@@ -12,15 +12,17 @@ User = get_user_model()
 
 pytestmark = pytest.mark.django_db(transaction=True)
 
+
 class TestPatientSerializer:
     def setup_method(self):
         self.temp_files = []
-    
+
     def teardown_method(self):
         # Clean up any temporary files
         for file_path in self.temp_files:
             if os.path.exists(file_path):
                 os.remove(file_path)
+
     def test_valid_payload(self, patient_factory):
         p = patient_factory(weight=70, height=180)
         payload = {"weight": 75, "height": 185}
@@ -42,6 +44,7 @@ class TestPatientSerializer:
         assert not ps.is_valid()
         assert "height" in ps.errors
 
+
 class TestPatientCreateSerializer:
     @pytest.fixture
     def base_payload(self):
@@ -59,8 +62,9 @@ class TestPatientCreateSerializer:
             }
             payload.update(overrides)
             return payload
+
         return _payload
-    
+
     def test_create_full(self, base_payload):
         assert User.objects.count() == 0
         payload = base_payload()
@@ -83,6 +87,7 @@ class TestPatientCreateSerializer:
         ps = PatientCreateSerializer(data=payload)
         assert not ps.is_valid()
         assert "weight" in ps.errors
+
 
 class TestPatientOnBoardSerializer:
     def setup(self, user_factory):

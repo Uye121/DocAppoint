@@ -5,6 +5,7 @@ from ..mixin import CamelCaseMixin
 
 User = get_user_model()
 
+
 class UserSerializer(CamelCaseMixin, serializers.ModelSerializer):
     password = serializers.CharField(
         write_only=True,
@@ -15,8 +16,8 @@ class UserSerializer(CamelCaseMixin, serializers.ModelSerializer):
     has_provider_profile = serializers.SerializerMethodField()
     has_admin_staff_profile = serializers.SerializerMethodField()
     has_system_admin_profile = serializers.SerializerMethodField()
-    user_role = serializers.SerializerMethodField() 
-    
+    user_role = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = [
@@ -39,28 +40,28 @@ class UserSerializer(CamelCaseMixin, serializers.ModelSerializer):
         read_only_fields = ["id"]
 
     def get_has_patient_profile(self, obj):
-        return hasattr(obj, 'patient')
-    
+        return hasattr(obj, "patient")
+
     def get_has_provider_profile(self, obj):
-        return hasattr(obj, 'provider')
-    
+        return hasattr(obj, "provider")
+
     def get_has_admin_staff_profile(self, obj):
-        return hasattr(obj, 'admin_staff')
-    
+        return hasattr(obj, "admin_staff")
+
     def get_has_system_admin_profile(self, obj):
-        return hasattr(obj, 'system_admin')
-    
+        return hasattr(obj, "system_admin")
+
     def get_user_role(self, obj):
         """Determine primary role based on hierarchy"""
-        if hasattr(obj, 'system_admin'):
-            return 'system_admin'
-        elif hasattr(obj, 'admin_staff'):
-            return 'admin_staff'
-        elif hasattr(obj, 'provider'):
-            return 'provider'
-        elif hasattr(obj, 'patient'):
-            return 'patient'
-        return 'unassigned'
+        if hasattr(obj, "system_admin"):
+            return "system_admin"
+        elif hasattr(obj, "admin_staff"):
+            return "admin_staff"
+        elif hasattr(obj, "provider"):
+            return "provider"
+        elif hasattr(obj, "patient"):
+            return "patient"
+        return "unassigned"
 
     def validate(self, attrs):
         email = attrs.get("email")
@@ -68,18 +69,16 @@ class UserSerializer(CamelCaseMixin, serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {"email": "A user with this email already exists."}
             )
-        
+
         # Check password on create
         if self.instance is None:
-            if not attrs.get('password'):
-                raise serializers.ValidationError(
-                    {"password": "Password is required."}
-                )
-        
+            if not attrs.get("password"):
+                raise serializers.ValidationError({"password": "Password is required."})
+
         return attrs
-        
+
     def create(self, validated_data):
-        if not validated_data['password']:
+        if not validated_data["password"]:
             raise serializers.ValidationError({"password": "Password cannot be blank."})
 
         user = User.objects.create_user(**validated_data, is_active=False)

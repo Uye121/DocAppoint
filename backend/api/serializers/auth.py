@@ -7,20 +7,19 @@ from ..mixin import CamelCaseMixin
 
 logger = logging.getLogger(__name__)
 
+
 class ChangePasswordSerializer(CamelCaseMixin, serializers.Serializer):
-    old_password = serializers.CharField(required=True, style={"input_type": "password"})
-    new_password = serializers.CharField(
-        required=True,
-        validators=[validate_password],
-        style={"input_type": "password"}
+    old_password = serializers.CharField(
+        required=True, style={"input_type": "password"}
     )
+    new_password = serializers.CharField(
+        required=True, validators=[validate_password], style={"input_type": "password"}
+    )
+
 
 class LoginSerializer(CamelCaseMixin, serializers.Serializer):
     email = serializers.EmailField()
-    password = serializers.CharField(
-        write_only=True,
-        style={"input_type": "password"}
-    )
+    password = serializers.CharField(write_only=True, style={"input_type": "password"})
 
     def validate(self, attrs):
         email = attrs.get("email").strip().lower()
@@ -28,9 +27,7 @@ class LoginSerializer(CamelCaseMixin, serializers.Serializer):
 
         if email and password:
             user = authenticate(
-                request=self.context.get("request"),
-                username=email,
-                password=password
+                request=self.context.get("request"), username=email, password=password
             )
 
             if not user:
@@ -45,6 +42,6 @@ class LoginSerializer(CamelCaseMixin, serializers.Serializer):
             raise serializers.ValidationError(
                 "Email and password are required.", code="authorization"
             )
-        
+
         attrs["user"] = user
         return attrs

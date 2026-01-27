@@ -12,10 +12,16 @@ from .factories import (
 )
 
 for factory in (
-    UserFactory, PatientFactory, HealthcareProviderFactory,
-    HospitalFactory, SpecialityFactory, AdminStaffFactory, SystemAdminFactory
+    UserFactory,
+    PatientFactory,
+    HealthcareProviderFactory,
+    HospitalFactory,
+    SpecialityFactory,
+    AdminStaffFactory,
+    SystemAdminFactory,
 ):
     register(factory)
+
 
 @pytest.fixture
 def provider_factory(healthcare_provider_factory):

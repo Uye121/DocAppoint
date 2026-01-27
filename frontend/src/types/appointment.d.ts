@@ -23,6 +23,7 @@ export interface AppointmentListItem {
   appointmentStartDatetimeUtc: string;
   appointmentEndDatetimeUtc: string;
   location: string;
+  reason: string;
   status: "REQUESTED" | "CONFIRMED" | "COMPLETED" | "CANCELLED" | "RESCHEDULED";
 }
 

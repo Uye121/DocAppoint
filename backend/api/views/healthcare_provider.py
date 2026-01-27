@@ -4,7 +4,7 @@ from rest_framework import mixins, viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
-from ..models import HealthcareProvider, User
+from ..models import HealthcareProvider
 from ..serializers import (
     HealthcareProviderSerializer,
     HealthcareProviderCreateSerializer,
@@ -12,6 +12,7 @@ from ..serializers import (
     HealthcareProviderListSerializer,
 )
 from ..permissions import IsStaffOrAdmin
+
 
 class HealthcareProviderViewSet(
     mixins.CreateModelMixin,
@@ -27,6 +28,7 @@ class HealthcareProviderViewSet(
         - Each provider owns their own profile (R/U)
         - Staff full CRUD
     """
+
     queryset = HealthcareProvider.objects.filter(
         is_removed=False, user__is_active=True
     ).select_related("user", "speciality", "primary_hospital")
@@ -47,15 +49,14 @@ class HealthcareProviderViewSet(
         return [permissions.IsAuthenticated()]
 
     def get_object(self):
-        
-        if 'pk' in self.kwargs:
+        if "pk" in self.kwargs:
             # Staff or the provider themselves accessing via ID
-            return HealthcareProvider.objects.get(user_id=self.kwargs['pk'])
+            return HealthcareProvider.objects.get(user_id=self.kwargs["pk"])
         return self.request.user.provider
-    
+
     @action(detail=False, methods=["get", "patch", "put"], url_path="me")
     def me(self, request):
-        if not hasattr(request.user, 'provider'):
+        if not hasattr(request.user, "provider"):
             raise exceptions.NotFound("Provider profile not found.")
 
         if request.method == "GET":
@@ -63,21 +64,23 @@ class HealthcareProviderViewSet(
             return Response(serializer.data)
         else:  # PATCH/PUT
             serializer = self.get_serializer(
-                request.user.provider, 
-                data=request.data, 
-                partial=(request.method == "PATCH")
+                request.user.provider,
+                data=request.data,
+                partial=(request.method == "PATCH"),
             )
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data)
 
     @action(detail=False, methods=["post"], url_path="onboard")
-    def onboard(self, request):        
+    def onboard(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        return Response({"detail": "Provider profile created."}, status=status.HTTP_201_CREATED)
+        return Response(
+            {"detail": "Provider profile created."}, status=status.HTTP_201_CREATED
+        )
 
     def perform_create(self, serializer):
         return serializer.save()
@@ -87,12 +90,15 @@ class HealthcareProviderViewSet(
         instance = self.get_object()
         can_update = False
 
-        if user.is_staff or hasattr(user, 'system_admin'):
+        if user.is_staff or hasattr(user, "system_admin"):
             can_update = True
-        elif hasattr(user, 'admin_staff'):
-            print('prov: ', instance.primary_hospital.name)
-            print('admin: ', user.admin_staff.hospital.name)
-            if instance.primary_hospital and instance.primary_hospital == user.admin_staff.hospital:
+        elif hasattr(user, "admin_staff"):
+            print("prov: ", instance.primary_hospital.name)
+            print("admin: ", user.admin_staff.hospital.name)
+            if (
+                instance.primary_hospital
+                and instance.primary_hospital == user.admin_staff.hospital
+            ):
                 can_update = True
 
         if can_update and serializer.validated_data.get("is_removed") is True:

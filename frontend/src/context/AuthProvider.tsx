@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import type { AuthPayload } from "../types/auth";
-import type { User } from "../types/auth";
+import type { AuthPayload, User } from "../types/auth";
 import {
   login as apiLogin,
   signup as apiSignup,

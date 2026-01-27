@@ -1,8 +1,6 @@
 import pytest
 import time
 from django.contrib.auth import get_user_model
-from django.utils.encoding import force_bytes
-from django.utils.http import urlsafe_base64_encode
 from rest_framework.test import APIClient
 from rest_framework import status
 
@@ -12,9 +10,11 @@ User = get_user_model()
 
 pytestmark = pytest.mark.django_db(transaction=True)
 
+
 @pytest.fixture
 def api_client():
     return APIClient()
+
 
 # ==================================================================
 #  login
@@ -59,6 +59,7 @@ class TestLogin:
         assert res.status_code == status.HTTP_400_BAD_REQUEST
         assert "detail" in res.data
 
+
 # ==================================================================
 #  verify email
 # ==================================================================
@@ -78,6 +79,7 @@ class TestVerifyEmail:
         assert res.status_code == status.HTTP_400_BAD_REQUEST
         assert res.data["detail"] == "Bad or expired token"
 
+
 # ==================================================================
 #  resend verification
 # ==================================================================
@@ -89,16 +91,14 @@ class TestResendVerify:
         res = api_client.post(self.url, {"email": user.email}, format="json")
         assert res.status_code == status.HTTP_204_NO_CONTENT
 
-    def test_second_resend_invalidates_previous_token(
-        self, api_client, user_factory
-    ):
+    def test_second_resend_invalidates_previous_token(self, api_client, user_factory):
         user = user_factory(email="tok@inv.com", is_active=False)
 
         # first resend
         res = api_client.post(self.url, {"email": user.email}, format="json")
         assert res.status_code == status.HTTP_204_NO_CONTENT
         user.refresh_from_db()
-        token_a = build_verification_jwt(user)   # captured “old” token
+        token_a = build_verification_jwt(user)  # captured “old” token
         old_ts = user.reset_sent_at
 
         time.sleep(2)
@@ -107,7 +107,7 @@ class TestResendVerify:
         res = api_client.post(self.url, {"email": user.email}, format="json")
         assert res.status_code == status.HTTP_204_NO_CONTENT
         user.refresh_from_db()
-        assert user.reset_sent_at > old_ts 
+        assert user.reset_sent_at > old_ts
 
         # reject first token
         bad = api_client.get("/api/auth/verify/", {"token": token_a})
@@ -133,6 +133,7 @@ class TestResendVerify:
         assert res.status_code == status.HTTP_404_NOT_FOUND
         assert "No User matches the given query." in res.data["detail"]
 
+
 # ==================================================================
 #  logout
 # ==================================================================
@@ -141,7 +142,11 @@ class TestLogout:
 
     def test_success(self, api_client, user_factory):
         user = user_factory()
-        res = api_client.post("/api/auth/login/", {"email": user.email, "password": "complex123!"}, format="json")
+        res = api_client.post(
+            "/api/auth/login/",
+            {"email": user.email, "password": "complex123!"},
+            format="json",
+        )
         refresh = res.data["refresh"]
         api_client.force_authenticate(user=user)
         res = api_client.post(self.url, {"refresh": refresh}, format="json")
@@ -152,6 +157,7 @@ class TestLogout:
         api_client.force_authenticate(user=user)
         res = api_client.post(self.url, {}, format="json")
         assert res.status_code == status.HTTP_400_BAD_REQUEST
+
 
 # ==================================================================
 #  change password
@@ -183,6 +189,7 @@ class TestChangePassword:
     def test_anonymous_denied(self, api_client):
         res = api_client.post(self.url, {}, format="json")
         assert res.status_code == status.HTTP_401_UNAUTHORIZED
+
 
 # ==================================================================
 #  me

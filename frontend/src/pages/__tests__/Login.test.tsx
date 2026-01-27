@@ -14,7 +14,12 @@ vi.mock("axios", async () => ({
 }));
 
 vi.mock("../../../utils/errorMap", () => ({
-  formatErrors: vi.fn((data) => JSON.stringify(data)),
+  getErrorMessage: vi.fn((err) => {
+    if (err?.isAxiosError) {
+      return err.response?.data?.detail || JSON.stringify(err.response?.data);
+    }
+    return err?.message || String(err);
+  }),
 }));
 
 const TestWrapper = ({ children }: { children: React.ReactNode }) => (
@@ -161,7 +166,7 @@ describe("Login page", () => {
 
   it("displays 'Unexpected error' for unknown error types", async () => {
     const user = userEvent.setup();
-    mockLogin.mockRejectedValue("string error");
+    mockLogin.mockRejectedValue("Unexpected error");
 
     render(<Login />, { wrapper: TestWrapper });
 

@@ -6,21 +6,23 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
+
 def build_verification_jwt(user) -> str:
     now = int(time.time())
     payload = {
         "uid": str(user.pk),
         "act": "verify_email",
         "iat": now,
-        "exp": now + 30 * 60, # 30-min clock expiry
-        "jti": str(uuid.uuid4()), # unique id for this token
-        "ts":  int(user.reset_sent_at.timestamp()) if user.reset_sent_at else now,
+        "exp": now + 30 * 60,  # 30-min clock expiry
+        "jti": str(uuid.uuid4()),  # unique id for this token
+        "ts": int(user.reset_sent_at.timestamp()) if user.reset_sent_at else now,
     }
     return jwt.encode(
         payload,
         settings.EMAIL_VERIFY_SECRET,
         algorithm="HS256",
     )
+
 
 def check_verification_jwt(token: str):
     try:

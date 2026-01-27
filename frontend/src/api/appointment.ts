@@ -25,7 +25,7 @@ export const getSlotsByRange = (payload: SlotRangePayload) => {
   }
 
   return api
-    .get<Slot>(`/slot/range/?${params.toString()}`)
+    .get<Record<string, Slot[]>>(`/slot/range/?${params.toString()}`)
     .then((res) => res.data);
 };
 

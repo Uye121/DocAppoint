@@ -12,6 +12,7 @@ from ..services.auth import send_verification_email
 
 User = get_user_model()
 
+
 class UserViewSet(
     mixins.CreateModelMixin,
     mixins.RetrieveModelMixin,
@@ -24,6 +25,7 @@ class UserViewSet(
         - Authenticated profile read / update
         - Authenticated password change
     """
+
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [AllowAny]
@@ -35,7 +37,7 @@ class UserViewSet(
 
     def get(self):
         return self.request.user
-    
+
     def perform_create(self, serializer):
         user = serializer.save()
         send_verification_email(user)
@@ -54,15 +56,15 @@ class UserViewSet(
         user.set_password(serializer.validated_data["new_password"])
         user.save()
         return Response({"detail": "Password updated."}, status=status.HTTP_200_OK)
-    
+
     @action(detail=False, methods=["get", "put", "patch"], url_path="me")
-    def me(self, request):        
+    def me(self, request):
         user = request.user
-        
+
         if request.method == "GET":
             serializer = self.get_serializer(user)
             return Response(serializer.data)
-        
+
         elif request.method in ["PUT", "PATCH"]:
             partial = request.method == "PATCH"
             serializer = self.get_serializer(user, data=request.data, partial=partial)

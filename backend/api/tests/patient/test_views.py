@@ -7,12 +7,14 @@ User = get_user_model()
 
 pytestmark = pytest.mark.django_db(transaction=True)
 
+
 @pytest.fixture
 def api_client():
     return APIClient()
 
+
 # ------------------------------------------------------------------
-#  public sign-up 
+#  public sign-up
 # ------------------------------------------------------------------
 class TestPatientSignUp:
     url = "/api/patient/"
@@ -47,6 +49,7 @@ class TestPatientSignUp:
         assert res.status_code == status.HTTP_400_BAD_REQUEST
         assert "email" in res.data
 
+
 # ------------------------------------------------------------------
 #  onboard existing user
 # ------------------------------------------------------------------
@@ -74,6 +77,7 @@ class TestPatientOnBoard:
         res = api_client.post(self.url, {}, format="json")
         assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
+
 # ------------------------------------------------------------------
 #  profile
 # ------------------------------------------------------------------
@@ -99,6 +103,7 @@ class TestPatientProfile:
     def test_anonymous_denied(self, api_client):
         res = api_client.get(self.me_url)
         assert res.status_code == status.HTTP_401_UNAUTHORIZED
+
 
 # ------------------------------------------------------------------
 #  staff list

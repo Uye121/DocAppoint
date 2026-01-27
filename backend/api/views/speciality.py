@@ -1,4 +1,3 @@
-from django.utils import timezone
 from rest_framework import mixins, viewsets, permissions
 from ..models import Speciality
 from ..serializers import (
@@ -7,6 +6,7 @@ from ..serializers import (
     SpecialityCreateSerializer,
 )
 from ..permissions import IsStaffOrAdmin
+
 
 class SpecialityViewSet(
     mixins.CreateModelMixin,
@@ -19,9 +19,8 @@ class SpecialityViewSet(
     Features:
         - Authenticated user can view specialities
     """
-    queryset = Speciality.objects.filter(
-        is_removed=False
-    )
+
+    queryset = Speciality.objects.filter(is_removed=False)
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -42,6 +41,4 @@ class SpecialityViewSet(
         )
 
     def perform_update(self, serializer):
-        serializer.save(
-            updated_by=self.request.user
-        )
+        serializer.save(updated_by=self.request.user)

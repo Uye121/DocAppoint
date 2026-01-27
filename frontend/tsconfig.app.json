@@ -12,8 +12,9 @@
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
-    "composite": true,
-    "emitDeclarationOnly": true, // Use this instead of noEmit
+
+    /* Type Checking - No Emit */
+    "noEmit": true,
     "jsx": "react-jsx",
 
     /* Linting */
@@ -24,5 +25,11 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src", "", "hooks/__tests__"]
+  "include": ["src"],
+  "exclude": [
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/__tests__/**",
+    "**/__mocks__/**"
+  ]
 }

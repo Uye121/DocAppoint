@@ -7,7 +7,8 @@ import {
   updateAppointmentStatus,
 } from "../api/appointment";
 // import { getPatientMedicalRecords, createMedicalRecord, updateMedicalRecord } from "../api/medicalRecord";
-import type { AppointmentListItem } from "../types";
+import type { AppointmentListItem } from "../types/appointment";
+import type { MedicalRecord } from "../types/medical";
 import { Spinner } from "../components";
 
 const ProviderHome = (): React.JSX.Element => {
@@ -34,6 +35,7 @@ const ProviderHome = (): React.JSX.Element => {
     staleTime: 3,
     refetchOnWindowFocus: true,
   });
+  console.log("appt: ", appointments);
 
   /* ---------- medical records ---------- */
   // const { data: records = [], refetch: refetchRecords } = useQuery({
@@ -41,28 +43,28 @@ const ProviderHome = (): React.JSX.Element => {
   //   queryFn: () => getPatientMedicalRecords(selectedAppt!.patient.id),
   //   enabled: !!selectedAppt?.patient.id,
   // });
-  const records = [];
+  const records: MedicalRecord[] = [];
 
   const handleStatus = async (appt: AppointmentListItem, status: string) => {
     await updateAppointmentStatus(appt.id, status);
     refetchAppts();
   };
 
-  // const handleSaveRecord = async () => {
-  //   const payload: MedicalRecordPayload = { diagnosis, notes, prescriptions };
-  //   if (editingRecord) {
-  //     await updateMedicalRecord(editingRecord, payload);
-  //   } else {
-  //     await createMedicalRecord({
-  //       ...payload,
-  //       patient: selectedAppt!.patient.id,
-  //       healthcareProvider: providerId!,
-  //     });
-  //   }
-  //   setDiagnosis(""); setNotes(""); setPrescriptions("");
-  //   setEditingRecord(null);
-  //   refetchRecords();
-  // };
+  const handleSaveRecord = async () => {
+    //   const payload: MedicalRecordPayload = { diagnosis, notes, prescriptions };
+    //   if (editingRecord) {
+    //     await updateMedicalRecord(editingRecord, payload);
+    //   } else {
+    //     await createMedicalRecord({
+    //       ...payload,
+    //       patient: selectedAppt!.patient.id,
+    //       healthcareProvider: providerId!,
+    //     });
+    //   }
+    //   setDiagnosis(""); setNotes(""); setPrescriptions("");
+    //   setEditingRecord(null);
+    //   refetchRecords();
+  };
 
   if (isLoading) return <Spinner loadingText="Loading appointments..." />;
 
@@ -174,8 +176,7 @@ const ProviderHome = (): React.JSX.Element => {
           <div className="bg-white rounded-xl w-full max-w-3xl max-h-[90vh] overflow-auto p-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">
-                Medical Records – {selectedAppt.patient.firstName}{" "}
-                {selectedAppt.patient.lastName}
+                Medical Records – {selectedAppt!.patientName}
               </h2>
               <button
                 onClick={() => setShowRecords(false)}
@@ -197,7 +198,7 @@ const ProviderHome = (): React.JSX.Element => {
                   </p>
                   <p className="text-sm">Notes: {r.notes}</p>
                   <p className="text-sm">Prescriptions: {r.prescriptions}</p>
-                  {r.healthcareProvider.id === user?.id && (
+                  {r.healthcareProvider === user?.id && (
                     <button
                       onClick={() => {
                         setEditingRecord(r.id);

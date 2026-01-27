@@ -3,11 +3,11 @@ from zoneinfo import ZoneInfo
 from django.db import models
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-from django.utils.translation import gettext_lazy as _
 
 from ..mixin import TimestampMixin, AuditMixin
 from .users import Patient, HealthcareProvider
 from .hospital import Hospital
+
 
 class Appointment(TimestampMixin):
     class Status(models.TextChoices):
@@ -16,41 +16,70 @@ class Appointment(TimestampMixin):
         COMPLETED = "COMPLETED", "Completed"
         CANCELLED = "CANCELLED", "Cancelled"
         RESCHEDULED = "RESCHEDULED", "Rescheduled"
-        
-    patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name="patient_appointments")
-    healthcare_provider = models.ForeignKey(HealthcareProvider, on_delete=models.CASCADE, related_name="provider_appointments")
-    appointment_start_datetime_utc= models.DateTimeField()
-    appointment_end_datetime_utc= models.DateTimeField()
-    location = models.ForeignKey(Hospital, on_delete=models.PROTECT, related_name='appointments')
+
+    patient = models.ForeignKey(
+        Patient, on_delete=models.CASCADE, related_name="patient_appointments"
+    )
+    healthcare_provider = models.ForeignKey(
+        HealthcareProvider,
+        on_delete=models.CASCADE,
+        related_name="provider_appointments",
+    )
+    appointment_start_datetime_utc = models.DateTimeField()
+    appointment_end_datetime_utc = models.DateTimeField()
+    location = models.ForeignKey(
+        Hospital, on_delete=models.PROTECT, related_name="appointments"
+    )
     reason = models.TextField()
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.REQUESTED)
+    status = models.CharField(
+        max_length=20, choices=Status.choices, default=Status.REQUESTED
+    )
     cancelled_at = models.DateTimeField(null=True, blank=True, db_index=True)
-    
+
     class Meta(TimestampMixin.Meta):
         constraints = [
             models.UniqueConstraint(
-                fields=["patient", "healthcare_provider", "appointment_start_datetime_utc"],
+                fields=[
+                    "patient",
+                    "healthcare_provider",
+                    "appointment_start_datetime_utc",
+                ],
                 condition=models.Q(cancelled_at__isnull=True),
                 name="uniq_active_appointment",
             ),
             models.CheckConstraint(
-                name='appointment_end_datetime_utc_gt_start_datetime',
-                condition=models.Q(appointment_end_datetime_utc__gt=models.F('appointment_start_datetime_utc'))
+                name="appointment_end_datetime_utc_gt_start_datetime",
+                condition=models.Q(
+                    appointment_end_datetime_utc__gt=models.F(
+                        "appointment_start_datetime_utc"
+                    )
+                ),
             ),
         ]
-    
+
     def clean(self):
         super().clean()
-        
-        if self.appointment_start_datetime_utc and self.appointment_start_datetime_utc < timezone.now():
-            raise ValidationError({'message': 'Cannot schedule an appointment with a past start time.'})
 
-        if self.appointment_end_datetime_utc and self.appointment_end_datetime_utc < timezone.now():
-            raise ValidationError({'message': 'Cannot schedule an appointment with a past end time.'})
-    
+        if (
+            self.appointment_start_datetime_utc
+            and self.appointment_start_datetime_utc < timezone.now()
+        ):
+            raise ValidationError(
+                {"message": "Cannot schedule an appointment with a past start time."}
+            )
+
+        if (
+            self.appointment_end_datetime_utc
+            and self.appointment_end_datetime_utc < timezone.now()
+        ):
+            raise ValidationError(
+                {"message": "Cannot schedule an appointment with a past end time."}
+            )
+
     def __str__(self):
         return f"Appointment: {self.patient} with {self.healthcare_provider} at {self.appointment_start_datetime_utc}"
-    
+
+
 class Slot(TimestampMixin, AuditMixin):
     class Status(models.TextChoices):
         FREE = "FREE", "Free"
@@ -58,8 +87,12 @@ class Slot(TimestampMixin, AuditMixin):
         BLOCKED = "BLOCKED", "Blocked"
         UNAVAILABLE = "UNAVAILABLE", "Unavailable"
 
-    healthcare_provider = models.ForeignKey(HealthcareProvider,on_delete=models.CASCADE, related_name="slots")
-    hospital = models.ForeignKey(Hospital, on_delete=models.CASCADE, related_name='slots')
+    healthcare_provider = models.ForeignKey(
+        HealthcareProvider, on_delete=models.CASCADE, related_name="slots"
+    )
+    hospital = models.ForeignKey(
+        Hospital, on_delete=models.CASCADE, related_name="slots"
+    )
     appointment = models.OneToOneField(
         "Appointment",
         on_delete=models.SET_NULL,
@@ -69,22 +102,33 @@ class Slot(TimestampMixin, AuditMixin):
     )
     start = models.DateTimeField()
     end = models.DateTimeField()
-    status = models.CharField(max_length=12, choices=Status.choices, default=Status.FREE) 
-    created_by = models.ForeignKey("User", on_delete=models.SET_NULL, null=True, blank=True,
-                                   related_name='slots_created')
-    updated_by = models.ForeignKey("User", on_delete=models.SET_NULL, null=True, blank=True,
-                                   related_name='slots_updated')
-    
+    status = models.CharField(
+        max_length=12, choices=Status.choices, default=Status.FREE
+    )
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="slots_created",
+    )
+    updated_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="slots_updated",
+    )
+
     class Meta(TimestampMixin.Meta, AuditMixin.Meta):
         constraints = [
             models.UniqueConstraint(
                 fields=["healthcare_provider", "start"],
-                name="uniq_healthcare_provider_start"
+                name="uniq_healthcare_provider_start",
             ),
             models.CheckConstraint(
-                condition=models.Q(end__gt=models.F("start")),
-                name="slot_end_gt_start"
-            )
+                condition=models.Q(end__gt=models.F("start")), name="slot_end_gt_start"
+            ),
         ]
         indexes = [
             models.Index(fields=["healthcare_provider", "start", "status"]),
@@ -94,13 +138,13 @@ class Slot(TimestampMixin, AuditMixin):
     @property
     def duration(self) -> timedelta:
         return self.end - self.start
-    
+
     def is_past(self) -> bool:
         return self.end < timezone.now()
-    
+
     def is_booked(self) -> bool:
         return self.status == self.Status.BOOKED
-    
+
     def clean(self):
         super().clean()
 
@@ -109,7 +153,7 @@ class Slot(TimestampMixin, AuditMixin):
 
         if self.is_past():
             raise ValidationError("Cannot create/modify a slot in the past.")
-        
+
     def __str__(self):
         tz = ZoneInfo(self.hospital.timezone)
         start_local = self.start.astimezone(tz)

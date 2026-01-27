@@ -7,7 +7,16 @@ from .message import Message
 from .speciality import Speciality
 
 __all__ = [
-    'User', 'Patient', 'HealthcareProvider', 'AdminStaff', 'SystemAdmin',
-    'Hospital', 'ProviderHospitalAssignment', 'Appointment', 'Slot',
-    'MedicalRecord', 'Message', 'Speciality'
+    "User",
+    "Patient",
+    "HealthcareProvider",
+    "AdminStaff",
+    "SystemAdmin",
+    "Hospital",
+    "ProviderHospitalAssignment",
+    "Appointment",
+    "Slot",
+    "MedicalRecord",
+    "Message",
+    "Speciality",
 ]

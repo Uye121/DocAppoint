@@ -15,12 +15,12 @@ const Doctors = (): React.JSX.Element => {
     const applyFilter = () => {
       if (speciality) {
         setFilteredDoc(
-          doctors.filter(
+          doctors!.filter(
             (doc: DoctorListItem) => doc.specialityName == speciality,
           ),
         );
       } else {
-        setFilteredDoc(doctors);
+        setFilteredDoc(doctors || []);
       }
     };
 

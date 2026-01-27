@@ -10,12 +10,9 @@ from ..mixin import TimestampMixin
 from .hospital import Hospital
 from .speciality import Speciality
 
+
 class User(TimestampMixin, AbstractUser):
-    id = models.UUIDField(
-        primary_key=True,
-        default=uuid.uuid4,
-        editable=False
-    )
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(
         _("email address"),
         unique=True,
@@ -25,69 +22,74 @@ class User(TimestampMixin, AbstractUser):
     )
     # Make first_name & last_name required
     first_name = models.CharField(
-        _("first name"),
-        max_length=150,
-        blank=False,
-        validators=[MinLengthValidator(1)]
+        _("first name"), max_length=150, blank=False, validators=[MinLengthValidator(1)]
     )
-    last_name  = models.CharField(
-        _("last name"), 
-        max_length=150,
-        blank=False,
-        validators=[MinLengthValidator(1)]
+    last_name = models.CharField(
+        _("last name"), max_length=150, blank=False, validators=[MinLengthValidator(1)]
     )
     date_of_birth = models.DateField(_("Date of Birth"), null=True, blank=True)
     phone_number = models.CharField(_("Phone Number"), max_length=20, blank=True)
     address = models.TextField(_("Address"), blank=True)
-    image = models.ImageField(upload_to='users_images', blank=True, null=True)
+    image = models.ImageField(upload_to="users_images", blank=True, null=True)
     reset_sent_at = models.DateTimeField(null=True, blank=True)
 
     # Use email as username for login
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username']
-    
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ["username"]
+
     # Enforce case insensitive uniqueness
     class Meta(TimestampMixin.Meta):
         constraints = [
-            models.UniqueConstraint(
-                Lower("email"),
-                name="user_email_ci_unique"
-            )
+            models.UniqueConstraint(Lower("email"), name="user_email_ci_unique")
         ]
 
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
-    
+
+
 class Patient(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="patient",
-        primary_key=True
+        primary_key=True,
     )
     blood_type = models.CharField(_("Blood Type"), max_length=5, blank=True)
     allergies = models.TextField(_("Allergies"), blank=True)
     chronic_conditions = models.TextField(_("Chronic Conditions"), blank=True)
     current_medications = models.TextField(_("Current Medications"), blank=True)
     insurance = models.CharField(_("Insurance"), max_length=255, blank=True)
-    weight = models.PositiveIntegerField(_("Weight (kg)"), blank=True, null=True, help_text="Weight in kg")
-    height = models.PositiveIntegerField(_("Height (cm)"), blank=True, null=True, help_text="Height in cm")
+    weight = models.PositiveIntegerField(
+        _("Weight (kg)"), blank=True, null=True, help_text="Weight in kg"
+    )
+    height = models.PositiveIntegerField(
+        _("Height (cm)"), blank=True, null=True, help_text="Height in cm"
+    )
 
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
-    
+
+
 class HealthcareProvider(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="provider",
-        primary_key=True
+        primary_key=True,
     )
-    speciality = models.ForeignKey(Speciality, on_delete=models.SET_NULL, null=True, blank=True, related_name='provider_speciality')
+    speciality = models.ForeignKey(
+        Speciality,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="provider_speciality",
+    )
     education = models.TextField(_("Education"), blank=True)
-    years_of_experience = models.PositiveIntegerField(_("Years of Experience"), default=0)
+    years_of_experience = models.PositiveIntegerField(
+        _("Years of Experience"), default=0
+    )
     about = models.TextField()
     fees = models.DecimalField(max_digits=9, decimal_places=2)
     address_line1 = models.CharField("Address line 1", max_length=1024)
@@ -97,21 +99,29 @@ class HealthcareProvider(models.Model):
     zip_code = models.CharField(max_length=5)
 
     license_validator = RegexValidator(
-        regex=r'^[A-Z0-9]{6,20}$',
-        message='License must be 6-20 alphanumeric characters.'
+        regex=r"^[A-Z0-9]{6,20}$",
+        message="License must be 6-20 alphanumeric characters.",
     )
 
-    license_number = models.CharField(_("License Number"), max_length=100, validators=[license_validator])
+    license_number = models.CharField(
+        _("License Number"), max_length=100, validators=[license_validator]
+    )
     certifications = models.TextField(_("Certifications"), blank=True)
-    
+
     # Affiliations
     hospitals = models.ManyToManyField(Hospital, through="ProviderHospitalAssignment")
-    primary_hospital = models.ForeignKey(Hospital, on_delete=models.SET_NULL, null=True, blank=True, related_name="primary_provider")
+    primary_hospital = models.ForeignKey(
+        Hospital,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="primary_provider",
+    )
 
     # Attributes for soft-delete
     is_removed = models.BooleanField(default=False, db_index=True)
     removed_at = models.DateTimeField(null=True, blank=True)
-    
+
     class Meta:
         db_table = "api_healthcareprovider"
         verbose_name = _("Healthcare Provider")
@@ -119,39 +129,40 @@ class HealthcareProvider(models.Model):
         constraints = [
             models.CheckConstraint(
                 name="experience_non_negative",
-                condition=models.Q(years_of_experience__gte=0)
+                condition=models.Q(years_of_experience__gte=0),
             ),
-            models.CheckConstraint(
-                name="fees_above_0",
-                condition=models.Q(fees__gt=0)
-            ),
+            models.CheckConstraint(name="fees_above_0", condition=models.Q(fees__gt=0)),
             models.CheckConstraint(
                 name="valid_license_format",
-                condition=models.Q(license_number__regex=r'^[A-Z0-9]{6,20}$')
-            )
+                condition=models.Q(license_number__regex=r"^[A-Z0-9]{6,20}$"),
+            ),
         ]
-    
+
+
 class AdminStaff(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="admin_staff",
-        primary_key=True
+        primary_key=True,
     )
     # Affiliation
-    hospital = models.ForeignKey(Hospital, on_delete=models.CASCADE, related_name='hospital')
+    hospital = models.ForeignKey(
+        Hospital, on_delete=models.CASCADE, related_name="hospital"
+    )
 
     class Meta:
         db_table = "api_adminstaff"
         verbose_name = _("Admin Staff")
         verbose_name_plural = _("Admin Staff")
-    
+
+
 class SystemAdmin(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="system_admin",
-        primary_key=True
+        primary_key=True,
     )
     role = models.CharField(max_length=50)
 

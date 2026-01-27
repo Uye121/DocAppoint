@@ -1,9 +1,8 @@
-import axios from "axios";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../hooks/useAuth";
-import { formatErrors } from "../../utils/errorMap";
+import { getErrorMessage } from "../../utils/errorMap";
 import type { AuthPayload } from "../types/auth";
 
 const Login = (): React.JSX.Element => {
@@ -34,19 +33,11 @@ const Login = (): React.JSX.Element => {
       await login(form);
       nav("/");
     } catch (err) {
-      console.log(err);
-
-      if (axios.isAxiosError(err) && err?.response?.status == 400) {
-        const errorMsg =
-          err.response?.data?.detail || formatErrors(err.response?.data);
-        setError(errorMsg);
-      } else if (err instanceof Error) {
-        setError(err?.message);
-      } else {
-        setError("Unexpected error");
-      }
+      console.log("login err: ", JSON.stringify(err));
+      setError(getErrorMessage(err, "Network error"));
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (

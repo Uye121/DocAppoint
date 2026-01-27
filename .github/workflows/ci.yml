@@ -1,0 +1,377 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  DOCKER_BUILDKIT: 1
+
+jobs:
+  # ==========================================
+  # FRONTEND VERIFICATION
+  # ==========================================
+  frontend-lint:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run ESLint
+        run: npm run lint
+
+  frontend-type-check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Type check
+        run: npm run type-check
+
+  frontend-test:
+    runs-on: ubuntu-latest
+    needs: [frontend-lint, frontend-type-check] 
+    defaults:
+      run:
+        working-directory: ./frontend
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run unit tests
+        run: npm run test:run
+      
+      - name: Generate coverage
+        run: npm run test:coverage
+
+  # ==========================================
+  # BACKEND VERIFICATION
+  # ==========================================
+  backend-lint:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ./backend/.venv
+          key: venv-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('backend/poetry.lock') }}
+      
+      - name: Install dependencies
+        run: poetry install --no-interaction --no-root --no-ansi
+      
+      - name: Run linting
+        run: |
+          poetry run ruff check .
+          poetry run ruff format --check .
+
+  backend-type-check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ./backend/.venv
+          key: venv-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('backend/poetry.lock') }}
+      
+      - name: Install dependencies
+        run: poetry install --no-interaction --no-root --no-ansi
+      
+      - name: Type check
+        run: poetry run mypy api
+
+  backend-migrations-check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: docappoint_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ./backend/.venv
+          key: venv-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('backend/poetry.lock') }}
+      
+      - name: Install dependencies
+        run: poetry install --no-interaction --no-root --no-ansi
+      
+      - name: Check for missing migrations
+        env:
+          DATABASE_URL: postgres://postgres:password@localhost:5432/docappoint_test
+          DJANGO_SECRET_KEY: test-secret-key-for-ci
+          EMAIL_VERIFY_SECRET: test-email-secret-for-ci
+          REDIS_URL: test-redis-secret-for-ci
+          DJANGO_SETTINGS_MODULE: api.settings.development
+        run: poetry run python manage.py makemigrations --check --dry-run
+
+  backend-test:
+    runs-on: ubuntu-latest
+    needs: [backend-lint, backend-type-check, backend-migrations-check]
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: docappoint_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+          --tmpfs /var/lib/postgresql/data:rw,noexec,nosuid,size=256m
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+    defaults:
+      run:
+        working-directory: ./backend
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+      
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ./backend/.venv
+          key: venv-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('backend/poetry.lock') }}
+      
+      - name: Install dependencies
+        run: poetry install --no-interaction --no-root --no-ansi
+
+      - name: Setup database and run migrations
+        env:
+          DATABASE_URL: postgres://postgres:password@localhost:5432/docappoint_test
+          REDIS_URL: redis://localhost:6379/0
+          SECRET_KEY: test-secret-key
+          DJANGO_SECRET_KEY: test-secret-key-for-ci
+          EMAIL_VERIFY_SECRET: test-email-secret-for-ci
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_HOST: localhost
+          POSTGRES_DB: docappoint_test
+          DJANGO_SETTINGS_MODULE: api.settings.development
+        run: |
+          poetry run python manage.py makemigrations api --noinput
+
+          # Apply migrations in order
+          poetry run python manage.py migrate api
+          poetry run python manage.py migrate
+      
+      - name: Run tests
+        env:
+          DATABASE_URL: postgres://postgres:password@localhost:5432/docappoint_test
+          REDIS_URL: redis://localhost:6379/0
+          SECRET_KEY: test-secret-key
+          PROVIDER_PASSWORD: testpwdforci123
+          ADMIN_USERNAME: testuserforci123
+          ADMIN_EMAIL: testuserci@admin.com
+          ADMIN_PASSWORD: testpwdforciadm1n
+          EMAIL_VERIFY_SECRET: test-email-secret-for-ci
+          DJANGO_SECRET_KEY: test-secret-key-for-ci
+          DJANGO_SETTINGS_MODULE: api.settings.development
+        run: poetry run pytest --cov=api --cov-report=xml --cov-report=html
+
+  # ==========================================
+  # BUILD DOCKER IMAGES (Artifacts)
+  # ==========================================
+  build-frontend-image:
+    runs-on: ubuntu-latest
+    needs: [frontend-lint, frontend-type-check, frontend-test]
+    permissions:
+      contents: read
+      packages: write  
+    outputs:
+      image-tag: ${{ steps.meta.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend
+          tags: |
+            type=sha,prefix=frontend-
+            type=ref,event=branch
+            type=ref,event=pr
+      
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-backend-image:
+    runs-on: ubuntu-latest
+    needs: [backend-lint, backend-type-check, backend-migrations-check, backend-test]
+    permissions:
+      contents: read
+      packages: write  
+    outputs:
+      image-tag: ${{ steps.meta.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend
+          tags: |
+            type=sha,prefix=backend-
+            type=ref,event=branch
+            type=ref,event=pr
+      
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ==========================================
+  # INTEGRATION & DEPLOYMENT TODO
+  # ==========================================
+  

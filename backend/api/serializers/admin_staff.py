@@ -5,6 +5,7 @@ from ..models import User, AdminStaff, Hospital
 from ..mixin import CamelCaseMixin
 from .user import UserSerializer
 
+
 class AdminStaffSerializer(CamelCaseMixin, serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     hospital_name = serializers.CharField(source="hospital.name", read_only=True)
@@ -13,12 +14,12 @@ class AdminStaffSerializer(CamelCaseMixin, serializers.ModelSerializer):
         model = AdminStaff
         fields = ["user", "hospital", "hospital_name"]
 
+
 class AdminStaffCreateSerializer(CamelCaseMixin, serializers.ModelSerializer):
     email = serializers.EmailField()
     username = serializers.CharField()
     password = serializers.CharField(
-        write_only=True,
-        validators=[password_validation.validate_password]
+        write_only=True, validators=[password_validation.validate_password]
     )
     first_name = serializers.CharField()
     last_name = serializers.CharField()
@@ -51,7 +52,7 @@ class AdminStaffCreateSerializer(CamelCaseMixin, serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        if not validated_data['password']:
+        if not validated_data["password"]:
             raise serializers.ValidationError({"password": "Password cannot be blank."})
 
         user_data = {
@@ -71,29 +72,27 @@ class AdminStaffCreateSerializer(CamelCaseMixin, serializers.ModelSerializer):
         admin_staff = AdminStaff.objects.create(user=user, **validated_data)
         return admin_staff
 
+
 class AdminStaffOnBoardSerializer(CamelCaseMixin, serializers.ModelSerializer):
     """
     Turn existing user into a admin staff with PATCH or POST
     """
+
     class Meta:
         model = AdminStaff
-        fields = [
-            "hospital"
-        ]
+        fields = ["hospital"]
 
     def validate(self, attrs):
         if not attrs.get("hospital"):
             raise serializers.ValidationError(
                 {"hospital": "Hospital affiliation is required."}
             )
-        
+
         user = self.context["request"].user
         # Check for existing user only during create
         if self.instance is None:
             if hasattr(user, "admin_staff"):
-                raise serializers.ValidationError(
-                    "Admin staff profile already exists."
-                )
+                raise serializers.ValidationError("Admin staff profile already exists.")
 
         return attrs
 

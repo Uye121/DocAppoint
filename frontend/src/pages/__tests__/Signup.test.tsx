@@ -10,7 +10,12 @@ vi.mock("../../../hooks/useAuth", () => ({
 }));
 
 vi.mock("../../../utils/errorMap", () => ({
-  formatErrors: vi.fn((data) => JSON.stringify(data)),
+  getErrorMessage: vi.fn((err) => {
+    if (err?.isAxiosError) {
+      return err.response?.data?.detail || JSON.stringify(err.response?.data);
+    }
+    return err?.message || String(err);
+  }),
 }));
 
 vi.mock("axios", async () => ({
@@ -36,13 +41,14 @@ const TestWrapper = ({ children }: { children: React.ReactNode }) => (
 
 import { useAuth } from "../../../hooks/useAuth";
 import { isAxiosError } from "axios";
-import { formatErrors } from "../../../utils/errorMap";
+import { getErrorMessage } from "../../../utils/errorMap";
 
 describe("Signup page", () => {
   const mockSignup = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.resetAllMocks();
     vi.mocked(useAuth).mockReturnValue({
       signup: mockSignup,
       user: null,
@@ -158,8 +164,10 @@ describe("Signup page", () => {
     mockSignup.mockRejectedValue(axiosError);
     vi.mocked(isAxiosError).mockReturnValue(true);
 
-    // Mock formatErrors to return a readable string
-    vi.mocked(formatErrors).mockReturnValue("Username: This field is required");
+    // Mock getErrorMessage to return a readable string
+    vi.mocked(getErrorMessage).mockReturnValue(
+      "Username: This field is required",
+    );
 
     render(<Signup />, { wrapper: TestWrapper });
 
