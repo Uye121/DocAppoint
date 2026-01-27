@@ -10,6 +10,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
   DOCKER_BUILDKIT: 1
+  CI: true
 
 jobs:
   # ==========================================
@@ -17,9 +18,6 @@ jobs:
   # ==========================================
   frontend-lint:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./frontend
     steps:
       - uses: actions/checkout@v4
       
@@ -28,19 +26,17 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-      
+          cache-dependency-path: ./frontend/package-lock.json
+
       - name: Install dependencies
+        working-directory: ./frontend
         run: npm ci
       
       - name: Run ESLint
-        run: npm run lint
+        run: make ci-fe-lint
 
   frontend-type-check:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./frontend
     steps:
       - uses: actions/checkout@v4
       
@@ -52,17 +48,15 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       
       - name: Install dependencies
+        working-directory: ./frontend
         run: npm ci
       
       - name: Type check
-        run: npm run type-check
+        run: make ci-fe-type-check
 
   frontend-test:
     runs-on: ubuntu-latest
     needs: [frontend-lint, frontend-type-check] 
-    defaults:
-      run:
-        working-directory: ./frontend
     steps:
       - uses: actions/checkout@v4
       
@@ -74,82 +68,36 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       
       - name: Install dependencies
+        working-directory: ./frontend
         run: npm ci
       
       - name: Run unit tests
-        run: npm run test:run
-      
-      - name: Generate coverage
-        run: npm run test:coverage
+        run: make ci-fe-test
 
   # ==========================================
   # BACKEND VERIFICATION
   # ==========================================
   backend-lint:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./backend
     steps:
       - uses: actions/checkout@v4
       
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: latest
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: ./backend/.venv
-          key: venv-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('backend/poetry.lock') }}
-      
-      - name: Install dependencies
-        run: poetry install --no-interaction --no-root --no-ansi
+      - name: Set up Python and Poetry
+        uses: ./.github/actions/setup-python-poetry
       
       - name: Run linting
-        run: |
-          poetry run ruff check .
-          poetry run ruff format --check .
+        run: make ci-be-lint
 
   backend-type-check:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./backend
     steps:
       - uses: actions/checkout@v4
       
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: latest
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: ./backend/.venv
-          key: venv-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('backend/poetry.lock') }}
-      
-      - name: Install dependencies
-        run: poetry install --no-interaction --no-root --no-ansi
+      - name: Set up Python and Poetry
+        uses: ./.github/actions/setup-python-poetry
       
       - name: Type check
-        run: poetry run mypy api
+        run: make ci-be-type-check
 
   backend-migrations-check:
     runs-on: ubuntu-latest
@@ -167,33 +115,11 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-    defaults:
-      run:
-        working-directory: ./backend
-
     steps:
       - uses: actions/checkout@v4
       
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: latest
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: ./backend/.venv
-          key: venv-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('backend/poetry.lock') }}
-      
-      - name: Install dependencies
-        run: poetry install --no-interaction --no-root --no-ansi
+      - name: Set up Python and Poetry
+        uses: ./.github/actions/setup-python-poetry
       
       - name: Check for missing migrations
         env:
@@ -202,7 +128,7 @@ jobs:
           EMAIL_VERIFY_SECRET: test-email-secret-for-ci
           REDIS_URL: test-redis-secret-for-ci
           DJANGO_SETTINGS_MODULE: api.settings.development
-        run: poetry run python manage.py makemigrations --check --dry-run
+        run: make ci-be-migrations-check
 
   backend-test:
     runs-on: ubuntu-latest
@@ -226,32 +152,11 @@ jobs:
         image: redis:7-alpine
         ports:
           - 6379:6379
-    defaults:
-      run:
-        working-directory: ./backend
     steps:
       - uses: actions/checkout@v4
       
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: latest
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-      
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: ./backend/.venv
-          key: venv-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('backend/poetry.lock') }}
-      
-      - name: Install dependencies
-        run: poetry install --no-interaction --no-root --no-ansi
+      - name: Set up Python and Poetry
+        uses: ./.github/actions/setup-python-poetry
 
       - name: Setup database and run migrations
         env:
@@ -265,12 +170,7 @@ jobs:
           POSTGRES_HOST: localhost
           POSTGRES_DB: docappoint_test
           DJANGO_SETTINGS_MODULE: api.settings.development
-        run: |
-          poetry run python manage.py makemigrations api --noinput
-
-          # Apply migrations in order
-          poetry run python manage.py migrate api
-          poetry run python manage.py migrate
+        run: make ci-db-setup
       
       - name: Run tests
         env:
@@ -284,7 +184,7 @@ jobs:
           EMAIL_VERIFY_SECRET: test-email-secret-for-ci
           DJANGO_SECRET_KEY: test-secret-key-for-ci
           DJANGO_SETTINGS_MODULE: api.settings.development
-        run: poetry run pytest --cov=api --cov-report=xml --cov-report=html
+        run: make ci-be-test
 
   # ==========================================
   # BUILD DOCKER IMAGES (Artifacts)
