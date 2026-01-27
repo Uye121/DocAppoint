@@ -303,8 +303,18 @@ jobs:
           POSTGRES_DB: docappoint_test
           DJANGO_SETTINGS_MODULE: api.settings.development
         run: |
+          # Generate ALL migrations fresh (including api)
+          poetry run python manage.py makemigrations
+          
+          # Show what we have
+          echo "=== All available migrations ==="
           poetry run python manage.py showmigrations
-          poetry run python manage.py flush --noinput
+          
+          # Apply with --fake-initial to handle dependencies
+          echo "=== Applying migrations ==="
+          poetry run python manage.py migrate --fake-initial
+          
+          # Apply any remaining
           poetry run python manage.py migrate
       
       - name: Run tests
