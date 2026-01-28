@@ -10,6 +10,7 @@ from ..models import (
 )
 from .patient import PatientSerializer
 from .healthcare_provider import HealthcareProviderListSerializer
+from .hospital import HospitalTinySerializer
 from ..mixin import CamelCaseMixin
 
 
@@ -52,8 +53,10 @@ class AppointmentListSerializer(CamelCaseMixin, serializers.ModelSerializer):
     provider_id = serializers.CharField(
         source="healthcare_provider.user.id", read_only=True
     )
+    provider_image = serializers.ImageField(source="healthcare_provider.user.image", read_only=True)
     patient_name = serializers.SerializerMethodField()
     provider_name = serializers.SerializerMethodField()
+    hospital = HospitalTinySerializer(source="location", read_only=True)
 
     class Meta:
         model = Appointment
@@ -63,9 +66,10 @@ class AppointmentListSerializer(CamelCaseMixin, serializers.ModelSerializer):
             "provider_id",
             "patient_name",
             "provider_name",
+            "provider_image",
             "appointment_start_datetime_utc",
             "appointment_end_datetime_utc",
-            "location",
+            "hospital",
             "reason",
             "status",
         ]

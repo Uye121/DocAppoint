@@ -16,3 +16,13 @@ class HospitalSerializer(CamelCaseMixin, serializers.ModelSerializer):
             "removed_at",
         )
         read_only_fields = ("id", "is_removed", "removed_at")
+
+class HospitalTinySerializer(CamelCaseMixin, serializers.ModelSerializer):
+    class Meta:
+        model = Hospital
+        fields = (
+            "id",
+            "name",
+            "address",
+            "timezone"
+        )

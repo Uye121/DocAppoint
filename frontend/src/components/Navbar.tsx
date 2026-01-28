@@ -58,7 +58,7 @@ const Navbar = (): React.JSX.Element => {
                   My Profile
                 </p>
                 <p
-                  onClick={() => nav("appointments")}
+                  onClick={() => nav("my-appointments")}
                   className="hover:text-black cursor-pointer"
                 >
                   My Appointments

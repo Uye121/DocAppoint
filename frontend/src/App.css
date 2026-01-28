@@ -7,12 +7,45 @@
 
 @theme {
   --color-primary: #6d28d9;
+
+  --color-background: #ffffff;
+  --color-surface: #fafafa;
+  --color-surface-hover: #f4f4f5;
+
+  --color-foreground: #18181b;
+  --color-muted: #71717a;
+  --color-muted-foreground: #a1a1aa;
+
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #dc2626;
+
+  --color-border: #e4e4e7;
+
+  /* Typography */
+  --font-family-sans: "Outfit", system-ui, sans-serif;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+
+  /* Border Radius */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
 }
 
 @layer utilities {
   .grid-cols-fluid {
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   }
+}
+
+@utility card-hover {
+  box-shadow: var(--shadow-md);
+  transition: box-shadow 0.2s ease;
 }
 
 .active hr {

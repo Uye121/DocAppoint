@@ -34,6 +34,11 @@ export const getProviderAppointments = async (providerId: string) =>
     .get<AppointmentListItem[]>(`/appointment/?provider=${providerId}`)
     .then((res) => res.data);
 
+export const getPatientAppointments = async (patientId: string) =>
+  api
+    .get<AppointmentListItem[]>(`/appointment/?patient=${patientId}`)
+    .then((res) => res.data);
+
 export const updateAppointmentStatus = async (id: string, status: string) =>
   api
     .post(`/appointment/${id}/set-status/`, { status })

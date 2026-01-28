@@ -7,3 +7,10 @@ export interface Hospital {
   isRemoved: boolean;
   removedAt: string | null;
 }
+
+export interface HospitalTiny {
+  id: number;
+  name: string;
+  address: string;
+  timezone: string;
+}

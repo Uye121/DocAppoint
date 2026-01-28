@@ -4,6 +4,7 @@ import {
   scheduleAppointment,
   getSlotsByRange,
   getProviderAppointments,
+  getPatientAppointments,
   updateAppointmentStatus,
 } from "../appointment";
 import type { AppointmentListItem } from "../../types/appointment";
@@ -27,9 +28,16 @@ const APPT: AppointmentListItem = {
   providerId: "2",
   patientName: "a",
   providerName: "b",
+  providerImage: "",
   appointmentStartDatetimeUtc: "",
   appointmentEndDatetimeUtc: "",
-  location: "",
+  hospital: {
+    id: 1,
+    name: "General Hospital",
+    address: "123 Main St.",
+    timezone: "utc",
+  },
+  reason: "test",
   status: "REQUESTED",
 };
 
@@ -71,6 +79,12 @@ describe("appointment API", () => {
   it("getProviderAppointments adds provider query", async () => {
     mock.onGet("/appointment/?provider=2").reply(200, [APPT]);
     const res = await getProviderAppointments("2");
+    expect(res).toEqual([APPT]);
+  });
+
+  it("getPatientAppointments adds patient query", async () => {
+    mock.onGet("/appointment/?patient=1").reply(200, [APPT]);
+    const res = await getPatientAppointments("1");
     expect(res).toEqual([APPT]);
   });
 
