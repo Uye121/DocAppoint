@@ -29,7 +29,7 @@ const WeekSelector = ({ days, selectedDay, onSelect }: WeekSelectorProps) => {
                   ? "border-primary text-primary"
                   : isPast
                     ? "border-transparent text-gray-300 cursor-not-allowed"
-                    : "border-transparent text-gray-500 hover:text-gray-700")
+                    : "border-transparent text-muted hover:text-foreground")
               }
             >
               {format(day, "EEE d")}

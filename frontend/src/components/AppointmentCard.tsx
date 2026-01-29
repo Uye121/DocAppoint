@@ -35,7 +35,7 @@ const AppointmentCard = ({ item, isPast = false }: AppointmentCardProps) => {
   return (
     <article
       className={clsx(
-        "flex items-center gap-4 p-4 bg-background border-border rounded-lg",
+        "card flex items-center gap-4 p-4",
         !isPast && "hover:card-hover transition-all duration-200",
         isPast && "bg-surface",
       )}
@@ -43,7 +43,7 @@ const AppointmentCard = ({ item, isPast = false }: AppointmentCardProps) => {
       {/* Provider Image */}
       <div className="shrink-0">
         <img
-          className="w-20 h-20 rounded-lg object-cover bg-indigo-50"
+          className="w-20 h-20 rounded-lg object-cover bg-primary-light"
           src={item.providerImage || assets.profile_pic}
           alt={`${item.providerName}'s profile`}
           loading="lazy"
@@ -75,13 +75,13 @@ const AppointmentCard = ({ item, isPast = false }: AppointmentCardProps) => {
         {!isPast && canPayOrCancel(item.status) ? (
           <>
             <button
-              className="btn btn-primary px-3 py-1.5 text-(length:--font-size-xs) border rounded hover:bg-primary hover:text-white transition"
+              className="btn btn-primary px-3 py-1.5 body-xs border rounded"
               aria-label={`Pay for appointment with ${item.providerName}`}
             >
               Pay Now
             </button>
             <button
-              className="btn btn-danger px-3 py-1.5 text-(length:--font-size-xs) border rounded bg-red-50 text-red-700 hover:bg-red-600 hover:text-white transition"
+              className="btn btn-danger px-3 py-1.5 body-xs border rounded bg-red-50"
               aria-label={`Cancel appointment with ${item.providerName}`}
             >
               Cancel
@@ -90,7 +90,7 @@ const AppointmentCard = ({ item, isPast = false }: AppointmentCardProps) => {
         ) : (
           <span
             className={clsx(
-              "px-3 py-1 rounded-md text-(length:--font-size-xs) font-medium",
+              "px-3 py-1 rounded-md body-xs font-medium",
               getStatusStyles(item.status),
             )}
           >

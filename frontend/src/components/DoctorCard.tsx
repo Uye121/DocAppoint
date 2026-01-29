@@ -30,13 +30,13 @@ const DoctorCard = ({
       />
     </div>
 
-    <div className="flex-1 border border-gray-400 rounded-lg p-8 py-7 bg-white mx-2 sm:mx-0 mt-[-80px] sm:mt-0">
+    <div className="flex-1 border border-gray-400 rounded-lg p-8 py-7 bg-white mx-2 sm:mx-0 -mt-20 sm:mt-0">
       <p className="flex items-center gap-2 text-2xl font-medium text-gray-900">
         {firstName} {lastName}
         <img className="w-5" src={assets.verified_icon} alt="verified" />
       </p>
 
-      <div className="flex items-center gap-2 text-sm mt-1 text-gray-600">
+      <div className="flex items-center gap-2 text-sm mt-1 text-muted">
         <span>
           {education} – {speciality}
         </span>
@@ -46,13 +46,13 @@ const DoctorCard = ({
       </div>
 
       <div className="mt-3">
-        <p className="flex items-center gap-1 text-sm font-medium text-gray-900">
+        <p className="flex items-center gap-1 body-small font-medium text-foreground">
           About <img src={assets.info_icon} alt="info" />
         </p>
-        <p className="text-sm text-gray-500 max-w-[700px] mt-1">{about}</p>
+        <p className="text-sm text-muted-foreground max-w-175 mt-1">{about}</p>
       </div>
 
-      <p className="text-gray-500 font-medium mt-4">
+      <p className="text-muted font-medium mt-4">
         Appointment fee: <span className="text-gray-600">${fees}</span>
       </p>
     </div>

@@ -19,7 +19,7 @@ const SpecialtyMenu = (): React.JSX.Element => {
 
   if (error) {
     return (
-      <div className="text-center py-16 text-red-600">
+      <div className="text-center py-16 text-error">
         <p>{error}</p>
       </div>
     );
@@ -27,7 +27,7 @@ const SpecialtyMenu = (): React.JSX.Element => {
 
   return (
     <div
-      className="flex flex-col items-center ggap-4 py-16 text-gray-800"
+      className="flex flex-col items-center gap-4 py-16 text-foreground"
       id="specialty"
     >
       <h2 className="text-3xl font-medium">Find by Speciality</h2>
@@ -40,7 +40,7 @@ const SpecialtyMenu = (): React.JSX.Element => {
           specialities.map((item: Speciality, index: number) => (
             <Link
               onClick={() => scrollTo(0, 0)}
-              className="flex flex-col items-center text-xs cursor-pointer flex-shrink-0 hover:translate-y-[-10px] transition-all duration-500"
+              className="flex flex-col items-center text-xs cursor-pointer shrink-0 hover:-translate-y-2.5 transition-all duration-500"
               key={index}
               to={`/doctors/${item.name}`}
             >

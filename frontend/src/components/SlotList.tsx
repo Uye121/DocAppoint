@@ -11,7 +11,7 @@ interface SlotListProps {
 const SlotList = ({ slots, userTz, selectedId, onSelect }: SlotListProps) => {
   if (!slots.length)
     return (
-      <p className="text-center text-gray-500">No available slots this day.</p>
+      <p className="text-center text-muted">No available slots this day.</p>
     );
 
   return (
@@ -43,7 +43,7 @@ const SlotList = ({ slots, userTz, selectedId, onSelect }: SlotListProps) => {
             className={
               "w-full rounded border px-4 py-3 text-left text-sm " +
               (selectedId === slot.id
-                ? "border-primary bg-primary/10"
+                ? "border-primary bg-primary-light"
                 : isFree && !isPast
                   ? "border-gray-200 hover:border-gray-400"
                   : "border-red-300 bg-red-50 text-red-700 cursor-not-allowed")

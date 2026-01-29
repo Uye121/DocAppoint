@@ -7,10 +7,13 @@
 
 @theme {
   --color-primary: #6d28d9;
+  --color-primary-hover: oklch(from var(--color-primary) calc(l - 0.15) c h);
+  --color-primary-light: #f5f3ff;
+  --color-primary-dark: #5b21b6;
 
   --color-background: #ffffff;
-  --color-surface: #fafafa;
-  --color-surface-hover: #f4f4f5;
+  --color-surface: #f4f4f5;
+  --color-surface-hover: #eaeaeb;
 
   --color-foreground: #18181b;
   --color-muted: #71717a;
@@ -19,8 +22,11 @@
   --color-success: #10b981;
   --color-warning: #f59e0b;
   --color-error: #dc2626;
+  --color-error-light: #ed8e8e;
 
   --color-border: #e4e4e7;
+  --color-border-strong: #d4d4d8;
+  --color-border-blue: #dbeafe;
 
   /* Typography */
   --font-family-sans: "Outfit", system-ui, sans-serif;
@@ -35,6 +41,12 @@
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
 }
 
 @layer utilities {
@@ -43,9 +55,109 @@
   }
 }
 
+/* Typography */
+@utility heading-1 {
+  font-size: var(--font-size-5xl);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+@utility heading-2 {
+  font-size: var(--font-size-4xl);
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+@utility heading-3 {
+  font-size: var(--font-size-3xl);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+@utility heading-4 {
+  font-size: var(--font-size-2xl);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+@utility heading-5 {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+@utility body-large {
+  font-size: var(--font-size-lg);
+  line-height: 1.6;
+}
+
+@utility body-base {
+  font-size: var(--font-size-base);
+  line-height: 1.6;
+}
+
+@utility body-small {
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+}
+
+@utility body-xs {
+  font-size: var(--font-size-xs);
+  line-height: 1.4;
+}
+
+@utility hover-lift {
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+  }
+}
+
+/* Card */
+@utility card {
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
 @utility card-hover {
   box-shadow: var(--shadow-md);
   transition: box-shadow 0.2s ease;
+}
+
+@utility card-blue {
+  border: 1px solid var(--color-border-blue);
+  border-radius: var(--radius-xl);
+}
+
+@utility btn-primary {
+  background-color: var(--color-primary);
+  color: var(--color-background);
+
+  &:hover {
+    background-color: var(--color-primary-hover);
+  }
+}
+
+@utility btn-danger {
+  background-color: var(--color-error-light);
+  color: var(--color-error);
+  border-color: var(--color-error-light);
+
+  &:hover {
+    background-color: var(--color-error);
+    color: var(--color-background);
+  }
+}
+
+@utility btn-secondary {
+  background-color: var(--color-surface);
+  color: var(--color-foreground);
+
+  &:hover {
+    background-color: var(--color-surface-hover);
+  }
 }
 
 .active hr {

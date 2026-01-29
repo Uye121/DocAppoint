@@ -11,7 +11,7 @@ const Navbar = (): React.JSX.Element => {
   const location = useLocation();
 
   return (
-    <div className="flex items-center justify-between text-sm py-4 mb-5 border-b border-b-gray-400">
+    <div className="flex items-center justify-between text-sm py-4 mb-5 border-b border-border-strong">
       <img
         onClick={() => nav("/")}
         className="w-44 cursor-pointer"
@@ -49,17 +49,17 @@ const Navbar = (): React.JSX.Element => {
               src={assets.dropdown_icon}
               alt="dropdown icon"
             />
-            <div className="absolute top-0 right-0 pt-14 text-base font-medium text-gray-600 z-20 hidden group-hover:block">
-              <div className="min-w-48 bg-stone-100 rounded flex flex-col gap-4 p-4">
+            <div className="absolute top-0 right-0 pt-14 text-base font-medium text-muted z-20 hidden group-hover:block">
+              <div className="min-w-48 bg-surface rounded flex flex-col gap-4 p-4">
                 <p
                   onClick={() => nav("user-profile")}
-                  className="hover:text-black cursor-pointer"
+                  className="hover:text-foreground cursor-pointer"
                 >
                   My Profile
                 </p>
                 <p
                   onClick={() => nav("my-appointments")}
-                  className="hover:text-black cursor-pointer"
+                  className="hover:text-foreground cursor-pointer"
                 >
                   My Appointments
                 </p>
@@ -73,7 +73,7 @@ const Navbar = (): React.JSX.Element => {
                       nav("/login");
                     }
                   }}
-                  className="hover:text-black cursor-pointer"
+                  className="hover:text-foreground cursor-pointer"
                 >
                   Logout
                 </p>
@@ -89,7 +89,7 @@ const Navbar = (): React.JSX.Element => {
                 nav("/signup");
               }
             }}
-            className="bg-primary text-white px-8 py-3 rounded-full font-light hidden md:block"
+            className="bg-primary text-background px-8 py-3 rounded-full font-light hidden md:block"
           >
             {location.pathname === "/login" ? "Create Account" : "Login"}
           </button>
