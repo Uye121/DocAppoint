@@ -151,6 +151,17 @@
   }
 }
 
+@utility btn-cancel {
+  background-color: var(--color-error-light);
+  color: var(--color-error);
+  border-color: var(--color-error-light);
+
+  &:hover {
+    background-color: var(--color-surface-hover);
+    color: var(--color-error-light);
+  }
+}
+
 @utility btn-secondary {
   background-color: var(--color-surface);
   color: var(--color-foreground);

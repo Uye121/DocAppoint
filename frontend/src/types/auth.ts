@@ -1,8 +1,11 @@
+import type { User } from "./user";
+
 export const VERIFY_STATUS = {
   LOADING: "Loading",
   FAILURE: "Failure",
   SUCCESSFUL: "Successful",
 } as const;
+
 export type VerifyStatus = (typeof VERIFY_STATUS)[keyof typeof VERIFY_STATUS];
 
 export interface AuthPayload {
@@ -29,13 +32,6 @@ export interface PasswordResetPayload {
 export interface PasswordResetConfirmPayload {
   token: string;
   password: string;
-}
-
-export interface User {
-  id: string;
-  email: string;
-  username: string;
-  userRole: "unassigned" | "patient" | "provider";
 }
 
 export interface AuthCtx {

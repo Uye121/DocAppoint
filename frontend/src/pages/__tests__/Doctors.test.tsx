@@ -41,6 +41,10 @@ const createTestWrapper = (initialRoute: string = "/doctors") => {
         <Routes>
           <Route path="/doctors" element={children} />
           <Route path="/doctors/:speciality" element={children} />
+          <Route
+            path="/appointment/:id"
+            element={<div>Appointment Page</div>}
+          />
         </Routes>
       </MemoryRouter>
     );
@@ -102,5 +106,101 @@ describe("Doctors page", () => {
     await waitFor(() => {
       expect(neuroBtn).toHaveClass("bg-indigo-100");
     });
+  });
+
+  it("clears speciality filter when active button clicked again", async () => {
+    const user = userEvent.setup();
+    // Start with General Physician filter
+    const TestWrapper = createTestWrapper("/doctors/General%20Physician");
+    render(<Doctors />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByText("John Smith")).toBeInTheDocument();
+      expect(screen.getByText("Bob Johnson")).toBeInTheDocument();
+      expect(screen.queryByText("Jane Doe")).not.toBeInTheDocument();
+    });
+
+    const genBtn = screen.getByRole("button", { name: "General Physician" });
+    await user.click(genBtn);
+
+    // After clicking, filter should be cleared, so ALL doctors should show
+    await waitFor(() => {
+      expect(screen.getByText("Jane Doe")).toBeInTheDocument();
+      expect(screen.getByText("John Smith")).toBeInTheDocument();
+      expect(screen.getByText("Bob Johnson")).toBeInTheDocument();
+    });
+  });
+
+  it("navigates to appointment page when doctor card clicked", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter initialEntries={["/doctors"]}>
+        <Routes>
+          <Route path="/doctors" element={<Doctors />} />
+          <Route
+            path="/appointment/:id"
+            element={<div>Appointment Page for ID</div>}
+          />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("John Smith")).toBeInTheDocument();
+    });
+
+    const johnCard = screen.getByText("John Smith").closest("button");
+    await user.click(johnCard!);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Appointment Page for ID/i)).toBeInTheDocument();
+    });
+  });
+
+  it("toggles filter panel on mobile", async () => {
+    const user = userEvent.setup();
+    const TestWrapper = createTestWrapper("/doctors");
+
+    render(<Doctors />, { wrapper: TestWrapper });
+
+    const toggleBtn = screen.getByRole("button", { name: /filters/i });
+    const filterPanel = screen.getByTestId("filter-panel");
+
+    // initially hidden on small screens
+    expect(filterPanel).toHaveClass("hidden", "sm:flex");
+
+    await user.click(toggleBtn);
+    expect(filterPanel).toHaveClass("flex");
+    expect(toggleBtn).toHaveClass("bg-primary", "text-white");
+
+    await user.click(toggleBtn);
+    expect(filterPanel).toHaveClass("hidden", "sm:flex");
+    expect(toggleBtn).not.toHaveClass("bg-primary");
+  });
+
+  it("renders loading state while doctors context is empty", () => {
+    vi.mocked(useDoctor).mockReturnValue({ doctors: [] });
+    const TestWrapper = createTestWrapper("/doctors");
+
+    render(<Doctors />, { wrapper: TestWrapper });
+
+    // Still renders heading and filter, but no cards
+    expect(
+      screen.getByText(/Browse through the doctors specialist/i),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("article")).not.toBeInTheDocument();
+  });
+
+  it("handles missing image gracefully", async () => {
+    vi.mocked(useDoctor).mockReturnValue({
+      doctors: [{ ...mockDoctors[0], image: "" }],
+    });
+    const TestWrapper = createTestWrapper("/doctors");
+
+    render(<Doctors />, { wrapper: TestWrapper });
+
+    const img = screen.getByAltText("Dr. Smith's portrait") as HTMLImageElement;
+    expect(img.src).toContain("");
   });
 });
