@@ -1,19 +1,30 @@
 import clsx from "clsx";
 import { formatInTimeZone } from "date-fns-tz";
+import { useQueryClient } from "@tanstack/react-query";
 
+import { updateAppointmentStatus } from "../api/appointment";
 import type { AppointmentListItem } from "../types/appointment";
 import { assets } from "../assets/assets_frontend/assets";
 
 interface AppointmentCardProps {
   item: AppointmentListItem;
+  userId: string;
   isPast?: boolean;
 }
 
-const AppointmentCard = ({ item, isPast = false }: AppointmentCardProps) => {
+const AppointmentCard = ({
+  item,
+  userId,
+  isPast = false,
+}: AppointmentCardProps) => {
+  const queryClient = useQueryClient();
   const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-  const canPayOrCancel = (status: string) =>
-    status === "CONFIRMED" || status === "COMPLETED";
+  const showButtons = (status: string) =>
+    !isPast &&
+    (status === "CONFIRMED" ||
+      status === "COMPLETED" ||
+      status === "REQUESTED");
 
   const getStatusStyles = (status: string) => {
     switch (status) {
@@ -30,6 +41,14 @@ const AppointmentCard = ({ item, isPast = false }: AppointmentCardProps) => {
       default:
         return "bg-surface text-muted";
     }
+  };
+
+  const handleStatus = async (appt: AppointmentListItem, status: string) => {
+    await updateAppointmentStatus(appt.id, status);
+
+    await queryClient.invalidateQueries({
+      queryKey: ["patient-appointments", userId],
+    });
   };
 
   return (
@@ -72,30 +91,30 @@ const AppointmentCard = ({ item, isPast = false }: AppointmentCardProps) => {
 
       {/* Status/Actions */}
       <div className="shrink-0 flex flex-col items-end gap-2">
-        {!isPast && canPayOrCancel(item.status) ? (
+        <span
+          className={clsx(
+            "px-3 py-1 rounded-md body-xs font-medium",
+            getStatusStyles(item.status),
+          )}
+        >
+          {item.status}
+        </span>
+        {showButtons(item.status) && (
           <>
-            <button
+            {/* <button
               className="btn btn-primary px-3 py-1.5 body-xs border rounded"
               aria-label={`Pay for appointment with ${item.providerName}`}
             >
               Pay Now
-            </button>
+            </button> */}
             <button
               className="btn btn-danger px-3 py-1.5 body-xs border rounded bg-red-50"
               aria-label={`Cancel appointment with ${item.providerName}`}
+              onClick={() => handleStatus(item, "CANCELLED")}
             >
               Cancel
             </button>
           </>
-        ) : (
-          <span
-            className={clsx(
-              "px-3 py-1 rounded-md body-xs font-medium",
-              getStatusStyles(item.status),
-            )}
-          >
-            {item.status}
-          </span>
         )}
       </div>
     </article>

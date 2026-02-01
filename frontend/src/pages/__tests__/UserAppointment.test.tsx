@@ -124,7 +124,6 @@ describe("UserAppointment", () => {
       expect(screen.getByText("Dr. Smith")).toBeInTheDocument(),
     );
 
-    expect(screen.getByRole("button", { name: /Pay/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Cancel/i })).toBeInTheDocument();
   });
 
@@ -147,13 +146,9 @@ describe("UserAppointment", () => {
     const appointmentCards = screen.getAllByRole("article");
     const upcomingCard = appointmentCards[0];
 
-    // Should NOT show Pay button for REQUESTED status
     expect(
-      within(upcomingCard).queryByRole("button", { name: /Pay Now/i }),
-    ).not.toBeInTheDocument();
-    expect(
-      within(upcomingCard).queryByRole("button", { name: /Cancel/i }),
-    ).not.toBeInTheDocument();
+      within(upcomingCard).getByRole("button", { name: /Cancel/i }),
+    ).toBeInTheDocument();
 
     // Should show REQUESTED status badge
     expect(within(upcomingCard).getByText("REQUESTED")).toBeInTheDocument();

@@ -26,7 +26,6 @@ const UserAppointment = (): React.JSX.Element => {
     (a) => new Date(a.appointmentStartDatetimeUtc) < now,
   );
 
-  /* ---------- render ---------- */
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
       <h2 className="pb-3 mt-6 font-semibold text-neutral-800 border-b">
@@ -35,7 +34,12 @@ const UserAppointment = (): React.JSX.Element => {
       {upcoming.length ? (
         <div className="grid gap-4 mt-4">
           {upcoming.map((a) => (
-            <AppointmentCard item={a} isPast={false} key={a.id} />
+            <AppointmentCard
+              item={a}
+              isPast={false}
+              key={a.id}
+              userId={user.id}
+            />
           ))}
         </div>
       ) : (

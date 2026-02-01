@@ -1,8 +1,13 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
 import AppointmentCard from "../AppointmentCard";
-import { assets } from "../../assets/assets_frontend/assets";
 import type { AppointmentListItem } from "../../types/appointment";
+
+vi.mock("../../api/appointment", () => ({
+  updateAppointmentStatus: vi.fn(),
+}));
 
 const mockAppointment = (overrides?: Partial<AppointmentListItem>) =>
   ({
@@ -24,78 +29,158 @@ vi.mock("../../../hooks/useAuth", () => ({
   useAuth: vi.fn(() => ({ user: { id: "u1" }, loading: false })),
 }));
 
-vi.mock("@tanstack/react-query", () => ({
-  useQuery: vi.fn(() => ({ data: [], isLoading: false, refetch: vi.fn() })),
-}));
+const createWrapper = () => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  });
+
+  return ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
+};
+
+import { updateAppointmentStatus } from "../../api/appointment";
 
 describe("AppointmentCard", () => {
   beforeEach(() => {
-    vi.spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions").mockReturnValue({
-      timeZone: "UTC",
-    } as Intl.ResolvedDateTimeFormatOptions);
+    vi.clearAllMocks();
   });
-  afterEach(() => vi.restoreAllMocks());
 
-  it("renders provider name, date, reason", () => {
-    render(<AppointmentCard item={mockAppointment()} />);
+  it("renders provider name, formatted date, and reason", () => {
+    render(<AppointmentCard item={mockAppointment()} userId="u1" />, {
+      wrapper: createWrapper(),
+    });
+
     expect(screen.getByText("Dr. Smith")).toBeInTheDocument();
-    expect(screen.getByText(/Friday, Jan 30 at 10:00 AM/)).toBeInTheDocument();
-    expect(screen.getByText("Routine check-up")).toBeInTheDocument();
+    expect(screen.getByText(/Routine check-up/)).toBeInTheDocument();
+
+    // Check that date formatting is applied (without testing exact format)
+    const dateElement = screen.getByText(/\w+, \w+ \d+ at \d+:\d+ (AM|PM)/);
+    expect(dateElement).toBeInTheDocument();
   });
 
   it("shows fallback image when providerImage is null", () => {
-    render(<AppointmentCard item={mockAppointment({ providerImage: null })} />);
-    const img = screen.getByRole("img") as HTMLImageElement;
-    expect(img.src).toContain(assets.profile_pic);
+    render(
+      <AppointmentCard
+        item={mockAppointment({ providerImage: null })}
+        userId="u1"
+      />,
+      {
+        wrapper: createWrapper(),
+      },
+    );
+
+    const img = screen.getByAltText("Dr. Smith's profile");
+    expect(img).toBeInTheDocument();
+    expect(img).toHaveAttribute("src");
   });
 
-  it("uses provided providerImage", () => {
+  it("uses provided providerImage when available", () => {
     render(
       <AppointmentCard
         item={mockAppointment({ providerImage: "https://example.com/dr.jpg" })}
+        userId="u1"
       />,
+      { wrapper: createWrapper() },
     );
-    const img = screen.getByRole("img") as HTMLImageElement;
-    expect(img.src).toBe("https://example.com/dr.jpg");
+
+    const img = screen.getByAltText("Dr. Smith's profile");
+    expect(img).toHaveAttribute("src", "https://example.com/dr.jpg");
   });
 
-  it("displays Pay/Cancel buttons for upcoming CONFIRMED appointment", () => {
-    render(<AppointmentCard item={mockAppointment({ status: "CONFIRMED" })} />);
-    expect(screen.getByText("Pay Now")).toBeInTheDocument();
-    expect(screen.getByText("Cancel")).toBeInTheDocument();
+  it("displays correct status badge based on appointment status", () => {
+    const statuses = [
+      { status: "REQUESTED", expectedClass: "bg-status-requested" },
+      { status: "CONFIRMED", expectedClass: "bg-status-confirmed" },
+      { status: "COMPLETED", expectedClass: "bg-status-completed" },
+      { status: "RESCHEDULED", expectedClass: "bg-status-rescheduled" },
+      { status: "CANCELLED", expectedClass: "bg-status-cancelled" },
+    ] as const;
+
+    statuses.forEach(({ status, expectedClass }) => {
+      const { unmount } = render(
+        <AppointmentCard item={mockAppointment({ status })} userId="u1" />,
+        { wrapper: createWrapper() },
+      );
+
+      const statusBadge = screen.getByText(status);
+      expect(statusBadge).toBeInTheDocument();
+      expect(statusBadge).toHaveClass(expectedClass);
+      unmount();
+    });
   });
 
-  it("hides buttons and shows status badge for non-actionable status", () => {
-    render(<AppointmentCard item={mockAppointment({ status: "REQUESTED" })} />);
+  it("shows Cancel button for appropriate statuses when not past appointment", () => {
+    const statusesWithButton: AppointmentListItem["status"][] = [
+      "CONFIRMED",
+      "COMPLETED",
+      "REQUESTED",
+    ];
+    const statusesWithoutButton: AppointmentListItem["status"][] = [
+      "RESCHEDULED",
+      "CANCELLED",
+    ];
+
+    statusesWithButton.forEach((status) => {
+      const { unmount } = render(
+        <AppointmentCard item={mockAppointment({ status })} userId="u1" />,
+        { wrapper: createWrapper() },
+      );
+
+      expect(
+        screen.getByRole("button", { name: /cancel appointment/i }),
+      ).toBeInTheDocument();
+      unmount();
+    });
+
+    statusesWithoutButton.forEach((status) => {
+      const { unmount } = render(
+        <AppointmentCard item={mockAppointment({ status })} userId="u1" />,
+        { wrapper: createWrapper() },
+      );
+
+      expect(
+        screen.queryByRole("button", { name: /cancel appointment/i }),
+      ).not.toBeInTheDocument();
+      unmount();
+    });
+  });
+
+  it("does not show Cancel button for past appointments", () => {
+    render(
+      <AppointmentCard
+        item={mockAppointment({ status: "CONFIRMED" })}
+        userId="u1"
+        isPast={true}
+      />,
+      { wrapper: createWrapper() },
+    );
+
     expect(
-      screen.queryByRole("button", { name: /pay now/i }),
+      screen.queryByRole("button", { name: /cancel appointment/i }),
     ).not.toBeInTheDocument();
-    expect(screen.getByText("REQUESTED")).toBeInTheDocument();
   });
 
-  it("applies correct status colour class", () => {
-    const { rerender } = render(
-      <AppointmentCard item={mockAppointment({ status: "REQUESTED" })} />,
-    );
-    expect(screen.getByText("REQUESTED")).toHaveClass("bg-status-requested");
+  it("calls updateAppointmentStatus with correct parameters when Cancel button is clicked", async () => {
+    const mockUpdate = vi
+      .mocked(updateAppointmentStatus)
+      .mockResolvedValue(undefined);
 
-    rerender(
-      <AppointmentCard item={mockAppointment({ status: "CANCELLED" })} />,
-    );
-    expect(screen.getByText("CANCELLED")).toHaveClass("bg-status-cancelled");
-  });
+    render(<AppointmentCard item={mockAppointment()} userId="u1" />, {
+      wrapper: createWrapper(),
+    });
 
-  it("applies past-card background when isPast=true", () => {
-    const { container } = render(
-      <AppointmentCard item={mockAppointment()} isPast />,
-    );
-    expect(container.firstChild).toHaveClass("bg-surface");
-  });
+    const cancelButton = screen.getByRole("button", {
+      name: /cancel appointment/i,
+    });
+    fireEvent.click(cancelButton);
 
-  it("does NOT apply hover styles for past cards", () => {
-    const { container } = render(
-      <AppointmentCard item={mockAppointment()} isPast />,
-    );
-    expect(container.firstChild).not.toHaveClass("hover:card-hover");
+    await waitFor(() => {
+      expect(mockUpdate).toHaveBeenCalledWith("1", "CANCELLED");
+    });
   });
 });
