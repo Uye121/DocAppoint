@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router-dom";
+
 import UserAppointment from "../UserAppointment";
 import { useAuth } from "../../../hooks/useAuth";
 import { getPatientAppointments } from "../../api/appointment";
@@ -22,9 +24,11 @@ const createTestQueryClient = () =>
   });
 
 const TestWrapper = ({ children }: { children: React.ReactNode }) => (
-  <QueryClientProvider client={createTestQueryClient()}>
-    {children}
-  </QueryClientProvider>
+  <MemoryRouter>
+    <QueryClientProvider client={createTestQueryClient()}>
+      {children}
+    </QueryClientProvider>
+  </MemoryRouter>
 );
 
 const hospital: HospitalTiny = {
