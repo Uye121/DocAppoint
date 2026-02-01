@@ -111,11 +111,14 @@ class TestAppointmentSerializers:
             reason="Check-up",
         )
         s = AppointmentListSerializer(instance=appt)
+
         assert s.data["status"] == "REQUESTED"
         assert (
             s.data["patientName"]
             == f"{data['patient'].user.first_name} {data['patient'].user.last_name}"
         )
+        assert s.data["hospital"]["id"] == data["hospital"].id
+        assert s.data["hospital"]["address"] == data["hospital"].address
 
     def test_appointment_detail_serializer(self, data):
         appt = Appointment.objects.create(

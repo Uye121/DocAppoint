@@ -35,7 +35,6 @@ const ProviderHome = (): React.JSX.Element => {
     staleTime: 3,
     refetchOnWindowFocus: true,
   });
-  console.log("appt: ", appointments);
 
   /* ---------- medical records ---------- */
   // const { data: records = [], refetch: refetchRecords } = useQuery({

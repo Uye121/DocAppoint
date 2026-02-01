@@ -9,14 +9,22 @@ const Doctors = (): React.JSX.Element => {
   const { speciality } = useParams();
   const [filteredDoc, setFilteredDoc] = useState<DoctorListItem[]>([]);
   const [showFilter, setShowFilter] = useState(false);
-  const { doctors } = useDoctor();
+  const { doctors = [] } = useDoctor();
+  const specialities = [
+    "General Physician",
+    "Gynecologist",
+    "Dermatologist",
+    "Pediatricians",
+    "Neurologist",
+  ];
 
   useEffect(() => {
     const applyFilter = () => {
-      if (speciality) {
+      if (speciality && speciality.trim() !== "") {
         setFilteredDoc(
           doctors!.filter(
-            (doc: DoctorListItem) => doc.specialityName == speciality,
+            (doc: DoctorListItem) =>
+              doc.specialityName.toLowerCase() == speciality.toLowerCase(),
           ),
         );
       } else {
@@ -26,6 +34,18 @@ const Doctors = (): React.JSX.Element => {
 
     applyFilter();
   }, [speciality, doctors]);
+
+  const handleSpecialityClick = (spec: string) => {
+    if (speciality?.toLowerCase() === spec.toLowerCase()) {
+      navigate("/doctors");
+    } else {
+      navigate(`/doctors/${encodeURIComponent(spec)}`);
+    }
+  };
+
+  const isSpecialityActive = (spec: string) => {
+    return speciality?.toLowerCase() === spec.toLowerCase();
+  };
 
   return (
     <div>
@@ -39,62 +59,22 @@ const Doctors = (): React.JSX.Element => {
         </button>
         <div
           className={`flex flex-col gap-4 text-sm text-gray-600 ${showFilter ? "flex" : "hidden sm:flex"}`}
+          data-testid="filter-panel"
         >
-          <button
-            type="button"
-            onClick={() =>
-              speciality == "General physician"
-                ? navigate("/doctors")
-                : navigate("/doctors/General physician")
-            }
-            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all text-left ${speciality === "General Physician" ? "bg-indigo-100 text-black" : "bg-white"}`}
-          >
-            General Physician
-          </button>
-          <button
-            type="button"
-            onClick={() =>
-              speciality == "Gynecologist"
-                ? navigate("/doctors")
-                : navigate("/doctors/Gynecologist")
-            }
-            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all text-left ${speciality === "Gynecologist" ? "bg-indigo-100 text-black" : "bg-white"}`}
-          >
-            Gynecologist
-          </button>
-          <button
-            type="button"
-            onClick={() =>
-              speciality == "Dermatologist"
-                ? navigate("/doctors")
-                : navigate("/doctors/Dermatologist")
-            }
-            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all text-left ${speciality === "Dermatologist" ? "bg-indigo-100 text-black" : "bg-white"}`}
-          >
-            Dermatologist
-          </button>
-          <button
-            type="button"
-            onClick={() =>
-              speciality == "Pediatricians"
-                ? navigate("/doctors")
-                : navigate("/doctors/Pediatricians")
-            }
-            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all text-left ${speciality === "Pediatricians" ? "bg-indigo-100 text-black" : "bg-white"}`}
-          >
-            Pediatricians
-          </button>
-          <button
-            type="button"
-            onClick={() =>
-              speciality == "Neurologist"
-                ? navigate("/doctors")
-                : navigate("/doctors/Neurologist")
-            }
-            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all text-left ${speciality === "Neurologist" ? "bg-indigo-100 text-black" : "bg-white"}`}
-          >
-            Neurologist
-          </button>
+          {specialities.map((spec) => (
+            <button
+              key={spec}
+              type="button"
+              onClick={() => handleSpecialityClick(spec)}
+              className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all text-left ${
+                isSpecialityActive(spec)
+                  ? "bg-indigo-100 text-black"
+                  : "bg-white"
+              }`}
+            >
+              {spec}
+            </button>
+          ))}
         </div>
         <div className="w-full grid grid-cols-fluid gap-4 gap-y-6">
           {filteredDoc.map((item: DoctorListItem, index: number) => (

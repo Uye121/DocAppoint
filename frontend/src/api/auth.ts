@@ -5,8 +5,8 @@ import type {
   ResendVerifyPayload,
   PasswordResetPayload,
   PasswordResetConfirmPayload,
-  User,
 } from "../types/auth";
+import type { User } from "../types/user";
 
 export const login = (payload: AuthPayload) =>
   api

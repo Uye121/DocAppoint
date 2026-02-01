@@ -1,3 +1,5 @@
+import type { HospitalTiny } from "./hospital";
+
 export interface Slot {
   id: string;
   hospitalId: int;
@@ -20,9 +22,10 @@ export interface AppointmentListItem {
   providerId: string;
   patientName: string;
   providerName: string;
+  providerImage: string | null;
   appointmentStartDatetimeUtc: string;
   appointmentEndDatetimeUtc: string;
-  location: string;
+  hospital: HospitalTiny;
   reason: string;
   status: "REQUESTED" | "CONFIRMED" | "COMPLETED" | "CANCELLED" | "RESCHEDULED";
 }

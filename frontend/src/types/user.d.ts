@@ -11,6 +11,6 @@ export interface User {
   image?: string | null;
   lastName: string;
   phoneNumber?: string | null;
-  userRole: string;
+  userRole: "unassigned" | "patient" | "provider";
   userName: string;
 }

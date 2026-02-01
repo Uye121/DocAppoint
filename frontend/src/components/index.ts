@@ -1,3 +1,4 @@
+import AppointmentCard from "./AppointmentCard";
 import Banner from "./Banner";
 import Footer from "./Footer";
 import Header from "./Header";
@@ -13,6 +14,7 @@ import SlotList from "./SlotList";
 import RoleGuard from "./RoleGuard";
 
 export {
+  AppointmentCard,
   Banner,
   Footer,
   Header,
