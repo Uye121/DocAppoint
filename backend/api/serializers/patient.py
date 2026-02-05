@@ -3,11 +3,11 @@ from django.contrib.auth import password_validation
 
 from ..models import User, Patient
 from ..mixin import CamelCaseMixin
-from .user import UserSerializer
+from .user import UserProfileSerializer
 
 
 class PatientSerializer(CamelCaseMixin, serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
+    user = UserProfileSerializer()
 
     class Meta:
         model = Patient
@@ -21,6 +21,7 @@ class PatientSerializer(CamelCaseMixin, serializers.ModelSerializer):
             "weight",
             "height",
         ]
+        read_only_fields = ["user"]
 
     def validate(self, attrs):
         """Checks for PATCH/PUT."""
@@ -37,6 +38,25 @@ class PatientSerializer(CamelCaseMixin, serializers.ModelSerializer):
             )
 
         return attrs
+
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop("user", None)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        # Update user fields if provided
+        if user_data:
+            user = instance.user
+
+            user_serializer = UserProfileSerializer(
+                instance=user, data=user_data, partial=True, context=self.context
+            )
+            user_serializer.is_valid(raise_exception=True)
+            user_serializer.save()
+
+        return instance
 
 
 class PatientCreateSerializer(CamelCaseMixin, serializers.ModelSerializer):

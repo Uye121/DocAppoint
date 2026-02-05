@@ -118,7 +118,6 @@ class TestAppointmentSerializers:
             == f"{data['patient'].user.first_name} {data['patient'].user.last_name}"
         )
         assert s.data["hospital"]["id"] == data["hospital"].id
-        assert s.data["hospital"]["address"] == data["hospital"].address
 
     def test_appointment_detail_serializer(self, data):
         appt = Appointment.objects.create(

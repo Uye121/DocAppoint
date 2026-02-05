@@ -1,5 +1,9 @@
 export interface User {
-  address?: string | null;
+  addressLine1?: string | null;
+  addressLine2?: string | null;
+  city?: string;
+  state?: string;
+  zipCode?: string;
   dateOfBirth?: string | null;
   email: string;
   firstName: string;

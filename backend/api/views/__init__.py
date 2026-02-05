@@ -4,8 +4,6 @@ from .auth import (
     VerifyEmailView,
     ResendVerifyView,
     LogoutView,
-    ChangePasswordView,
-    UserView,
 )
 from .patient import PatientViewSet
 from .healthcare_provider import HealthcareProviderViewSet
@@ -20,8 +18,6 @@ __all__ = [
     "VerifyEmailView",
     "ResendVerifyView",
     "LogoutView",
-    "ChangePasswordView",
-    "UserView",
     "SpecialityViewSet",
     "AppointmentViewSet",
     "SlotViewSet",

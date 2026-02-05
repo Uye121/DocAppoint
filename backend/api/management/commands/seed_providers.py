@@ -104,7 +104,8 @@ class Command(BaseCommand):
             id=1,
             defaults={
                 "name": "General Hospital",
-                "address": "123 Main St",
+                "address_line1": "123 Main St",
+                "address_line2": "",
                 "phone_number": "555-1234",
                 "timezone": "America/New_York",
                 "created_by": admin_user,

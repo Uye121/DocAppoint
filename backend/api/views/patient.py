@@ -36,8 +36,12 @@ class PatientViewSet(
         return PatientSerializer
 
     def get_permissions(self):
-        if self.action in ("create"):
-            return [permissions.AllowAny()]
+        if self.action in ("create", "list"):
+            return (
+                [permissions.AllowAny()]
+                if self.action == "create"
+                else [permissions.IsAuthenticated()]
+            )
         return [permissions.IsAuthenticated()]
 
     def get_object(self):
@@ -45,6 +49,16 @@ class PatientViewSet(
 
     def perform_create(self, serializer):
         return serializer.save()
+
+    def update(self, request, *args, **kwargs):
+        """Only allow patients to update their own profile"""
+        instance = self.get_object()
+        if instance.user != request.user and not request.user.is_staff:
+            return Response(
+                {"detail": "You can only update your own patient profile."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        return super().update(request, *args, **kwargs)
 
     @action(detail=False, methods=["post"], url_path="onboard")
     def on_board(self, request):

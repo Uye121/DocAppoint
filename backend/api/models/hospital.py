@@ -7,7 +7,8 @@ from ..mixin import AuditMixin
 
 class Hospital(AuditMixin, models.Model):
     name = models.CharField(max_length=255)
-    address = models.TextField()
+    address_line1 = models.CharField("Address line 1", max_length=1024)
+    address_line2 = models.CharField("Address line 2", max_length=1024, blank=True)
     phone_number = models.CharField(max_length=20)
     timezone = models.CharField(
         max_length=64,

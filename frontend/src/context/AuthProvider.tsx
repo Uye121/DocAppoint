@@ -7,8 +7,8 @@ import {
   login as apiLogin,
   signup as apiSignup,
   logout as apiLogout,
-  getMe,
 } from "../api/auth";
+import { getMe } from "../api/users";
 import { AuthContext } from "./AuthContext";
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({

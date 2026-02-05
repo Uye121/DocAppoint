@@ -28,8 +28,6 @@ from .views import (
     VerifyEmailView,
     ResendVerifyView,
     LogoutView,
-    ChangePasswordView,
-    UserView,
     PatientViewSet,
     HealthcareProviderViewSet,
     SpecialityViewSet,
@@ -38,26 +36,19 @@ from .views import (
 )
 
 router = DefaultRouter()
-router.register("users", UserViewSet, basename="user")
+router.register("users", UserViewSet, basename="users")
 router.register("patient", PatientViewSet, basename="patient")
 router.register("provider", HealthcareProviderViewSet, basename="provider")
 router.register("speciality", SpecialityViewSet, basename="speciality")
 router.register("appointment", AppointmentViewSet, basename="appointment")
 router.register("slot", SlotViewSet, basename="slot")
-# router.register("patients", PatientViewSet, basename="patient")
-# router.register("providers", HealthcareProviderViewSet, basename="provider")
 
 authpatterns = [
     path("login/", LoginView.as_view(), name="login"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("verify/", VerifyEmailView.as_view(), name="verify_email"),
     path("resend-verify/", ResendVerifyView.as_view(), name="resend_verify"),
-    path(
-        "password-reset/", include("django_rest_passwordreset.urls")
-    ),  # TODO: to be modified
     path("logout/", LogoutView.as_view(), name="logout"),
-    path("change-password/", ChangePasswordView.as_view(), name="change_password"),
-    path("me/", UserView.as_view(), name="user_info"),
 ]
 
 
@@ -65,7 +56,5 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/auth/", include(authpatterns)),
     path("api/", include(router.urls)),
-    # path("api/providers/", include(providerpatterns)),
-    # path("api/specialities/", include(specialitypatterns)),
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

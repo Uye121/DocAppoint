@@ -6,12 +6,16 @@ import { vi } from "vitest";
 import { AuthProvider } from "../AuthProvider";
 import { AuthContext } from "../AuthContext";
 import * as authApi from "../../api/auth";
+import { getMe } from "../../api/users";
 
 vi.mock("../../api/auth", () => ({
-  getMe: vi.fn(),
   login: vi.fn(),
   signup: vi.fn(),
   logout: vi.fn(),
+}));
+
+vi.mock("../../api/users", () => ({
+  getMe: vi.fn(),
 }));
 
 const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -28,7 +32,7 @@ describe("AuthProvider", () => {
   afterEach(() => localStorage.clear());
 
   it("exposes default state while bootstrapping", () => {
-    vi.mocked(authApi.getMe).mockImplementation(() => new Promise(() => {}));
+    vi.mocked(getMe).mockImplementation(() => new Promise(() => {}));
     localStorage.setItem("access", "test-token");
     const { result } = renderHook(() => useContext(AuthContext), { wrapper });
 
@@ -38,7 +42,7 @@ describe("AuthProvider", () => {
 
   it("sets user when access token exists and /me succeeds", async () => {
     const fakeUser = { id: 1, email: "a@b.com" };
-    vi.mocked(authApi.getMe).mockResolvedValue(fakeUser);
+    vi.mocked(getMe).mockResolvedValue(fakeUser);
     localStorage.setItem("access", "tok");
 
     const { result } = renderHook(() => useContext(AuthContext), { wrapper });
@@ -48,7 +52,7 @@ describe("AuthProvider", () => {
   });
 
   it("clears token and stays logged-out when /me fails", async () => {
-    vi.mocked(authApi.getMe).mockRejectedValue(new Error("401"));
+    vi.mocked(getMe).mockRejectedValue(new Error("401"));
     localStorage.setItem("access", "bad");
 
     const { result } = renderHook(() => useContext(AuthContext), { wrapper });

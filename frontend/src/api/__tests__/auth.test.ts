@@ -39,15 +39,4 @@ describe("auth API", () => {
     const res = await auth.logout();
     expect(res).toBeUndefined();
   });
-
-  it("getMe GET /auth/me/ with Bearer header", async () => {
-    localStorage.setItem("access", "acc");
-    const user = { id: 1, email: "a@b.com" };
-    mock.onGet("/auth/me/").reply((config) => {
-      expect(config.headers?.Authorization).toBe("Bearer acc");
-      return [200, user];
-    });
-    const res = await auth.getMe();
-    expect(res).toEqual(user);
-  });
 });
