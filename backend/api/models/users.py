@@ -29,7 +29,11 @@ class User(TimestampMixin, AbstractUser):
     )
     date_of_birth = models.DateField(_("Date of Birth"), null=True, blank=True)
     phone_number = models.CharField(_("Phone Number"), max_length=20, blank=True)
-    address = models.TextField(_("Address"), blank=True)
+    address_line1 = models.CharField("Address line 1", max_length=1024, blank=True)
+    address_line2 = models.CharField("Address line 2", max_length=1024, blank=True)
+    city = models.CharField(max_length=50, blank=True)
+    state = models.CharField(max_length=2, blank=True)
+    zip_code = models.CharField(max_length=5, blank=True)
     image = models.ImageField(upload_to="users_images", blank=True, null=True)
     reset_sent_at = models.DateTimeField(null=True, blank=True)
 

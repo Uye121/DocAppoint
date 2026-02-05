@@ -9,7 +9,8 @@ class HospitalSerializer(CamelCaseMixin, serializers.ModelSerializer):
         fields = (
             "id",
             "name",
-            "address",
+            "address_line1",
+            "address_line2",
             "phone_number",
             "timezone",
             "is_removed",
@@ -21,4 +22,4 @@ class HospitalSerializer(CamelCaseMixin, serializers.ModelSerializer):
 class HospitalTinySerializer(CamelCaseMixin, serializers.ModelSerializer):
     class Meta:
         model = Hospital
-        fields = ("id", "name", "address", "timezone")
+        fields = ("id", "name", "address_line1", "address_line2", "timezone")

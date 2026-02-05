@@ -44,6 +44,77 @@ class TestPatientSerializer:
         assert not ps.is_valid()
         assert "height" in ps.errors
 
+    def test_update_patient_fields_with_user_data(self, patient_factory):
+        """Test updating both patient and user fields in one request"""
+        p = patient_factory(blood_type="O+", weight=70, height=175)
+        # Update both patient and user fields
+        payload = {
+            "blood_type": "A-",
+            "weight": 75,
+            "user": {
+                "first_name": "Jane",
+                "last_name": "Smith",
+            },
+        }
+
+        ps = PatientSerializer(instance=p, data=payload, partial=True)
+        assert ps.is_valid(), ps.errors
+        updated_patient = ps.save()
+
+        # Check patient fields updated
+        assert updated_patient.blood_type == "A-"
+        assert updated_patient.weight == 75
+
+        # Check user fields updated
+        assert updated_patient.user.first_name == "Jane"
+        assert updated_patient.user.last_name == "Smith"
+        # Height should remain unchanged
+        assert updated_patient.height == 175
+
+    def test_update_user_only_no_patient_data(self, patient_factory):
+        p = patient_factory(
+            user__first_name="Original", blood_type="O+", weight=70, height=175
+        )
+
+        payload = {
+            "user": {
+                "first_name": "Updated",
+                "last_name": "NameChanged",
+                "phone_number": "987-654-3210",
+            }
+        }
+
+        ps = PatientSerializer(instance=p, data=payload, partial=True)
+        assert ps.is_valid(), ps.errors
+        obj = ps.save()
+
+        # User fields updated
+        assert obj.user.first_name == "Updated"
+        assert obj.user.last_name == "NameChanged"
+        assert obj.user.phone_number == "987-654-3210"
+
+        # Patient fields unchanged
+        assert obj.blood_type == p.blood_type
+        assert obj.weight == p.weight
+        assert obj.height == p.height
+
+    def test_update_with_empty_user_dict(self, patient_factory):
+        p = patient_factory(weight=70, blood_type="O+")
+
+        payload = {
+            "weight": 75,
+            "user": {},  # Empty user dict
+        }
+
+        ps = PatientSerializer(instance=p, data=payload, partial=True)
+        assert ps.is_valid(), ps.errors
+        obj = ps.save()
+
+        # Patient field updated
+        assert obj.weight == 75
+        # User unchanged
+        assert obj.user.first_name == p.user.first_name
+
 
 class TestPatientCreateSerializer:
     @pytest.fixture
