@@ -189,7 +189,7 @@ _For more examples, please refer to the [Documentation](https://example.com)_
     - [x] Schedule appointment with doctors with custom notes
     - [x] Filter doctors by speciality
     - [x] Onboarding with medical information
-    - [ ] Update personal information
+    - [x] Update personal information
     - [ ] Chat with doctors in real-time
     - [ ] AI chatbot to give general information
 - [ ] Doctor features
@@ -208,12 +208,12 @@ _For more examples, please refer to the [Documentation](https://example.com)_
     - [x] Pre-commit
     - [x] Unit test backend
     - [x] Linting
-    - [ ] Jest unit tests
+    - [x] Vitest unit tests
     - [ ] Integration tests
     - [ ] Security scanner (code + deps + image)
     - [ ] e2e test
     - [ ] Smoke test
-    - [ ] Build & publish artefacts
+    - [x] Build & publish artefacts
     - [ ] DB migration safety & rollback test
     - [ ] Canary / blue-green deployment
     - [ ] Observability (alerts & metrics: Grafana + Prometheus)
