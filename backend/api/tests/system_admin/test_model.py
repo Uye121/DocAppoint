@@ -4,8 +4,7 @@ from django.db import IntegrityError
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
-
-pytestmark = pytest.mark.django_db(transaction=True)
+pytestmark = pytest.mark.django_db
 
 
 def test_system_admin_creation(system_admin_factory):

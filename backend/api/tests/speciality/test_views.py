@@ -6,7 +6,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from ...models import Speciality
 from ...views import SpecialityViewSet
 
-pytestmark = pytest.mark.django_db(transaction=True)
+pytestmark = pytest.mark.django_db
 
 
 class TestSpecialityPermissions:

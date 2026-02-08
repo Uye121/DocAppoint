@@ -32,6 +32,13 @@ from .appointment import (
     AppointmentDetailSerializer,
     AppointmentCreateSerializer,
 )
+from .medical_record import (
+    MedicalRecordSerializer,
+    MedicalRecordCreateSerializer,
+    MedicalRecordUpdateSerializer,
+    MedicalRecordListSerializer,
+    MedicalRecordDetailSerializer,
+)
 
 __all__ = [
     "AdminStaffSerializer",
@@ -58,4 +65,9 @@ __all__ = [
     "AppointmentListSerializer",
     "AppointmentDetailSerializer",
     "AppointmentCreateSerializer",
+    "MedicalRecordSerializer",
+    "MedicalRecordCreateSerializer",
+    "MedicalRecordUpdateSerializer",
+    "MedicalRecordListSerializer",
+    "MedicalRecordDetailSerializer",
 ]

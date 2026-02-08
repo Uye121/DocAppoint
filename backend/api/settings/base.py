@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-
+import sys
 from datetime import timedelta
 from pathlib import Path
 import os
@@ -184,7 +184,7 @@ SIMPLE_JWT = {
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 DEFAULT_FROM_EMAIL = "noreply@docappoint.com"
 FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:3000")
-EMAIL_VERIFY_SECRET = env("EMAIL_VERIFY_SECRET")
+EMAIL_VERIFY_SECRET = env("EMAIL_VERIFY_SECRET", default="email123secret")
 
 # rate-limit
 RATELIMIT_USE_CACHE = "default"

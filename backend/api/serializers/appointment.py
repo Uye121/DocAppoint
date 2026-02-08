@@ -56,8 +56,14 @@ class AppointmentListSerializer(CamelCaseMixin, serializers.ModelSerializer):
     provider_image = serializers.ImageField(
         source="healthcare_provider.user.image", read_only=True
     )
-    patient_name = serializers.SerializerMethodField()
-    provider_name = serializers.SerializerMethodField()
+    patient_name = serializers.CharField(
+        source='patient.user.get_full_name', 
+        read_only=True
+    )
+    provider_name = serializers.CharField(
+        source='healthcare_provider.user.get_full_name', 
+        read_only=True
+    )
     hospital = HospitalTinySerializer(source="location", read_only=True)
 
     class Meta:
@@ -76,11 +82,11 @@ class AppointmentListSerializer(CamelCaseMixin, serializers.ModelSerializer):
             "status",
         ]
 
-    def get_patient_name(self, obj: Appointment) -> str:
-        return f"{obj.patient.user.first_name} {obj.patient.user.last_name}"
+    # def get_patient_name(self, obj: Appointment) -> str:
+    #     return f"{obj.patient.user.first_name} {obj.patient.user.last_name}"
 
-    def get_provider_name(self, obj: Appointment) -> str:
-        return f"{obj.healthcare_provider.user.first_name} {obj.healthcare_provider.user.last_name}"
+    # def get_provider_name(self, obj: Appointment) -> str:
+    #     return f"{obj.healthcare_provider.user.first_name} {obj.healthcare_provider.user.last_name}"
 
 
 class AppointmentDetailSerializer(CamelCaseMixin, serializers.ModelSerializer):

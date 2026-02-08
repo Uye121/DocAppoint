@@ -93,8 +93,6 @@ class HealthcareProviderViewSet(
         if user.is_staff or hasattr(user, "system_admin"):
             can_update = True
         elif hasattr(user, "admin_staff"):
-            print("prov: ", instance.primary_hospital.name)
-            print("admin: ", user.admin_staff.hospital.name)
             if (
                 instance.primary_hospital
                 and instance.primary_hospital == user.admin_staff.hospital

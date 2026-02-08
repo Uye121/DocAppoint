@@ -84,6 +84,8 @@ jobs:
       
       - name: Set up Python and Poetry
         uses: ./.github/actions/setup-python-poetry
+        with:
+          install-dev: true
       
       - name: Run linting
         run: make ci-be-lint
@@ -95,6 +97,8 @@ jobs:
       
       - name: Set up Python and Poetry
         uses: ./.github/actions/setup-python-poetry
+        with:
+          install-dev: true
       
       - name: Type check
         run: make ci-be-type-check
@@ -157,6 +161,8 @@ jobs:
       
       - name: Set up Python and Poetry
         uses: ./.github/actions/setup-python-poetry
+        with:
+          install-dev: true
 
       - name: Setup database and run migrations
         env:
