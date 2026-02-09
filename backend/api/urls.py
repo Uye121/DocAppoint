@@ -34,6 +34,7 @@ from .views import (
     SpecialityViewSet,
     AppointmentViewSet,
     SlotViewSet,
+    MedicalRecordViewSet,
 )
 
 router = DefaultRouter()
@@ -43,6 +44,7 @@ router.register("provider", HealthcareProviderViewSet, basename="provider")
 router.register("speciality", SpecialityViewSet, basename="speciality")
 router.register("appointment", AppointmentViewSet, basename="appointment")
 router.register("slot", SlotViewSet, basename="slot")
+router.register("medical-record", MedicalRecordViewSet, basename="medical_record")
 
 authpatterns: List[Union[URLPattern, URLResolver]] = [
     path("login/", LoginView.as_view(), name="login"),
