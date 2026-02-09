@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from ..models import (
     HealthcareProvider,
-    MedicalRecord
+    MedicalRecord,
+    Hospital,
 )
 from ..mixin import CamelCaseMixin
 
@@ -106,6 +107,14 @@ class MedicalRecordCreateSerializer(MedicalRecordSerializer):
 
 
 class MedicalRecordUpdateSerializer(MedicalRecordSerializer):
+    diagnosis = serializers.CharField(required=False, allow_blank=False)
+    notes = serializers.CharField(required=False, allow_blank=False)
+    prescriptions = serializers.CharField(required=False, allow_blank=False)
+    hospital = serializers.PrimaryKeyRelatedField(
+        queryset=Hospital.objects.all(),
+        required=False
+    )
+
     class Meta(MedicalRecordSerializer.Meta):
         fields = [
             "diagnosis",
@@ -131,7 +140,11 @@ class MedicalRecordUpdateSerializer(MedicalRecordSerializer):
                 )
             
             # Check if provider is affiliated with the new hospital
-            if not self.instance.healthcare_provider.hospitals.filter(id=hospital.id).exists():
+            if not self.instance.healthcare_provider.hospitals.filter(
+                id=hospital.id,
+                providerhospitalassignment__is_active=True,
+                providerhospitalassignment__end_datetime_utc__isnull=True
+            ).exists():
                 raise serializers.ValidationError(
                     {"hospital": "Provider is not affiliated with this hospital."}
                 )
@@ -244,7 +257,7 @@ class MedicalRecordDetailSerializer(MedicalRecordSerializer):
             'full_name': provider.user.get_full_name(),
         }
     
-    def get_hospital_info(self, obj):
+    def get_hospital_details(self, obj):
         if obj.hospital:
             return {
                 'id': obj.hospital.id,

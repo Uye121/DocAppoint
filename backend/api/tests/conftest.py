@@ -9,6 +9,7 @@ from .factories import (
     SpecialityFactory,
     AdminStaffFactory,
     SystemAdminFactory,
+    MedicalRecordFactory,
 )
 
 for factory in (
@@ -19,6 +20,7 @@ for factory in (
     SpecialityFactory,
     AdminStaffFactory,
     SystemAdminFactory,
+    MedicalRecordFactory,
 ):
     register(factory)
 
