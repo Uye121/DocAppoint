@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 
 from ..mixin import TimestampMixin, AuditMixin
 from .users import Patient, HealthcareProvider, Hospital
+from ..models import Appointment
 
 
 class MedicalRecord(TimestampMixin, AuditMixin):
@@ -14,6 +15,11 @@ class MedicalRecord(TimestampMixin, AuditMixin):
     )
     hospital = models.ForeignKey(
         Hospital, on_delete=models.CASCADE,
+    )
+    appointment = models.OneToOneField(
+        Appointment,
+        on_delete=models.CASCADE,
+        related_name="medical_record",
     )
     diagnosis = models.TextField()
     notes = models.TextField()

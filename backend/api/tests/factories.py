@@ -1,4 +1,6 @@
 import factory
+from django.utils import timezone
+from datetime import timedelta
 from django.contrib.auth import get_user_model
 from ..models import (
     Patient,
@@ -7,6 +9,7 @@ from ..models import (
     SystemAdmin,
     Hospital,
     Speciality,
+    Appointment,
     MedicalRecord,
     ProviderHospitalAssignment,
 )
@@ -112,12 +115,27 @@ class SystemAdminFactory(factory.django.DjangoModelFactory):
     user = factory.SubFactory(UserFactory)
     role = "super"
 
+class AppointmentFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Appointment
+    
+    patient = factory.SubFactory(PatientFactory)
+    healthcare_provider = factory.SubFactory(HealthcareProviderFactory)
+    location = factory.SubFactory(HospitalFactory)
+
+    appointment_start_datetime_utc = timezone.now() + timedelta(days=1)
+    appointment_end_datetime_utc = appointment_start_datetime_utc + timedelta(minutes=30)
+    
+    reason = 'test'
+    status = 'CONFIRMED'
+
 class MedicalRecordFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = MedicalRecord
     
     patient = factory.SubFactory(PatientFactory)
     healthcare_provider = factory.SubFactory(HealthcareProviderFactory)
+    appointment = factory.SubFactory(AppointmentFactory)
     hospital = factory.SubFactory(HospitalFactory)
     diagnosis = factory.Faker('text', max_nb_chars=200)
     notes = factory.Faker('text', max_nb_chars=500)
@@ -150,4 +168,3 @@ class MedicalRecordFactory(factory.django.DjangoModelFactory):
             )
         
         return record
-

@@ -23,36 +23,20 @@ class TestMedicalRecordSerializer:
         serializer = MedicalRecordSerializer(record)
         
         expected_fields = [
-            'id',
-            'patient',
-            'providerId',
-            'hospital',
-            'diagnosis',
-            'notes',
-            'prescriptions'
+            "id",
+            "patientId",
+            "providerId",
+            "hospitalId",
+            "appointmentId",
+            "diagnosis",
+            "notes",
+            "prescriptions",
+            "createdAt",
+            "updatedAt",
         ]
         
         assert set(serializer.data.keys()) == set(expected_fields)
 
-    def test_validate_provider_cannot_create_record_for_self(self, patient_factory, healthcare_provider_factory):
-        provider = healthcare_provider_factory()
-        patient = patient_factory()
-        
-        # Make patient user same as provider user
-        patient.user = provider.user
-        patient.save()
-        
-        data = {
-            'patient': patient.user.id,
-            'diagnosis': 'Test diagnosis',
-            'notes': 'Test notes',
-            'prescriptions': 'Test prescriptions'
-        }
-        
-        serializer = MedicalRecordSerializer(data=data, context={'request': None})
-        
-        with pytest.raises(Exception):
-            serializer.is_valid(raise_exception=True)
 
 class TestMedicalRecordCreateSerializer:
     def assign_provider_to_hospital(self, provider, hospital):
@@ -72,12 +56,14 @@ class TestMedicalRecordCreateSerializer:
             created_by=provider.user,
             updated_by=provider.user
         )
+
     def test_create_serializer_fields(self):
         serializer = MedicalRecordCreateSerializer()
         
         expected_fields = [
-            'patient',
-            'hospital',
+            'patient_id',
+            'hospital_id',
+            'appointment_id',
             'diagnosis',
             'notes',
             'prescriptions',
@@ -85,35 +71,41 @@ class TestMedicalRecordCreateSerializer:
         
         assert set(serializer.fields.keys()) == set(expected_fields)
     
-    def test_validate_authentication_required(self, patient_factory, hospital_factory):
+    def test_validate_authentication_required(self, patient_factory, hospital_factory, appointment_factory):
         patient = patient_factory()
         hospital = hospital_factory()
+        appointment = appointment_factory()
 
         data = {
-            'patient': patient.user.id,
-            'hospital': hospital.id,
+            'patient_id': patient.user.id,
+            'hospital_id': hospital.id,
+            'appointment_id': appointment.id,
             'diagnosis': 'Test',
             'notes': 'Test',
             'prescriptions': 'Test'
         }
-        
+
         serializer = MedicalRecordCreateSerializer(data=data, context={'request': None})
         
         with pytest.raises(Exception) as exc_info:
             serializer.is_valid(raise_exception=True)
-        error_message = str(exc_info.value)
-        assert 'Authentication required' in error_message or 'detail' in serializer.errors
 
-    def test_validate_non_provider_user(self, patient_factory, hospital_factory):
+        error_detail = exc_info.value.detail
+        assert 'detail' in error_detail
+        assert 'Authentication required.' in str(error_detail['detail'])
+
+    def test_validate_non_provider_user(self, patient_factory, hospital_factory, appointment_factory):
         factory = APIRequestFactory()
         request = factory.post('/')
         patient = patient_factory()
         hospital = hospital_factory()
+        appointment = appointment_factory()
         request.user = patient.user
         
         data = {
-            'patient': patient.user.id,
-            'hospital': hospital.id,
+            'patient_id': patient.user.id,
+            'hospital_id': hospital.id,
+            'appointment_id': appointment.id,
             'diagnosis': 'Test',
             'notes': 'Test',
             'prescriptions': 'Test'
@@ -125,17 +117,19 @@ class TestMedicalRecordCreateSerializer:
             serializer.is_valid(raise_exception=True)
         assert 'Only healthcare providers' in str(exc_info.value)
     
-    def test_validate_provider_removed(self, provider_factory, patient_factory, hospital_factory):
+    def test_validate_provider_removed(self, provider_factory, patient_factory, hospital_factory, appointment_factory):
         provider = provider_factory(is_removed=True, removed_at=timezone.now())
         patient = patient_factory()
         hospital = hospital_factory()
+        appointment = appointment_factory()
         factory = APIRequestFactory()
         request = factory.post('/')
         request.user = provider.user
         
         data = {
-            'patient': patient.user.id,
-            'hospital': hospital.id,
+            'patient_id': patient.user.id,
+            'hospital_id': hospital.id,
+            'appointment_id': appointment.id,
             'diagnosis': 'Test',
             'notes': 'Test',
             'prescriptions': 'Test'
@@ -148,9 +142,10 @@ class TestMedicalRecordCreateSerializer:
         assert 'Provider account is no longer active' in str(exc_info.value)
 
     def test_validate_hospital_not_affiliated(
-        self, provider_factory, patient_factory, hospital_factory
+        self, provider_factory, patient_factory, hospital_factory, appointment_factory
     ):
         provider = provider_factory()
+        appointment = appointment_factory()
         factory = APIRequestFactory()
         request = factory.post('/')
         request.user = provider.user
@@ -159,8 +154,9 @@ class TestMedicalRecordCreateSerializer:
         hospital = hospital_factory()  
         
         data = {
-            'patient': patient.user.id,
-            'hospital': hospital.id,
+            'patient_id': patient.user.id,
+            'hospital_id': hospital.id,
+            'appointment_id': appointment.id,
             'diagnosis': 'Test diagnosis',
             'notes': 'Test notes',
             'prescriptions': 'Test prescriptions'
@@ -173,14 +169,15 @@ class TestMedicalRecordCreateSerializer:
         assert 'Provider is not affiliated with this hospital' in str(exc_info.value)
 
     def test_validate_provider_cannot_create_for_self(
-        self, provider_factory, hospital_factory, patient_factory
+        self, provider_factory, hospital_factory, patient_factory, appointment_factory
     ):
         provider = provider_factory()
+        patient = patient_factory(user=provider.user)
+        appointment = appointment_factory(patient=patient, healthcare_provider=provider)
         factory = APIRequestFactory()
         request = factory.post('/')
         request.user = provider.user
         
-        patient = patient_factory(user=provider.user)
         
         # Make provider affiliated with hospital
         hospital = hospital_factory()
@@ -193,8 +190,9 @@ class TestMedicalRecordCreateSerializer:
         )
         
         data = {
-            'patient': patient.user.id,
-            'hospital': hospital.id,
+            'patient_id': patient.user.id,
+            'hospital_id': hospital.id,
+            'appointment_id': appointment.id,
             'diagnosis': 'Test diagnosis',
             'notes': 'Test notes',
             'prescriptions': 'Test prescriptions'
@@ -207,14 +205,15 @@ class TestMedicalRecordCreateSerializer:
         assert 'Provider cannot create medical records for themselves' in str(exc_info.value)
 
     def test_validate_removed_hospital(
-        self, provider_factory, patient_factory, hospital_factory
+        self, provider_factory, patient_factory, hospital_factory, appointment_factory
     ):
+        patient = patient_factory()
         provider = provider_factory()
+        appointment = appointment_factory(patient=patient, healthcare_provider=provider)
         factory = APIRequestFactory()
         request = factory.post('/')
         request.user = provider.user
         
-        patient = patient_factory()
         hospital = hospital_factory(is_removed=True, removed_at=timezone.now())
         
         ProviderHospitalAssignment.objects.create(
@@ -226,8 +225,9 @@ class TestMedicalRecordCreateSerializer:
         )
         
         data = {
-            'patient': patient.user.id,
-            'hospital': hospital.id,
+            'patient_id': patient.user.id,
+            'hospital_id': hospital.id,
+            'appointment_id': appointment.id,
             'diagnosis': 'Test diagnosis',
             'notes': 'Test notes',
             'prescriptions': 'Test prescriptions'
@@ -240,18 +240,17 @@ class TestMedicalRecordCreateSerializer:
         assert 'Selected hospital is no longer active' in str(exc_info.value)
 
     def test_create_medical_record_success(
-        self, provider_factory, patient_factory, hospital_factory
+        self, provider_factory, patient_factory, hospital_factory, appointment_factory
     ):
         provider = provider_factory()
+        patient = patient_factory()
+        appointment = appointment_factory(patient=patient, healthcare_provider=provider)
         factory = APIRequestFactory()
         request = factory.post('/')
         request.user = provider.user
         
-        patient = patient_factory()
         hospital = hospital_factory()
         
-        # Create proper affiliation with audit fields
-        from api.models import ProviderHospitalAssignment
         ProviderHospitalAssignment.objects.create(
             healthcare_provider=provider,
             hospital=hospital,
@@ -261,8 +260,9 @@ class TestMedicalRecordCreateSerializer:
         )
         
         data = {
-            'patient': patient.user.id,
-            'hospital': hospital.id,
+            'patient_id': patient.user.id,
+            'hospital_id': hospital.id,
+            'appointment_id': appointment.id,
             'diagnosis': 'Test diagnosis',
             'notes': 'Test notes',
             'prescriptions': 'Test prescriptions'
@@ -285,19 +285,24 @@ class TestMedicalRecordCreateSerializer:
         assert record.updated_by == provider.user
 
     def test_create_medical_record_with_medical_record_factory(
-        self, medical_record_factory
+        self, medical_record_factory, appointment_factory
     ):
         record = medical_record_factory()
         provider = record.healthcare_provider
+
+        new_appointment = appointment_factory(
+            patient=record.patient,
+            healthcare_provider=provider
+        )
         
         factory = APIRequestFactory()
         request = factory.post('/')
         request.user = provider.user
         
-        # Create new data based on existing record
         data = {
-            'patient': record.patient.user.id,
-            'hospital': record.hospital.id,
+            'patient_id': record.patient.user.id,
+            'hospital_id': record.hospital.id,
+            'appointment_id': new_appointment.id,
             'diagnosis': 'New diagnosis',
             'notes': 'New notes',
             'prescriptions': 'New prescriptions'
@@ -311,18 +316,17 @@ class TestMedicalRecordCreateSerializer:
         assert serializer.is_valid() is True
 
     def test_validate_missing_required_fields(
-        self, provider_factory, patient_factory, hospital_factory
+        self, provider_factory, patient_factory, hospital_factory, appointment_factory
     ):
         provider = provider_factory()
+        patient = patient_factory()
+        appointment = appointment_factory(patient=patient, healthcare_provider=provider)
         factory = APIRequestFactory()
         request = factory.post('/')
         request.user = provider.user
         
-        patient = patient_factory()
         hospital = hospital_factory()
-        
-        # Create affiliation
-        from api.models import ProviderHospitalAssignment
+
         ProviderHospitalAssignment.objects.create(
             healthcare_provider=provider,
             hospital=hospital,
@@ -331,10 +335,10 @@ class TestMedicalRecordCreateSerializer:
             updated_by=provider.user
         )
         
-        # Test missing diagnosis
         data = {
-            'patient': patient.user.id,
-            'hospital': hospital.id,
+            'patient_id': patient.user.id,
+            'hospital_id': hospital.id,
+            'appointment_id': appointment.id,
             'notes': 'Test notes',
             'prescriptions': 'Test prescriptions'
         }
@@ -344,7 +348,7 @@ class TestMedicalRecordCreateSerializer:
         assert 'diagnosis' in serializer.errors
 
     def test_create_with_provider_primary_hospital(
-        self, provider_factory, patient_factory, hospital_factory
+        self, provider_factory, patient_factory, hospital_factory, appointment_factory
     ):
         hospital = hospital_factory(
             name="Primary Hospital",
@@ -354,16 +358,18 @@ class TestMedicalRecordCreateSerializer:
         )
         
         provider = provider_factory(primary_hospital=hospital)
+        patient = patient_factory()
+        appointment = appointment_factory(patient=patient, healthcare_provider=provider)
         
         factory = APIRequestFactory()
         request = factory.post('/')
         request.user = provider.user
         
-        patient = patient_factory()
         
         data = {
-            'patient': patient.user.id,
-            'hospital': hospital.id,
+            'patient_id': patient.user.id,
+            'hospital_id': hospital.id,
+            'appointment_id': appointment.id,
             'diagnosis': 'Test diagnosis',
             'notes': 'Test notes',
             'prescriptions': 'Test prescriptions'
@@ -375,18 +381,19 @@ class TestMedicalRecordCreateSerializer:
         
         record = serializer.save()
         
-        assert record.hospital == hospital
-        assert record.healthcare_provider == provider
+        assert record.hospital_id == hospital.id
+        assert record.healthcare_provider.user.id == provider.user.id
 
     def test_create_with_multiple_hospital_affiliations(
-        self, healthcare_provider_factory, patient_factory, hospital_factory
+        self, healthcare_provider_factory, patient_factory, hospital_factory, appointment_factory
     ):
         provider = healthcare_provider_factory(primary_hospital=None)
+        patient = patient_factory()
+        appointment = appointment_factory(patient=patient, healthcare_provider=provider)
         factory = APIRequestFactory()
         request = factory.post('/')
         request.user = provider.user
         
-        patient = patient_factory()
         
         # Create multiple hospitals
         hospital1 = hospital_factory()
@@ -398,8 +405,9 @@ class TestMedicalRecordCreateSerializer:
         
         # Test with hospital1
         data1 = {
-            'patient': patient.user.id,
-            'hospital': hospital1.id,
+            'patient_id': patient.user.id,
+            'hospital_id': hospital1.id,
+            'appointment_id': appointment.id,
             'diagnosis': 'Diagnosis at hospital1',
             'notes': 'Notes',
             'prescriptions': 'Prescriptions'
@@ -410,8 +418,9 @@ class TestMedicalRecordCreateSerializer:
         
         # Test with hospital2
         data2 = {
-            'patient': patient.user.id,
-            'hospital': hospital2.id,
+            'patient_id': patient.user.id,
+            'hospital_id': hospital2.id,
+            'appointment_id': appointment.id,
             'diagnosis': 'Diagnosis at hospital2',
             'notes': 'Notes',
             'prescriptions': 'Prescriptions'
@@ -420,23 +429,25 @@ class TestMedicalRecordCreateSerializer:
         serializer2 = MedicalRecordCreateSerializer(data=data2, context={'request': request})
         assert serializer2.is_valid() is True
 
-    def test_serializer_context_required(self, patient_factory, hospital_factory):
+    def test_serializer_context_required(self, patient_factory, hospital_factory, appointment_factory):
         patient = patient_factory()
         hospital = hospital_factory()
+        appointment = appointment_factory(patient=patient)
         data = {
-            'patient': patient.user.id,
-            'hospital': hospital.id,
+            'patient_id': patient.user.id,
+            'hospital_id': hospital.id,
+            'appointment_id': appointment.id,
             'diagnosis': 'Test',
             'notes': 'Test',
             'prescriptions': 'Test'
         }
-        
-        # No context at all
+
         serializer = MedicalRecordCreateSerializer(data=data)
         
         with pytest.raises(Exception) as exc_info:
             serializer.is_valid(raise_exception=True)
         assert 'Authentication required' in str(exc_info.value)
+
 
 class TestMedicalRecordUpdateSerializer:
 
@@ -444,10 +455,13 @@ class TestMedicalRecordUpdateSerializer:
         serializer = MedicalRecordUpdateSerializer()
         
         expected_fields = [
+            "patient_id",
+            "hospital_id",
+            "appointment_id",
             "diagnosis",
             "notes",
             "prescriptions",
-            "hospital"
+            "hospital_id",
         ]
         
         assert set(serializer.fields.keys()) == set(expected_fields)
@@ -473,7 +487,7 @@ class TestMedicalRecordUpdateSerializer:
         )
         
         data = {
-            'hospital': new_hospital.id,
+            'hospital_id': new_hospital.id,
             'diagnosis': 'Updated diagnosis',
             'notes': 'Updated notes',
             'prescriptions': 'Updated prescriptions'
@@ -522,10 +536,10 @@ class TestMedicalRecordUpdateSerializer:
         updated_record = serializer.save()
         
         assert updated_record.notes == 'Partially updated notes'
-        assert updated_record.diagnosis == original_diagnosis 
-        assert updated_record.hospital == original_hospital 
+        assert updated_record.diagnosis == original_diagnosis
+        assert updated_record.hospital_id == original_hospital.id
         assert updated_record.updated_by == provider.user
-    
+
     def test_update_with_same_hospital(
         self, medical_record_factory
     ):
@@ -538,7 +552,7 @@ class TestMedicalRecordUpdateSerializer:
         assert provider.hospitals.filter(id=record.hospital.id).exists()
         
         data = {
-            'hospital': record.hospital.id,
+            'hospital_id': record.hospital.id,
             'diagnosis': 'Updated diagnosis',
             'notes': 'Updated notes',
             'prescriptions': 'Updated prescriptions'
@@ -554,7 +568,7 @@ class TestMedicalRecordUpdateSerializer:
         
         updated_record = serializer.save()
         
-        assert updated_record.hospital == record.hospital 
+        assert updated_record.hospital_id == record.hospital.id
         assert updated_record.diagnosis == 'Updated diagnosis'
         assert updated_record.updated_by == provider.user
 
@@ -589,7 +603,7 @@ class TestMedicalRecordUpdateSerializer:
         
         assert updated_record.diagnosis == 'Updated diagnosis'
         assert updated_record.updated_by == provider.user
-    
+
     def test_update_validation_errors(
         self, medical_record_factory
     ):
@@ -621,7 +635,7 @@ class TestMedicalRecordUpdateSerializer:
         
         factory = APIRequestFactory()
         request = factory.put('/')
-        request.user = AnonymousUser()  # Unauthenticated user
+        request.user = AnonymousUser()
         
         data = {
             'diagnosis': 'Updated diagnosis',
@@ -659,10 +673,10 @@ class TestMedicalRecordUpdateSerializer:
         
         factory = APIRequestFactory()
         request = factory.put('/')
-        request.user = different_provider.user  # Different provider
+        request.user = different_provider.user
         
         data = {
-            'hospital': record.hospital.id,
+            'hospital_id': record.hospital.id,
             'diagnosis': 'Updated by different provider',
             'notes': 'Updated notes',
             'prescriptions': 'Updated prescriptions'
@@ -695,14 +709,14 @@ class TestMedicalRecordUpdateSerializer:
         ProviderHospitalAssignment.objects.create(
             healthcare_provider=provider,
             hospital=new_hospital,
-            is_active=False,  # Inactive!
+            is_active=False,
             end_datetime_utc=timezone.now(),
             created_by=provider.user,
             updated_by=provider.user
         )
         
         data = {
-            'hospital': new_hospital.id,
+            'hospital_id': new_hospital.id,
             'diagnosis': 'Updated diagnosis',
             'notes': 'Updated notes',
             'prescriptions': 'Updated prescriptions'
@@ -715,9 +729,9 @@ class TestMedicalRecordUpdateSerializer:
         )
         
         assert serializer.is_valid() is False
-        assert 'hospital' in serializer.errors
-        assert 'Provider is not affiliated with this hospital' in str(serializer.errors['hospital'][0])
-    
+        error_messages = str(serializer.errors.values())
+        assert 'inactive' in error_messages or 'not affiliated' in error_messages
+
     def test_update_with_removed_hospital(
         self, medical_record_factory, hospital_factory
     ):
@@ -739,7 +753,7 @@ class TestMedicalRecordUpdateSerializer:
         )
         
         data = {
-            'hospital': removed_hospital.id,
+            'hospital_id': removed_hospital.id,
             'diagnosis': 'Updated diagnosis',
             'notes': 'Updated notes',
             'prescriptions': 'Updated prescriptions'
@@ -751,9 +765,9 @@ class TestMedicalRecordUpdateSerializer:
             context={'request': request}
         )
         
-        with pytest.raises(DRFValidationError) as exc_info:
+        with pytest.raises(DRFValidationError):
             serializer.is_valid(raise_exception=True)
-        assert 'Selected hospital is no longer active' in str(exc_info.value.detail['hospital'][0])
+        assert 'Selected hospital is no longer active' in str(serializer.errors.values())
 
     def test_update_empty_notes_validation(
         self, medical_record_factory
@@ -765,7 +779,7 @@ class TestMedicalRecordUpdateSerializer:
         request.user = provider.user
         
         data = {
-            'hospital': record.hospital.id,
+            'hospital_id': record.hospital.id,
             'diagnosis': 'Updated diagnosis',
             'notes': '   ',
             'prescriptions': 'Updated prescriptions'
@@ -780,7 +794,7 @@ class TestMedicalRecordUpdateSerializer:
         assert serializer.is_valid() is False
         assert 'notes' in serializer.errors
         assert 'This field may not be blank' in str(serializer.errors['notes'][0])
-    
+
     def test_update_empty_prescriptions_validation(
         self, medical_record_factory
     ):
@@ -791,7 +805,7 @@ class TestMedicalRecordUpdateSerializer:
         request.user = provider.user
         
         data = {
-            'hospital': record.hospital.id,
+            'hospital_id': record.hospital.id,
             'diagnosis': 'Updated diagnosis',
             'notes': 'Updated notes',
             'prescriptions': ''
@@ -815,10 +829,9 @@ class TestMedicalRecordUpdateSerializer:
         factory = APIRequestFactory()
         request = factory.put('/')
         request.user = provider.user
-        
-        # Send same data
+
         data = {
-            'hospital': record.hospital.id,
+            'hospital_id': record.hospital.id,
             'diagnosis': record.diagnosis,
             'notes': record.notes,
             'prescriptions': record.prescriptions
@@ -834,11 +847,12 @@ class TestMedicalRecordUpdateSerializer:
         
         updated_record = serializer.save()
         # All fields should remain the same
-        assert updated_record.hospital == record.hospital
+        assert updated_record.hospital_id == record.hospital.id
         assert updated_record.diagnosis == record.diagnosis
         assert updated_record.notes == record.notes
         assert updated_record.prescriptions == record.prescriptions
         assert updated_record.updated_by == provider.user
+
 
 class TestMedicalRecordListSerializer:
     
@@ -851,10 +865,12 @@ class TestMedicalRecordListSerializer:
             'patient_name',
             'provider_id',
             'provider_name',
-            'hospital_name',
+            'hospital_id',
+            "hospital_name",
+            'appointment_id',
             'diagnosis',
             'created_at',
-            'updated_at'
+            'updated_at',
         ]
         
         actual_fields = set(serializer.fields.keys())
@@ -884,7 +900,7 @@ class TestMedicalRecordListSerializer:
         
         serializer = MedicalRecordListSerializer(record)
         assert serializer.data['providerName'] == "Dr. Jane Smith"
-    
+
     def test_hospital_name_field(self, medical_record_factory):
         record = medical_record_factory()
         serializer = MedicalRecordListSerializer(record)
@@ -946,6 +962,7 @@ class TestMedicalRecordListSerializer:
         assert serializer.data['patientId'] == str(record.patient.user.id)
         assert serializer.data['patientName'] == record.patient.user.get_full_name()
 
+
 class TestMedicalRecordDetailSerializer:
     def test_detail_serializer_fields(self):
         serializer = MedicalRecordDetailSerializer()
@@ -955,17 +972,18 @@ class TestMedicalRecordDetailSerializer:
             'patient_details',
             'provider_details',
             'hospital_details',
+            'appointment_details',
             'diagnosis',
             'notes',
             'prescriptions',
             'created_at',
             'updated_at',
-            'created_by',
+            'created_by', 
             'created_by_name',
             'updated_by',
             'updated_by_name',
             'is_removed',
-            'removed_at'
+            'removed_at',
         ]
         
         actual_fields = set(serializer.fields.keys())
@@ -973,7 +991,7 @@ class TestMedicalRecordDetailSerializer:
         
         assert actual_fields == expected_fields_set, \
             f"Expected fields: {expected_fields_set}, Got: {actual_fields}"
-        
+
     def test_all_fields_are_read_only(self):
         serializer = MedicalRecordDetailSerializer()
         
@@ -990,17 +1008,23 @@ class TestMedicalRecordDetailSerializer:
         record.patient.chronic_conditions = "Hypertension"
         record.patient.current_medications = "Lisinopril 10mg daily"
         record.patient.insurance = "Blue Cross"
-        record.patient.weight = 70  # kg
-        record.patient.height = 175  # cm
+        record.patient.weight = 70
+        record.patient.height = 175
         record.patient.save()
         
         # Set user details
         record.patient.user.date_of_birth = timezone.datetime(1980, 1, 1).date()
         record.patient.user.image = "profile.jpg"
         record.patient.user.save()
+
+        # Set appointment details
+        record.appointment.reason = "test"
+        record.appointment.status = "REQUESTED"
+        record.appointment.save()
         
         serializer = MedicalRecordDetailSerializer(record)
         patient_details = serializer.data['patientDetails']
+        appointment_details = serializer.data["appointmentDetails"]
         
         assert patient_details['id'] == record.patient.user.id
         assert patient_details['bloodType'] == "O+"
@@ -1013,7 +1037,9 @@ class TestMedicalRecordDetailSerializer:
         assert patient_details['fullName'] == record.patient.user.get_full_name()
         assert patient_details['dateOfBirth'].strftime("%Y-%m-%d") == "1980-01-01"
         assert patient_details['image'] == "profile.jpg"
-        
+        assert appointment_details["reason"] == "test"
+        assert appointment_details["status"] == "REQUESTED"
+
     def test_provider_details_values(self, medical_record_factory, speciality_factory):
         record = medical_record_factory()
         

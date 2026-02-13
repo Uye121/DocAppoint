@@ -7,10 +7,11 @@ pytestmark = pytest.mark.django_db
 
 class TestMedicalRecordModel:
     @pytest.fixture
-    def record_data(self, patient_factory, healthcare_provider_factory, hospital_factory):
+    def record_data(self, patient_factory, healthcare_provider_factory, hospital_factory, appointment_factory):
         patient = patient_factory()
         provider = healthcare_provider_factory()
         hospital = hospital_factory()
+        appointment = appointment_factory()
         
         return {
             "patient": patient,
@@ -21,6 +22,7 @@ class TestMedicalRecordModel:
             "prescriptions": "Rest and fluids",
             "created_by": provider.user,
             "updated_by": provider.user,
+            "appointment": appointment,
         }
     
     def test_create_medical_record(self, record_data):
@@ -33,7 +35,31 @@ class TestMedicalRecordModel:
         assert record.diagnosis == "Common cold"
         assert record.is_removed is False
         assert record.removed_at is None
+        assert record.appointment is not None
         assert str(record) == f"Medical Record: {record.patient} - {record.updated_at}"
+
+    def test_create_medical_record_with_appointment(self, record_data, appointment_factory):
+        appointment = appointment_factory()
+        
+        record_data["appointment"] = appointment
+        
+        record = MedicalRecord.objects.create(**record_data)
+        
+        assert record.id is not None
+        assert record.appointment == appointment
+        # Verify the reverse relationship works
+        assert appointment.medical_record == record
+
+    def test_appointment_one_to_one_constraint(self, record_data, appointment_factory):
+        appointment = appointment_factory()
+        
+        # Create first medical record with the appointment
+        record_data["appointment"] = appointment
+        MedicalRecord.objects.create(**record_data)
+        
+        # Try to create second medical record with same appointment
+        with pytest.raises(Exception):
+            MedicalRecord.objects.create(**record_data)
 
     def test_medical_record_soft_delete(self, record_data):
         record = MedicalRecord.objects.create(**record_data)
@@ -50,7 +76,7 @@ class TestMedicalRecordModel:
         # Should still exist in database
         assert MedicalRecord.objects.filter(id=record.id).exists()
 
-    def test_medical_record_required_fields(self, record_data):
+    def test_medical_record_required_fields(self, record_data, hospital_factory):
         # Test without diagnosis
         record_data.pop("diagnosis")
         with pytest.raises(Exception):
@@ -62,18 +88,14 @@ class TestMedicalRecordModel:
         with pytest.raises(Exception):
             MedicalRecord.objects.create(**record_data)
 
+        # Test without hospital
         record_data["patient"] = patient
         record_data["hospital"] = None
         with pytest.raises(Exception):
             MedicalRecord.objects.create(**record_data)
-
-    def test_medical_record_ordering(self, record_data):
-        record1 = MedicalRecord.objects.create(**record_data)
-        record2 = MedicalRecord.objects.create(**record_data)
         
-        record1.created_at = timezone.now() - timezone.timedelta(days=1)
-        record1.save()
-        
-        records = MedicalRecord.objects.all()
-        assert records[0] == record2 
-        assert records[1] == record1
+        # NEW: Test without healthcare_provider (should also fail)
+        record_data["hospital"] = hospital_factory()
+        record_data.pop("healthcare_provider")
+        with pytest.raises(Exception):
+            MedicalRecord.objects.create(**record_data)

@@ -6,12 +6,6 @@ from django.urls import reverse
 
 from api.models import MedicalRecord, ProviderHospitalAssignment
 from api.views import MedicalRecordViewSet
-from api.serializers import (
-    MedicalRecordCreateSerializer,
-    MedicalRecordUpdateSerializer,
-    MedicalRecordListSerializer,
-    MedicalRecordDetailSerializer
-)
 
 pytestmark = pytest.mark.django_db
 
@@ -141,11 +135,12 @@ class TestMedicalRecordViewSet:
         assert len(response.data) == 2
 
     def test_create_medical_record_as_provider(
-        self, provider_factory, patient_factory, hospital_factory
+        self, provider_factory, patient_factory, hospital_factory, appointment_factory
     ):
         provider = provider_factory()
         patient = patient_factory()
         hospital = hospital_factory()
+        appointment = appointment_factory(patient=patient, healthcare_provider=provider)
         
         ProviderHospitalAssignment.objects.create(
             healthcare_provider=provider,
@@ -156,8 +151,9 @@ class TestMedicalRecordViewSet:
         )
         
         data = {
-            'patient': patient.user.id,
-            'hospital': hospital.id,
+            'patient_id': patient.user.id,
+            'hospital_id': hospital.id,
+            'appointment_id': appointment.id,
             'diagnosis': 'Test diagnosis',
             'notes': 'Test notes',
             'prescriptions': 'Test prescriptions'
@@ -174,6 +170,7 @@ class TestMedicalRecordViewSet:
         view = MedicalRecordViewSet.as_view({'post': 'create'})
         response = view(request)
         
+        print(response.data)
         assert response.status_code == status.HTTP_201_CREATED
         assert MedicalRecord.objects.count() == 1
         
@@ -340,15 +337,17 @@ class TestMedicalRecordViewSet:
         assert len(response.data) == 2
 
     def test_create_record_provider_not_affiliated_with_hospital(
-        self, provider_factory, patient_factory, hospital_factory
+        self, provider_factory, patient_factory, hospital_factory, appointment_factory
     ):
         provider = provider_factory()
         patient = patient_factory()
         hospital = hospital_factory()
-        
+        appointment = appointment_factory(patient=patient, healthcare_provider=provider)
+
         data = {
-            'patient': patient.user.id,
-            'hospital': hospital.id,
+            'patient_id': patient.user.id,
+            'hospital_id': hospital.id,
+            'appointment_id': appointment.id,
             'diagnosis': 'Test diagnosis',
             'notes': 'Test notes',
             'prescriptions': 'Test prescriptions'
@@ -364,19 +363,22 @@ class TestMedicalRecordViewSet:
         
         view = MedicalRecordViewSet.as_view({'post': 'create'})
         response = view(request)
+        print(response.data)
         
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert 'hospital' in response.data
-    
+        error_messages = str(response.data['hospital_id'])
+        assert 'Provider is not affiliated with this hospital' in error_messages
+
     def test_update_record_provider_not_affiliated_with_new_hospital(
-        self, medical_record_factory, hospital_factory
+        self, medical_record_factory, hospital_factory, appointment_factory
     ):
         record = medical_record_factory()
         provider = record.healthcare_provider
         new_hospital = hospital_factory()
-        
+        appointment_factory()
+
         data = {
-            'hospital': new_hospital.id,
+            'hospital_id': new_hospital.id,
             'diagnosis': 'Updated diagnosis'
         }
         
@@ -392,15 +394,16 @@ class TestMedicalRecordViewSet:
         response = view(request, pk=record.id)
         
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert 'hospital' in response.data
+        error_messages = str(response.data['hospital_id'])
+        assert 'hospital' in error_messages
 
     def test_provider_cannot_create_record_for_themselves(
-        self, healthcare_provider_factory, hospital_factory, patient_factory
+        self, healthcare_provider_factory, hospital_factory, patient_factory, appointment_factory
     ):
         provider = healthcare_provider_factory()
         hospital = hospital_factory()
-        
         patient = patient_factory(user=provider.user)
+        appointment = appointment_factory(patient=patient, healthcare_provider=provider)
         
         ProviderHospitalAssignment.objects.create(
             healthcare_provider=provider,
@@ -411,8 +414,9 @@ class TestMedicalRecordViewSet:
         )
         
         data = {
-            'patient': patient.user.id,
-            'hospital': hospital.id,
+            'patient_id': patient.user.id,
+            'hospital_id': hospital.id,
+            'appointment_id': appointment.id,
             'diagnosis': 'Self diagnosis',
             'notes': 'Test notes',
             'prescriptions': 'Test prescriptions'
