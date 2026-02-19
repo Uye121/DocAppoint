@@ -162,6 +162,9 @@ ci-fe-lint:
 ci-fe-type-check:
 	cd $(FRONTEND_DIR) && npm run type-check
 
+ci-fe-test-file:
+	$(DC) exec frontend npm run test -- $(FILE)
+
 ci-fe-test:
 	cd $(FRONTEND_DIR) && npm run test:run
 ifneq ($(IS_CI),true)

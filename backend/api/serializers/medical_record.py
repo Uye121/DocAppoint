@@ -22,7 +22,7 @@ class MedicalRecordSerializer(CamelCaseMixin, serializers.ModelSerializer):
         source="hospital.id",
         read_only=True,
     )
-    appointment_id = serializers.UUIDField(
+    appointment_id = serializers.IntegerField(
         source="appointment.id",
         read_only=True,
     )
@@ -231,9 +231,7 @@ class MedicalRecordUpdateSerializer(MedicalRecordSerializer):
             raise serializers.ValidationError(
                 {"patient_id": "Provider cannot update medical records for themselves."}
             )
-        
 
-    
         return attrs
 
     def update(self, instance, validated_data):
@@ -323,8 +321,17 @@ class MedicalRecordDetailSerializer(MedicalRecordSerializer):
 
     def get_patient_details(self, obj):
         patient = obj.patient
+        user = patient.user
+
+        image_url = None
+        if user.image and hasattr(user.image, 'url'):
+            try:
+                image_url = user.image
+            except ValueError:
+                image_url = None
+
         return {
-            'id': patient.user.id,
+            'id': user.id,
             'blood_type': patient.blood_type,
             'allergies': patient.allergies,
             'chronic_conditions': patient.chronic_conditions,
@@ -332,9 +339,9 @@ class MedicalRecordDetailSerializer(MedicalRecordSerializer):
             'insurance': patient.insurance,
             'weight': patient.weight,
             'height': patient.height,
-            'full_name': patient.user.get_full_name(),
-            'date_of_birth': patient.user.date_of_birth,
-            'image': patient.user.image,
+            'full_name': user.get_full_name(),
+            'date_of_birth': user.date_of_birth,
+            'image': image_url,
         }
 
     def get_provider_details(self, obj):

@@ -12,6 +12,7 @@ import ProtectedRoutes from "./ProtectedRoutes";
 import WeekSelector from "./WeekSelector";
 import SlotList from "./SlotList";
 import RoleGuard from "./RoleGuard";
+import MedicalRecordModal from "./MedicalRecordModal";
 
 export {
   AppointmentCard,
@@ -28,4 +29,5 @@ export {
   WeekSelector,
   SlotList,
   RoleGuard,
+  MedicalRecordModal,
 };

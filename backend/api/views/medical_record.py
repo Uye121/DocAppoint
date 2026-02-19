@@ -24,18 +24,18 @@ class MedicalRecordViewSet(viewsets.ModelViewSet):
     ViewSet for MedicalRecord with soft-delete support and role-based permissions.
     
     Endpoints:
-    - GET /api/medical-records/ - List records (filtered by role)
-    - POST /api/medical-records/ - Create new record (provider only)
-    - GET /api/medical-records/{id}/ - Retrieve single record
-    - PUT /api/medical-records/{id}/ - Update record (provider owner only)
-    - PATCH /api/medical-records/{id}/ - Partial update (provider owner only)
-    - DELETE /api/medical-records/{id}/ - Soft delete (provider owner only)
+    - GET /api/medical-record/ - List records (filtered by role)
+    - POST /api/medical-record/ - Create new record (provider only)
+    - GET /api/medical-record/{id}/ - Retrieve single record
+    - PUT /api/medical-record/{id}/ - Update record (provider owner only)
+    - PATCH /api/medical-record/{id}/ - Partial update (provider owner only)
+    - DELETE /api/medical-record/{id}/ - Soft delete (provider owner only)
     """
     
     queryset = MedicalRecord.objects.filter(is_removed=False)
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['patient', 'healthcare_provider', 'hospital']
+    filterset_fields = ['patient', 'healthcare_provider', 'hospital', 'appointment']
     search_fields = ['diagnosis', 'notes', 'prescriptions']
     ordering_fields = ['created_at', 'updated_at']
     ordering = ['-created_at']
@@ -46,10 +46,10 @@ class MedicalRecordViewSet(viewsets.ModelViewSet):
             return MedicalRecordCreateSerializer
         elif self.action in ['update', 'partial_update']:
             return MedicalRecordUpdateSerializer
+        elif self.action == 'retrieve' or (self.action == 'list' and self.request.query_params.get('appointment')):
+            return MedicalRecordDetailSerializer
         elif self.action == 'list':
             return MedicalRecordListSerializer
-        elif self.action == 'retrieve':
-            return MedicalRecordDetailSerializer
         # Default fallback
         return MedicalRecordDetailSerializer
 

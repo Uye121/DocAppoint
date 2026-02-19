@@ -33,7 +33,6 @@ const Login = (): React.JSX.Element => {
       await login(form);
       nav("/");
     } catch (err) {
-      console.log("login err: ", JSON.stringify(err));
       setError(getErrorMessage(err, "Network error"));
     } finally {
       setLoading(false);
@@ -42,7 +41,7 @@ const Login = (): React.JSX.Element => {
 
   return (
     <form onSubmit={handleSubmit} className="min-h-[80vh] flex items-center">
-      <div className="flex flex-col gap-3 m-auto items-start p-8 min-w-[340px] sm:min-w-96 max-w-md border rounded-xl text-zinc-600 text-sm shadow-lg">
+      <div className="flex flex-col gap-3 m-auto items-start p-8 min-w-85 sm:min-w-96 max-w-md border rounded-xl text-zinc-600 text-sm shadow-lg">
         <h2 className="text-2xl font-semibold">Login</h2>
         <div className="w-full">
           <label htmlFor="email">Email</label>

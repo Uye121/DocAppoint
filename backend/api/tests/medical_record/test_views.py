@@ -169,8 +169,7 @@ class TestMedicalRecordViewSet:
         
         view = MedicalRecordViewSet.as_view({'post': 'create'})
         response = view(request)
-        
-        print(response.data)
+
         assert response.status_code == status.HTTP_201_CREATED
         assert MedicalRecord.objects.count() == 1
         
@@ -187,8 +186,8 @@ class TestMedicalRecordViewSet:
         hospital = hospital_factory()
         
         data = {
-            'patient': patient.user.id,
-            'hospital': hospital.id,
+            'patient_id': patient.user.id,
+            'hospital_id': hospital.id,
             'diagnosis': 'Test diagnosis',
             'notes': 'Test notes',
             'prescriptions': 'Test prescriptions'

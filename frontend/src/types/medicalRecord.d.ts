@@ -1,11 +1,14 @@
 export interface BaseMedicalRecord {
   id: number;
-  patient: string;
+  patientId: string;
   providerId: string;
-  hospital: number;
+  hospitalId: number;
+  appointmentId: string;
   diagnosis: string;
   notes: string;
   prescriptions: string;
+  createdAt: string;
+  upddatedAt: string;
 }
 
 export interface MedicalRecordItem {
@@ -14,7 +17,9 @@ export interface MedicalRecordItem {
   patientName: string;
   providerId: string;
   providerName: string;
+  hospitalId: string;
   hospitalName: string;
+  appointmentId: string;
   diagnosis: string;
   createdAt: string;
   updatedAt: string;
@@ -48,11 +53,19 @@ export interface HospitalDetails {
   timezone: string;
 }
 
+export interface AppointmentDetails {
+  startDatetimeUtc: string;
+  endDatetimeUtc: string;
+  reason: string;
+  status: "REQUESTED" | "CONFIRMED" | "COMPLETED" | "CANCELLED" | "RESCHEDULED";
+}
+
 export interface MedicalRecordDetail {
   id: number;
   patientDetails: PatientDetails;
   providerDetails: DoctorDetails;
   hospitalDetails: HospitalDetails;
+  appointmentDetails: AppointmentDetails;
   diagnosis: string;
   notes: string;
   prescriptions: string;
@@ -66,17 +79,20 @@ export interface MedicalRecordDetail {
   removedAt: string;
 }
 
-export interface CreateMedicalRecord {
-  patient: string;
-  hospital: number;
+export interface MedicalRecordPayload {
+  patientId: string;
+  hospitalId: number;
+  appointmentId: string;
   diagnosis: string;
   notes: string;
   prescriptions: string;
 }
 
-export interface UpdateMedicalRecord {
-  hospital?: number;
-  diagnosis?: string;
-  notes?: string;
-  prescriptions?: string;
+export interface UpdateMedicalRecordResponse {
+  patientId: string;
+  hospitalId: number;
+  appointmentId: string;
+  diagnosis: string;
+  notes: string;
+  prescriptions: string;
 }

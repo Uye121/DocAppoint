@@ -9,29 +9,12 @@ import {
   updateAppointmentStatus,
 } from "../../api/appointment";
 
-// Mock dependencies
-vi.mock("../../../hooks/useAuth", () => ({
-  useAuth: vi.fn(),
-}));
-
-vi.mock("../../api/appointment", () => ({
-  getProviderAppointments: vi.fn(),
-  updateAppointmentStatus: vi.fn(),
-}));
-
-const createTestQueryClient = () =>
-  new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-      mutations: { retry: false },
-    },
-  });
-
-const TestWrapper = ({ children }: { children: React.ReactNode }) => (
-  <QueryClientProvider client={createTestQueryClient()}>
-    {children}
-  </QueryClientProvider>
-);
+const mockProvider = {
+  id: "2",
+  specialityName: "pulmonologist",
+  licenseNumber: "abc123",
+  fullName: "John Doe",
+};
 
 const mockAppointments = [
   {
@@ -59,6 +42,33 @@ const mockAppointments = [
     patient: { id: "p3", firstName: "Bob", lastName: "Johnson" },
   },
 ];
+
+const updateResponse = {
+  detail: "Appointment confirmed.",
+};
+
+vi.mock("../../../hooks/useAuth", () => ({
+  useAuth: vi.fn(() => ({ user: mockProvider })),
+}));
+
+vi.mock("../../api/appointment", () => ({
+  getProviderAppointments: vi.fn(() => mockAppointments),
+  updateAppointmentStatus: vi.fn(() => updateResponse),
+}));
+
+const createTestQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+
+const TestWrapper = ({ children }: { children: React.ReactNode }) => (
+  <QueryClientProvider client={createTestQueryClient()}>
+    {children}
+  </QueryClientProvider>
+);
 
 describe("ProviderHome", () => {
   const mockUser = { id: "provider-123", name: "Dr. Test" };
@@ -247,5 +257,111 @@ describe("ProviderHome", () => {
 
     // Check that date-fns formatted the date (format "PPp" = Jun 15, 2024, 2:30 PM)
     expect(screen.getByText(/jun 15, 2024/i)).toBeInTheDocument();
+  });
+
+  it("refetches appointments after status update", async () => {
+    const user = userEvent.setup();
+
+    render(<ProviderHome />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByText("John Doe")).toBeInTheDocument();
+    });
+
+    const confirmButton = screen.getByRole("button", { name: /confirm/i });
+    await user.click(confirmButton);
+
+    // Wait for the status update to be called
+    await waitFor(() => {
+      expect(vi.mocked(updateAppointmentStatus)).toHaveBeenCalledWith(
+        "1",
+        "CONFIRMED",
+      );
+    });
+
+    // Verify that refetch was triggered (getProviderAppointments called again)
+    await waitFor(() => {
+      expect(vi.mocked(getProviderAppointments)).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it("opens medical record modal when Add/View Record button is clicked", async () => {
+    const user = userEvent.setup();
+
+    render(<ProviderHome />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByText("Jane Smith")).toBeInTheDocument();
+    });
+
+    const addRecordButton = screen.getByRole("button", {
+      name: /add\/view record/i,
+    });
+    await user.click(addRecordButton);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("modal-backdrop")).toBeInTheDocument();
+      expect(screen.getByTestId("modal-title")).toHaveTextContent(
+        /medical record.*jane smith/i,
+      );
+    });
+  });
+
+  it("closes medical record modal when onClose is called", async () => {
+    const user = userEvent.setup();
+
+    render(<ProviderHome />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByText("Jane Smith")).toBeInTheDocument();
+    });
+
+    // Open modal
+    const addRecordButton = screen.getByRole("button", {
+      name: /add\/view record/i,
+    });
+    await user.click(addRecordButton);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("modal-backdrop")).toBeInTheDocument();
+    });
+
+    const closeButton = screen.getByRole("button", { name: /✕/ });
+    await user.click(closeButton);
+
+    // Verify modal is closed
+    await waitFor(() => {
+      expect(screen.queryByText(/medical record/i)).not.toBeInTheDocument();
+    });
+  });
+
+  it("handles error when updating appointment status fails", async () => {
+    const user = userEvent.setup();
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    // Mock the update function to throw an error
+    vi.mocked(updateAppointmentStatus).mockRejectedValue(
+      new Error("Update failed"),
+    );
+
+    render(<ProviderHome />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByText("John Doe")).toBeInTheDocument();
+    });
+
+    const confirmButton = screen.getByRole("button", { name: /confirm/i });
+    await user.click(confirmButton);
+
+    await waitFor(() => {
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "Failed to update appointment status:",
+        expect.any(String),
+      );
+    });
+
+    const errorMsg = consoleSpy.mock.calls[0][1];
+    expect(errorMsg).toBe("Update failed");
+    consoleSpy.mockRestore();
   });
 });
