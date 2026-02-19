@@ -9,7 +9,6 @@ from api.models import (
     Appointment,
     Slot,
     ProviderHospitalAssignment,
-    MedicalRecord
 )
 
 User = get_user_model()

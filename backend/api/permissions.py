@@ -42,23 +42,20 @@ class IsPatientOrProvider(permissions.BasePermission):
         if not user or not user.is_authenticated:
             return False
 
-        return (
-            user.is_staff
-            or hasattr(user, "patient")
-            or hasattr(user, "provider")
-        )
+        return user.is_staff or hasattr(user, "patient") or hasattr(user, "provider")
+
 
 class IsRecordOwner(permissions.BasePermission):
     """Check if user is the owner of the medical record"""
-    
+
     def has_object_permission(self, request, view, obj):
         if not request.user.is_authenticated:
             return False
-        
-        if hasattr(request.user, 'provider'):
+
+        if hasattr(request.user, "provider"):
             return obj.healthcare_provider == request.user.provider
-        
+
         if request.user.is_staff:
             return True
-        
+
         return False

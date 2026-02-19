@@ -10,6 +10,7 @@ if TYPE_CHECKING:
     from api.models import User
 else:
     from django.contrib.auth import get_user_model
+
     User = get_user_model()
 
 

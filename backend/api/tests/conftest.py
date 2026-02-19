@@ -10,7 +10,7 @@ from .factories import (
     AdminStaffFactory,
     SystemAdminFactory,
     MedicalRecordFactory,
-    AppointmentFactory
+    AppointmentFactory,
 )
 
 for factory in (

@@ -57,12 +57,10 @@ class AppointmentListSerializer(CamelCaseMixin, serializers.ModelSerializer):
         source="healthcare_provider.user.image", read_only=True
     )
     patient_name = serializers.CharField(
-        source='patient.user.get_full_name', 
-        read_only=True
+        source="patient.user.get_full_name", read_only=True
     )
     provider_name = serializers.CharField(
-        source='healthcare_provider.user.get_full_name', 
-        read_only=True
+        source="healthcare_provider.user.get_full_name", read_only=True
     )
     hospital = HospitalTinySerializer(source="location", read_only=True)
 

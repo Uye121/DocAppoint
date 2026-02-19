@@ -14,7 +14,8 @@ class MedicalRecord(TimestampMixin, AuditMixin):
         HealthcareProvider, on_delete=models.CASCADE
     )
     hospital = models.ForeignKey(
-        Hospital, on_delete=models.CASCADE,
+        Hospital,
+        on_delete=models.CASCADE,
     )
     appointment = models.OneToOneField(
         Appointment,
@@ -37,9 +38,9 @@ class MedicalRecord(TimestampMixin, AuditMixin):
             raise ValidationError({"diagnosis": "Diagnosis is required"})
         if not self.notes:
             raise ValidationError({"notes": "Notes is required"})
-        
+
     def save(self, *args, **kwargs):
-        self.full_clean() 
+        self.full_clean()
         super().save(*args, **kwargs)
 
     def __str__(self):
