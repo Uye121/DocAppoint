@@ -182,7 +182,7 @@ _For more examples, please refer to the [Documentation](https://example.com)_
     - [x] Email verification
     - [x] Resend email verification
     - [x] Custom user policies
-    - [ ] Reset password (backend completed)
+    - [ ] Reset password
 - [x] User-type specific web pages
 - [ ] Patient features
     - [x] View doctors' schedule
@@ -194,7 +194,7 @@ _For more examples, please refer to the [Documentation](https://example.com)_
     - [ ] AI chatbot to give general information
 - [ ] Doctor features
     - [x] Accept or reject patient appointments
-    - [ ] View User's medical records (backend completed)
+    - [x] View and update User's medical records
     - [ ] Indicate whether doctors are online
     - [ ] Set availability (backend completed)
 - [ ] Redis caching
