@@ -13,7 +13,7 @@ import { US_STATES } from "../../utils/states";
 const UserProfile = (): React.JSX.Element => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [isEdit, setIsEdit] = useState(false);
+  const [isEditing, setisEditing] = useState(false);
   const [localData, setLocalData] = useState<PatientDetail>({});
 
   const { data: patientData, isLoading } = useQuery({
@@ -28,7 +28,7 @@ const UserProfile = (): React.JSX.Element => {
       updatePatientInfo(user!.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["patient-info"] });
-      setIsEdit(false);
+      setisEditing(false);
     },
   });
 
@@ -48,7 +48,7 @@ const UserProfile = (): React.JSX.Element => {
     if (patientData) {
       setLocalData(patientData);
     }
-    setIsEdit(false);
+    setisEditing(false);
   };
 
   const handleInputChange = (
@@ -123,7 +123,7 @@ const UserProfile = (): React.JSX.Element => {
             alt="User Profile"
           />
           <div>
-            {isEdit ? (
+            {isEditing ? (
               <div className="flex flex-col gap-3">
                 <div className="flex gap-3">
                   <input
@@ -169,7 +169,7 @@ const UserProfile = (): React.JSX.Element => {
                 Email
               </label>
               <p className="text-primary">{localData.user?.email}</p>
-              {isEdit && (
+              {isEditing && (
                 <p className="text-xs text-zinc-500 mt-1">
                   Email cannot be edited. Contact support to update your email
                   address.
@@ -181,7 +181,7 @@ const UserProfile = (): React.JSX.Element => {
               <label className="block text-sm font-medium text-zinc-600 mb-1">
                 Phone Number
               </label>
-              {isEdit ? (
+              {isEditing ? (
                 <input
                   className="w-full px-3 py-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                   type="tel"
@@ -208,7 +208,7 @@ const UserProfile = (): React.JSX.Element => {
               <label className="block text-sm font-medium text-zinc-600 mb-1">
                 Address
               </label>
-              {isEdit ? (
+              {isEditing ? (
                 <div className="space-y-3">
                   <div>
                     <input
@@ -299,7 +299,7 @@ const UserProfile = (): React.JSX.Element => {
               <label className="block text-sm font-medium text-zinc-600 mb-1">
                 Date of Birth
               </label>
-              {isEdit ? (
+              {isEditing ? (
                 <input
                   className="w-full px-3 py-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                   type="date"
@@ -333,7 +333,7 @@ const UserProfile = (): React.JSX.Element => {
               <label className="block text-sm font-medium text-zinc-600 mb-1">
                 Blood Type
               </label>
-              {isEdit ? (
+              {isEditing ? (
                 <input
                   className="w-full px-3 py-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                   type="text"
@@ -358,7 +358,7 @@ const UserProfile = (): React.JSX.Element => {
               <label className="block text-sm font-medium text-zinc-600 mb-1">
                 Allergies
               </label>
-              {isEdit ? (
+              {isEditing ? (
                 <textarea
                   className="w-full px-3 py-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent min-h-[80px] resize-y"
                   value={localData.allergies || ""}
@@ -382,7 +382,7 @@ const UserProfile = (): React.JSX.Element => {
               <label className="block text-sm font-medium text-zinc-600 mb-1">
                 Chronic Conditions
               </label>
-              {isEdit ? (
+              {isEditing ? (
                 <textarea
                   className="w-full px-3 py-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent min-h-[80px] resize-y"
                   value={localData.chronicConditions || ""}
@@ -408,7 +408,7 @@ const UserProfile = (): React.JSX.Element => {
               <label className="block text-sm font-medium text-zinc-600 mb-1">
                 Current Medications
               </label>
-              {isEdit ? (
+              {isEditing ? (
                 <textarea
                   className="w-full px-3 py-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent min-h-[80px] resize-y"
                   value={localData.currentMedications || ""}
@@ -434,7 +434,7 @@ const UserProfile = (): React.JSX.Element => {
               <label className="block text-sm font-medium text-zinc-600 mb-1">
                 Insurance Provider
               </label>
-              {isEdit ? (
+              {isEditing ? (
                 <input
                   className="w-full px-3 py-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                   type="text"
@@ -460,7 +460,7 @@ const UserProfile = (): React.JSX.Element => {
                 <label className="block text-sm font-medium text-zinc-600 mb-1">
                   Height (cm)
                 </label>
-                {isEdit ? (
+                {isEditing ? (
                   <input
                     className="w-full px-3 py-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                     type="number"
@@ -488,7 +488,7 @@ const UserProfile = (): React.JSX.Element => {
                 <label className="block text-sm font-medium text-zinc-600 mb-1">
                   Weight (kg)
                 </label>
-                {isEdit ? (
+                {isEditing ? (
                   <input
                     className="w-full px-3 py-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                     type="number"
@@ -518,7 +518,7 @@ const UserProfile = (): React.JSX.Element => {
 
       {/* Action Buttons */}
       <div className="mt-8 flex gap-4 justify-end">
-        {isEdit ? (
+        {isEditing ? (
           <>
             <button
               className="px-6 py-2.5 border border-zinc-300 text-zinc-700 font-medium rounded-lg hover:bg-zinc-50 transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-300 focus:ring-offset-2"
@@ -538,7 +538,7 @@ const UserProfile = (): React.JSX.Element => {
         ) : (
           <button
             className="px-6 py-2.5 bg-primary text-white font-medium rounded-lg hover:bg-primary-dark transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-            onClick={() => setIsEdit(true)}
+            onClick={() => setisEditing(true)}
           >
             Edit Profile
           </button>

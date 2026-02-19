@@ -44,3 +44,7 @@ export interface AppointmentPayload {
   location: string;
   reason: string;
 }
+
+export interface AppointmentUpdateResponse {
+  detail: string;
+}

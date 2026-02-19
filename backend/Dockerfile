@@ -7,20 +7,24 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc libpq-dev && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    gcc \
+    libpq-dev && \
+    rm -rf /var/lib/apt/lists/*
 
 RUN pip install poetry
 
 COPY pyproject.toml poetry.lock* ./
 
 RUN poetry config virtualenvs.create false && \
-    poetry install --no-interaction --no-ansi --no-root
+    poetry install --no-interaction --no-ansi --no-root --with dev
+    
+RUN mkdir -p /app/media/speciality /app/media/healthcare_providers
 
 # Copy project
 COPY . .
 
-RUN mkdir -p /app/media/speciality /app/media/healthcare_providers
 
 EXPOSE 8000
 

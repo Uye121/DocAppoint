@@ -1,15 +1,11 @@
 import { api } from "./axios";
 import type {
-  // Appointment,
   AppointmentListItem,
   AppointmentPayload,
   Slot,
   SlotRangePayload,
+  AppointmentUpdateResponse,
 } from "../types/appointment";
-
-// TODO: update once start getting data about appointment
-// export const getAppointmentById = (id: string) =>
-//   api.get<Appointment>(`/appointment/${id}`).then((res) => res.data);
 
 export const scheduleAppointment = (payload: AppointmentPayload) =>
   api
@@ -41,5 +37,7 @@ export const getPatientAppointments = async (patientId: string) =>
 
 export const updateAppointmentStatus = async (id: string, status: string) =>
   api
-    .post(`/appointment/${id}/set-status/`, { status })
+    .post<AppointmentUpdateResponse>(`/appointment/${id}/set-status/`, {
+      status,
+    })
     .then((res) => res.data);

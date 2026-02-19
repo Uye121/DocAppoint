@@ -15,6 +15,8 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
+from typing import List, Union
+from django.urls import URLPattern, URLResolver
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
@@ -33,6 +35,7 @@ from .views import (
     SpecialityViewSet,
     AppointmentViewSet,
     SlotViewSet,
+    MedicalRecordViewSet,
 )
 
 router = DefaultRouter()
@@ -42,8 +45,9 @@ router.register("provider", HealthcareProviderViewSet, basename="provider")
 router.register("speciality", SpecialityViewSet, basename="speciality")
 router.register("appointment", AppointmentViewSet, basename="appointment")
 router.register("slot", SlotViewSet, basename="slot")
+router.register("medical-record", MedicalRecordViewSet, basename="medical_record")
 
-authpatterns = [
+authpatterns: List[Union[URLPattern, URLResolver]] = [
     path("login/", LoginView.as_view(), name="login"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("verify/", VerifyEmailView.as_view(), name="verify_email"),
@@ -52,9 +56,10 @@ authpatterns = [
 ]
 
 
-urlpatterns = [
+urlpatterns: List[Union[URLPattern, URLResolver]] = [
     path("admin/", admin.site.urls),
     path("api/auth/", include(authpatterns)),
     path("api/", include(router.urls)),
 ]
+
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

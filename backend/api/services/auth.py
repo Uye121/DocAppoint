@@ -2,12 +2,19 @@ from django.utils import timezone
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
-from django.contrib.auth.models import AbstractUser
+from typing import TYPE_CHECKING
 
 from ..utils.tokens import build_verification_jwt
 
+if TYPE_CHECKING:
+    from api.models import User
+else:
+    from django.contrib.auth import get_user_model
 
-def send_verification_email(user: AbstractUser) -> None:
+    User = get_user_model()
+
+
+def send_verification_email(user: User) -> None:
     """
     Build and send a one-time verification email to user
     """

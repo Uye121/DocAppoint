@@ -9,6 +9,7 @@ from .patient import PatientViewSet
 from .healthcare_provider import HealthcareProviderViewSet
 from .speciality import SpecialityViewSet
 from .appointment import AppointmentViewSet, SlotViewSet
+from .medical_record import MedicalRecordViewSet
 
 __all__ = [
     "UserViewSet",
@@ -21,4 +22,5 @@ __all__ = [
     "SpecialityViewSet",
     "AppointmentViewSet",
     "SlotViewSet",
+    "MedicalRecordViewSet",
 ]

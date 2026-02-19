@@ -2,8 +2,7 @@ import pytest
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
-
-pytestmark = pytest.mark.django_db(transaction=True)
+pytestmark = pytest.mark.django_db
 
 
 def test_patient_one_to_one_relation(patient_factory, user_factory):

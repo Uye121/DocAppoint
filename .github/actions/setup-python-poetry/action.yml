@@ -6,6 +6,10 @@ inputs:
     description: 'Python version'
     required: false
     default: '3.11'
+  install-dev:
+    description: 'install dev dependencies'
+    required: false
+    default: 'false'
 
 runs:
   using: "composite"
@@ -30,4 +34,10 @@ runs:
 
     - name: Install dependencies
       shell: bash
-      run: cd backend && poetry install --no-interaction --no-root --no-ansi
+      run: |
+        cd backend
+        if [ "${{ inputs.install-dev }}" = "true" ]; then
+          poetry install --with dev --no-interaction --no-root --no-ansi
+        else
+          poetry install --no-interaction --no-root --no-ansi
+        fi

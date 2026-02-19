@@ -12,7 +12,7 @@ from api.models import (
 )
 
 User = get_user_model()
-pytestmark = pytest.mark.django_db(transaction=True)
+pytestmark = pytest.mark.django_db
 
 
 class TestAppointmentModel:

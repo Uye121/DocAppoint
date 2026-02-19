@@ -31,6 +31,12 @@ api.interceptors.response.use(
     const originalRequest: AxiosRequestConfig & { _retry?: boolean } =
       err.config;
 
+    const isLoginRequest = originalRequest.url?.includes("/auth/login/");
+    // Don't attempt refresh for login error
+    if (isLoginRequest && err.response?.status === 401) {
+      return Promise.reject(err);
+    }
+
     // Intercept unauthorized access and try to refresh the access token
     if (err.response?.status === 401 && !originalRequest._retry) {
       // Move other request to queue if currently refreshing
@@ -48,6 +54,14 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       isRefreshing = true;
       const refresh = localStorage.getItem("refresh");
+
+      // Redirec tto login if no refresh
+      if (!refresh) {
+        processQueue(null);
+        localStorage.clear();
+        window.location.href = "/login";
+        return Promise.reject(err);
+      }
 
       try {
         // Use a different axios instance to prevent possible infinite loop

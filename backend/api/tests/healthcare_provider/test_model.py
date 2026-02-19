@@ -3,8 +3,7 @@ from django.contrib.auth import get_user_model
 from django.db import IntegrityError
 
 User = get_user_model()
-
-pytestmark = pytest.mark.django_db(transaction=True)
+pytestmark = pytest.mark.django_db
 
 
 class TestHealthcareProvider:

@@ -7,8 +7,7 @@ from rest_framework import status
 from ...utils.tokens import build_verification_jwt
 
 User = get_user_model()
-
-pytestmark = pytest.mark.django_db(transaction=True)
+pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture

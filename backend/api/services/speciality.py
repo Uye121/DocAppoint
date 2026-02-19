@@ -1,6 +1,7 @@
-from typing import Optional, List
+from typing import Optional
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import QuerySet
 from django.utils import timezone
 
 from ..models import Speciality
@@ -8,7 +9,7 @@ from ..models import Speciality
 
 class SpecialityService:
     @staticmethod
-    def get_all_specialities(active_only: bool = True) -> List[Speciality]:
+    def get_all_specialities(active_only: bool = True) -> QuerySet[Speciality]:
         """Get all specialities"""
         queryset = Speciality.objects.all()
         if active_only:
@@ -55,7 +56,7 @@ class SpecialityService:
     @staticmethod
     @transaction.atomic
     def soft_delete_speciality(speciality: Speciality) -> None:
-        if speciality.healthcare_provider_profile_set.filter(is_removed=False).exists():
+        if speciality.provider_speciality.filter(is_removed=False).exists():
             raise ValidationError(
                 "Cannot delete speciality that has active healthcare providers"
             )
