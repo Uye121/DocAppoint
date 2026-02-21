@@ -212,6 +212,9 @@ jobs:
         
       - name: Load frontend image
         run: |
+          ls -la /tmp/frontend.tar.gz
+          file /tmp/frontend.tar.gz
+          gzip -t /tmp/frontend.tar.gz || echo "Corrupted gzip file"
           docker load < /tmp/frontend.tar.gz
           docker images # Verify image is loaded
       
@@ -251,6 +254,9 @@ jobs:
 
       - name: Load backend image
         run: |
+          ls -la /tmp/backend.tar.gz
+          file /tmp/backend.tar.gz
+          gzip -t /tmp/backend.tar.gz || echo "Corrupted gzip file"
           docker load < /tmp/backend.tar.gz
           docker images
       
