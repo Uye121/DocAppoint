@@ -174,7 +174,7 @@ endif
 ci-fe-test-docker:
 	docker run --rm \
 		-e CI=true \
-		$(REGISTRY)/$(IMAGE_NAME)-frontend:$(TAG) \
+		$(shell echo $(REGISTRY)/$(IMAGE_NAME)-frontend:$(TAG) | tr '[:upper:]' '[:lower:]') \
 		npm run test:unit -- --watchAll=false
 
 ## Backend CI suite
@@ -208,7 +208,7 @@ ci-be-test-docker:
 		-e REDIS_URL=$$REDIS_URL \
 		-e DJANGO_SECRET_KEY=$$DJANGO_SECRET_KEY \
 		-e DJANGO_SETTINGS_MODULE=$$DJANGO_SETTINGS_MODULE \
-		$(REGISTRY)/$(IMAGE_NAME)-backend:$(TAG) \
+		$(shell echo $(REGISTRY)/$(IMAGE_NAME)-backend:$(TAG) | tr '[:upper:]' '[:lower:]') \
 		pytest
 
 ## Run both container tests
