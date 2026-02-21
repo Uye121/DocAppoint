@@ -171,11 +171,22 @@ ifneq ($(IS_CI),true)
 	cd $(FRONTEND_DIR) && npm run test:coverage
 endif
 
-ci-fe-test-docker:
+ci-fe-test-run-docker:
 	docker run --rm \
 		-e CI=true \
 		$(shell echo $(REGISTRY)/$(IMAGE_NAME)-frontend:$(TAG) | tr '[:upper:]' '[:lower:]') \
-		npm run test:unit -- --watchAll=false
+		npm run test:run -- --watchAll=false
+
+ci-fe-test-coverage-docker:
+	docker run --rm \
+		-e CI=true \
+		$(shell echo $(REGISTRY)/$(IMAGE_NAME)-frontend:$(TAG) | tr '[:upper:]' '[:lower:]') \
+		npm run test:coverage -- --watchAll=false
+
+ci-fe-test-docker: ci-fe-test-run-docker
+	@if [ "$(IS_CI)" != "true" ]; then \
+		$(MAKE) ci-fe-test-coverage-docker; \
+	fi
 
 ## Backend CI suite
 ci-be: ci-be-lint ci-be-type-check ci-be-migrations-check ci-be-test
@@ -189,6 +200,15 @@ ci-be-type-check:
 
 ci-be-migrations-check:
 	cd $(BACKEND_DIR) && DJANGO_SETTINGS_MODULE=api.settings.development poetry run python manage.py makemigrations --check --dry-run
+
+ci-be-migrations-check-docker:
+	docker run --rm \
+		--network host \
+		-e DATABASE_URL=$$DATABASE_URL \
+		-e DJANGO_SECRET_KEY=$$DJANGO_SECRET_KEY \
+		-e DJANGO_SETTINGS_MODULE=$$DJANGO_SETTINGS_MODULE \
+		$(shell echo $(REGISTRY)/$(IMAGE_NAME)-backend:$(TAG) | tr '[:upper:]' '[:lower:]') \
+		python manage.py makemigrations --check --dry-run
 
 ci-be-test:
 	cd $(BACKEND_DIR) && DJANGO_SETTINGS_MODULE=api.settings.development poetry run pytest --cov=api --cov-report=xml --cov-report=html
