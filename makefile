@@ -205,6 +205,7 @@ ci-be-migrations-check-docker:
 	docker run --rm \
 		--network host \
 		-e DATABASE_URL="$(DATABASE_URL)" \
+		-e POSTGRES_DB="$(POSTGRES_DB)" \
 		-e DJANGO_SECRET_KEY="$(DJANGO_SECRET_KEY)" \
 		-e DJANGO_SETTINGS_MODULE="$(DJANGO_SETTINGS_MODULE)" \
 		$(shell echo $(REGISTRY)/$(IMAGE_NAME)-backend:$(TAG) | tr '[:upper:]' '[:lower:]') \
