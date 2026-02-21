@@ -127,7 +127,10 @@ jobs:
 
       - name: Save frontend image
         run: |
-          docker save ${{ steps.meta.outputs.tags }} | gzip > /tmp/frontend.tar.gz
+          docker images
+          echo "Tags to save: ${{ steps.meta.outputs.tags }}"
+          docker save ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend:${{ steps.meta.outputs.version }} | gzip > /tmp/frontend.tar.gz
+          ls -la /tmp/frontend.tar.gz
 
       - name: Upload frontend image artifact
         uses: actions/upload-artifact@v4
@@ -183,7 +186,10 @@ jobs:
 
       - name: Save backend image
         run: |
-          docker save ${{ steps.meta.outputs.tags }} | gzip > /tmp/backend.tar.gz
+          docker images
+          echo "Tags to save: ${{ steps.meta.outputs.tags }}"
+          docker save ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:${{ steps.meta.outputs.version }} | gzip > /tmp/backend.tar.gz
+          ls -la /tmp/backend.tar.gz
 
       - name: Upload backend image artifact
         uses: actions/upload-artifact@v4
