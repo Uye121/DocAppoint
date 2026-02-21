@@ -24,8 +24,6 @@ BASE_DIR = Path(__file__).resolve().parents[4]
 env = environ.Env()
 environ.Env.read_env(os.path.join(BASE_DIR / ".env"))
 
-print(f"env: {env('PROVIDER_PASSWORD', default='failed')}")
-
 
 User = get_user_model()
 DOC_FILE = Path(f"{settings.MEDIA_ROOT}/doctor.json")
@@ -63,7 +61,7 @@ class Command(BaseCommand):
 
         admin_username = env.str("ADMIN_USERNAME", default="admin")
         admin_email = env.str("ADMIN_EMAIL", default="admin@docappoint.com")
-        admin_password = env.str("ADMIN_PASSWORD")
+        admin_password = env.str("ADMIN_PASSWORD", default="test@dminpwd1")
         payload = {
             "email": admin_email,
             "username": admin_username,
