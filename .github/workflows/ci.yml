@@ -204,10 +204,11 @@ jobs:
       - name: Check for missing migrations
         env:
           DATABASE_URL: postgres://postgres:password@localhost:5432/docappoint_test
+          POSTGRES_DB: docappoint_test
+          REDIS_URL: test-redis-secret-for-ci
           DJANGO_SECRET_KEY: test-secret-key-for-ci
           DJANGO_SETTINGS_MODULE: api.settings.development
           EMAIL_VERIFY_SECRET: test-email-secret-for-ci
-          REDIS_URL: test-redis-secret-for-ci
         run: make ci-be-migrations-check-docker TAG=${{ needs.build-backend-image.outputs.image-tag }}
 
   # ==========================================
@@ -278,6 +279,7 @@ jobs:
       - name: Run tests
         env:
           DATABASE_URL: postgres://postgres:password@localhost:5432/docappoint_test
+          POSTGRES_DB: docappoint_test
           REDIS_URL: redis://localhost:6379/0
           DJANGO_SECRET_KEY: test-secret-key-for-ci
           DJANGO_SETTINGS_MODULE: api.settings.development
