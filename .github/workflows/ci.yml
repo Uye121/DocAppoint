@@ -14,9 +14,9 @@ env:
 
 jobs:
   # ==========================================
-  # FRONTEND VERIFICATION
+  # STATIC CHECKS
   # ==========================================
-  frontend-lint:
+  frontend-lint-typecheck:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -35,49 +35,10 @@ jobs:
       - name: Run ESLint
         run: make ci-fe-lint
 
-  frontend-type-check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-      
-      - name: Install dependencies
-        working-directory: ./frontend
-        run: npm ci
-      
       - name: Type check
         run: make ci-fe-type-check
 
-  frontend-test:
-    runs-on: ubuntu-latest
-    needs: [frontend-lint, frontend-type-check] 
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-      
-      - name: Install dependencies
-        working-directory: ./frontend
-        run: npm ci
-      
-      - name: Run unit tests
-        run: make ci-fe-test
-
-  # ==========================================
-  # BACKEND VERIFICATION
-  # ==========================================
-  backend-lint:
+  backend-lint-typecheck:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -90,16 +51,6 @@ jobs:
       - name: Run linting
         run: make ci-be-lint
 
-  backend-type-check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Set up Python and Poetry
-        uses: ./.github/actions/setup-python-poetry
-        with:
-          install-dev: true
-      
       - name: Type check
         run: make ci-be-type-check
 
@@ -112,11 +63,6 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: password
           POSTGRES_DB: docappoint_test
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
         ports:
           - 5432:5432
     steps:
@@ -134,70 +80,12 @@ jobs:
           DJANGO_SETTINGS_MODULE: api.settings.development
         run: make ci-be-migrations-check
 
-  backend-test:
-    runs-on: ubuntu-latest
-    needs: [backend-lint, backend-type-check, backend-migrations-check]
-    services:
-      postgres:
-        image: postgres:14
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: password
-          POSTGRES_DB: docappoint_test
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-          --tmpfs /var/lib/postgresql/data:rw,noexec,nosuid,size=256m
-        ports:
-          - 5432:5432
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Set up Python and Poetry
-        uses: ./.github/actions/setup-python-poetry
-        with:
-          install-dev: true
-
-      - name: Setup database and run migrations
-        env:
-          DATABASE_URL: postgres://postgres:password@localhost:5432/docappoint_test
-          REDIS_URL: redis://localhost:6379/0
-          SECRET_KEY: test-secret-key
-          DJANGO_SECRET_KEY: test-secret-key-for-ci
-          EMAIL_VERIFY_SECRET: test-email-secret-for-ci
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: password
-          POSTGRES_HOST: localhost
-          POSTGRES_DB: docappoint_test
-          DJANGO_SETTINGS_MODULE: api.settings.development
-        run: make ci-db-setup
-      
-      - name: Run tests
-        env:
-          DATABASE_URL: postgres://postgres:password@localhost:5432/docappoint_test
-          REDIS_URL: redis://localhost:6379/0
-          SECRET_KEY: test-secret-key
-          PROVIDER_PASSWORD: testpwdforci123
-          ADMIN_USERNAME: testuserforci123
-          ADMIN_EMAIL: testuserci@admin.com
-          ADMIN_PASSWORD: testpwdforciadm1n
-          EMAIL_VERIFY_SECRET: test-email-secret-for-ci
-          DJANGO_SECRET_KEY: test-secret-key-for-ci
-          DJANGO_SETTINGS_MODULE: api.settings.development
-        run: make ci-be-test
-
   # ==========================================
-  # BUILD DOCKER IMAGES (Artifacts)
+  # BUILD IMAGES
   # ==========================================
   build-frontend-image:
     runs-on: ubuntu-latest
-    needs: [frontend-lint, frontend-type-check, frontend-test]
+    needs: [frontend-lint-typecheck]
     permissions:
       contents: read
       packages: write  
@@ -226,19 +114,34 @@ jobs:
             type=ref,event=branch
             type=ref,event=pr
       
-      - name: Build and push frontend image
+      - name: Build and cache frontend image
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
-          push: true
+          push: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          load: true
+
+      - name: Save frontend image
+        run: |
+          docker save ${{ steps.meta.outputs.tags }} | gzip > /tmp/frontend.tar.gz
+
+      - name: Upload frontend image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-image
+          path: /tmp/frontend.tar.gz
+          retention-days: 1
+
+      - name: Set output for frontend
+        run: echo "frontend-tag=${{ steps.meta.outputs.version }}" >> $GITHUB_OUTPUT
 
   build-backend-image:
     runs-on: ubuntu-latest
-    needs: [backend-lint, backend-type-check, backend-migrations-check, backend-test]
+    needs: [backend-lint-typecheck, backend-migrations-check]
     permissions:
       contents: read
       packages: write  
@@ -267,17 +170,134 @@ jobs:
             type=ref,event=branch
             type=ref,event=pr
       
-      - name: Build and push backend image
+      - name: Build and cache backend image
         uses: docker/build-push-action@v5
         with:
           context: ./backend
-          push: true
+          push: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          load: true
+
+      - name: Save backend image
+        run: |
+          docker save ${{ steps.meta.outputs.tags }} | gzip > /tmp/backend.tar.gz
+
+      - name: Upload backend image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-image
+          path: /tmp/backend.tar.gz
+          retention-days: 1
+
+      - name: Set output for backend
+        run: echo "backend-tag=${{ steps.meta.outputs.version }}" >> $GITHUB_OUTPUT
 
   # ==========================================
-  # INTEGRATION & DEPLOYMENT TODO
+  # UNIT TESTS
   # ==========================================
+  frontend-unit-test:
+    runs-on: ubuntu-latest
+    needs: build-frontend-image
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download frontend image
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-image
+          path: /tmp
+        
+      - name: Load frontend image
+        run: |
+          docker load < /tmp/frontend.tar.gz
+          docker images # Verify image is loaded
+      
+      - name: Run unit tests
+        run: make ci-fe-test-docker TAG=${{ needs.build-frontend-image.outputs.image-tag }}
+
+  backend-unit-test:
+    runs-on: ubuntu-latest
+    needs: build-backend-image
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: docappoint_test
+        # options: >-
+        #   --health-cmd pg_isready
+        #   --health-interval 10s
+        #   --health-timeout 5s
+        #   --health-retries 5
+        #   --tmpfs /var/lib/postgresql/data:rw,noexec,nosuid,size=256m
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download backend image
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-image
+          path: /tmp
+
+      - name: Load backend image
+        run: |
+          docker load < /tmp/backend.tar.gz
+          docker images
+      
+      - name: Run tests
+        env:
+          DATABASE_URL: postgres://postgres:password@localhost:5432/docappoint_test
+          REDIS_URL: redis://localhost:6379/0
+          DJANGO_SECRET_KEY: test-secret-key-for-ci
+          DJANGO_SETTINGS_MODULE: api.settings.development
+          # SECRET_KEY: test-secret-key
+          # PROVIDER_PASSWORD: testpwdforci123
+          # ADMIN_USERNAME: testuserforci123
+          # ADMIN_EMAIL: testuserci@admin.com
+          # ADMIN_PASSWORD: testpwdforciadm1n
+          # EMAIL_VERIFY_SECRET: test-email-secret-for-ci
+        run: make ci-be-test-docker TAG=${{ needs.build-backend-image.outputs.image-tag }}
+
+  # ==========================================
+  # PUSH IMAGES
+  # ==========================================
+  push-images:
+    runs-on: ubuntu-latest
+    needs: [build-frontend-image, build-backend-image, frontend-unit-test, backend-unit-test]
+    # Only push on main branch, not PRs
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        service: [frontend, backend]
+    steps:
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Download ${{ matrix.service }} image
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ matrix.service }}-image
+          path: /tmp
+      
+      - name: Load and push ${{ matrix.service }} image
+        run: |
+          docker load < /tmp/${{ matrix.service }}.tar.gz
+          docker push --all-tags ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ matrix.service }}
   

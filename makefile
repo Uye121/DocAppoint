@@ -171,6 +171,12 @@ ifneq ($(IS_CI),true)
 	cd $(FRONTEND_DIR) && npm run test:coverage
 endif
 
+ci-fe-test-docker:
+	docker run --rm \
+		-e CI=true \
+		$(REGISTRY)/$(IMAGE_NAME)-frontend:$(TAG) \
+		npm run test:unit -- --watchAll=false
+
 ## Backend CI suite
 ci-be: ci-be-lint ci-be-type-check ci-be-migrations-check ci-be-test
 
@@ -194,6 +200,20 @@ ci-db-setup:
 	cd $(BACKEND_DIR) && DJANGO_SETTINGS_MODULE=api.settings.development poetry run python manage.py makemigrations api --noinput
 	cd $(BACKEND_DIR) && DJANGO_SETTINGS_MODULE=api.settings.development poetry run python manage.py migrate api
 	cd $(BACKEND_DIR) && DJANGO_SETTINGS_MODULE=api.settings.development poetry run python manage.py migrate
+
+ci-be-test-docker:
+	docker run --rm \
+		--network host \
+		-e DATABASE_URL=$$DATABASE_URL \
+		-e REDIS_URL=$$REDIS_URL \
+		-e DJANGO_SECRET_KEY=$$DJANGO_SECRET_KEY \
+		-e DJANGO_SETTINGS_MODULE=$$DJANGO_SETTINGS_MODULE \
+		$(REGISTRY)/$(IMAGE_NAME)-backend:$(TAG) \
+		pytest
+
+## Run both container tests
+ci-test-docker: ci-fe-test-docker ci-be-test-docker
+	@echo "✅ All container tests passed"
 
 # =============================================================================
 # HELP
