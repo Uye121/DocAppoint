@@ -175,13 +175,13 @@ ci-fe-test-run-docker:
 	docker run --rm \
 		-e CI=true \
 		$(shell echo $(REGISTRY)/$(IMAGE_NAME)-frontend:$(TAG) | tr '[:upper:]' '[:lower:]') \
-		npm run test:run -- --watchAll=false
+		npm run test:run
 
 ci-fe-test-coverage-docker:
 	docker run --rm \
 		-e CI=true \
 		$(shell echo $(REGISTRY)/$(IMAGE_NAME)-frontend:$(TAG) | tr '[:upper:]' '[:lower:]') \
-		npm run test:coverage -- --watchAll=false
+		npm run test:coverage
 
 ci-fe-test-docker: ci-fe-test-run-docker
 	@if [ "$(IS_CI)" != "true" ]; then \
@@ -204,9 +204,9 @@ ci-be-migrations-check:
 ci-be-migrations-check-docker:
 	docker run --rm \
 		--network host \
-		-e DATABASE_URL=$$DATABASE_URL \
-		-e DJANGO_SECRET_KEY=$$DJANGO_SECRET_KEY \
-		-e DJANGO_SETTINGS_MODULE=$$DJANGO_SETTINGS_MODULE \
+		-e DATABASE_URL="$(DATABASE_URL)" \
+		-e DJANGO_SECRET_KEY="$(DJANGO_SECRET_KEY)" \
+		-e DJANGO_SETTINGS_MODULE="$(DJANGO_SETTINGS_MODULE)" \
 		$(shell echo $(REGISTRY)/$(IMAGE_NAME)-backend:$(TAG) | tr '[:upper:]' '[:lower:]') \
 		python manage.py makemigrations --check --dry-run
 
@@ -224,10 +224,10 @@ ci-db-setup:
 ci-be-test-docker:
 	docker run --rm \
 		--network host \
-		-e DATABASE_URL=$$DATABASE_URL \
-		-e REDIS_URL=$$REDIS_URL \
-		-e DJANGO_SECRET_KEY=$$DJANGO_SECRET_KEY \
-		-e DJANGO_SETTINGS_MODULE=$$DJANGO_SETTINGS_MODULE \
+		-e DATABASE_URL="$(DATABASE_URL)" \
+		-e REDIS_URL="$(REDIS_URL)" \
+		-e DJANGO_SECRET_KEY="$(DJANGO_SECRET_KEY)" \
+		-e DJANGO_SETTINGS_MODULE="$(DJANGO_SETTINGS_MODULE)" \
 		$(shell echo $(REGISTRY)/$(IMAGE_NAME)-backend:$(TAG) | tr '[:upper:]' '[:lower:]') \
 		pytest
 
