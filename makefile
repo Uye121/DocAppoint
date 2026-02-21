@@ -229,7 +229,7 @@ ci-be-test-docker:
 		-e DJANGO_SECRET_KEY="$(DJANGO_SECRET_KEY)" \
 		-e DJANGO_SETTINGS_MODULE="$(DJANGO_SETTINGS_MODULE)" \
 		$(shell echo $(REGISTRY)/$(IMAGE_NAME)-backend:$(TAG) | tr '[:upper:]' '[:lower:]') \
-		sh -c "python manage.py migrate && pytest"
+		sh -c "python manage.py makemigrations api && python manage.py migrate api && python manage.py migrate && pytest"
 
 ## Run both container tests
 ci-test-docker: ci-fe-test-docker ci-be-test-docker

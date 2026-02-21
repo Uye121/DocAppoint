@@ -278,12 +278,10 @@ jobs:
       
       - name: Run tests
         env:
-          # DATABASE_URL: postgres://postgres:password@localhost:5432/docappoint_test
           POSTGRES_DB: docappoint_test
           REDIS_URL: redis://localhost:6379/0
           DJANGO_SECRET_KEY: test-secret-key-for-ci
           DJANGO_SETTINGS_MODULE: api.settings.development
-          # SECRET_KEY: test-secret-key
           # PROVIDER_PASSWORD: testpwdforci123
           # ADMIN_USERNAME: testuserforci123
           # ADMIN_EMAIL: testuserci@admin.com
