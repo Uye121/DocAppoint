@@ -203,7 +203,6 @@ jobs:
 
       - name: Check for missing migrations
         env:
-          # DATABASE_URL: postgres://postgres:password@localhost:5432/docappoint_test
           POSTGRES_DB: docappoint_test
           REDIS_URL: test-redis-secret-for-ci
           DJANGO_SECRET_KEY: test-secret-key-for-ci
@@ -247,12 +246,6 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: password
           POSTGRES_DB: docappoint_test
-        # options: >-
-        #   --health-cmd pg_isready
-        #   --health-interval 10s
-        #   --health-timeout 5s
-        #   --health-retries 5
-        #   --tmpfs /var/lib/postgresql/data:rw,noexec,nosuid,size=256m
         ports:
           - 5432:5432
       redis:
@@ -282,11 +275,6 @@ jobs:
           REDIS_URL: redis://localhost:6379/0
           DJANGO_SECRET_KEY: test-secret-key-for-ci
           DJANGO_SETTINGS_MODULE: api.settings.development
-          # PROVIDER_PASSWORD: testpwdforci123
-          # ADMIN_USERNAME: testuserforci123
-          # ADMIN_EMAIL: testuserci@admin.com
-          # ADMIN_PASSWORD: testpwdforciadm1n
-          # EMAIL_VERIFY_SECRET: test-email-secret-for-ci
         run: make ci-be-test-docker TAG=${{ needs.build-backend-image.outputs.image-tag }}
 
   # ==========================================
