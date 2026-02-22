@@ -462,7 +462,6 @@ class TestSlotRange:
     def test_range_default_week(self, api_client, provider):
         today = timezone.now().date()
         monday = today - timedelta(days=today.weekday())
-        # sunday = monday + timedelta(days=6)
 
         for i in range(7):
             day = monday + timedelta(days=i)

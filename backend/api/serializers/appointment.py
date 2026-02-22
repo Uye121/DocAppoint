@@ -80,12 +80,6 @@ class AppointmentListSerializer(CamelCaseMixin, serializers.ModelSerializer):
             "status",
         ]
 
-    # def get_patient_name(self, obj: Appointment) -> str:
-    #     return f"{obj.patient.user.first_name} {obj.patient.user.last_name}"
-
-    # def get_provider_name(self, obj: Appointment) -> str:
-    #     return f"{obj.healthcare_provider.user.first_name} {obj.healthcare_provider.user.last_name}"
-
 
 class AppointmentDetailSerializer(CamelCaseMixin, serializers.ModelSerializer):
     patient = PatientSerializer(read_only=True)
@@ -141,6 +135,7 @@ class AppointmentCreateSerializer(CamelCaseMixin, serializers.ModelSerializer):
     class Meta:
         model = Appointment
         fields = [
+            "id",
             "patient",
             "provider",
             "appointment_start_datetime_utc",

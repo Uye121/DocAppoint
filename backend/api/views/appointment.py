@@ -2,7 +2,7 @@ from datetime import timedelta
 from django.utils import timezone
 from django.db import transaction
 from django.db.models import F
-from django.utils.dateparse import parse_time
+from django.utils.dateparse import parse_time, parse_datetime
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import viewsets, serializers, permissions, status
@@ -105,90 +105,100 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                 {"detail": "Prohibited status change."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        appointment.status = new_status
 
-        if new_status == Appointment.Status.RESCHEDULED:
-            new_start = request.data.get("new_start_datetime_utc")
-            new_end = request.data.get("new_end_datetime_utc")
+        with transaction.atomic():
+            if new_status == Appointment.Status.RESCHEDULED:
+                new_start = request.data.get("new_start_datetime_utc")
+                new_end = request.data.get("new_end_datetime_utc")
 
-            if not new_start or not new_end:
-                return Response(
-                    {
-                        "detail": "New start and end times are required for rescheduling."
-                    },
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-            with transaction.atomic():
-                # Check for available slots
-                slots = (
-                    Slot.objects.select_for_update()
-                    .filter(
-                        healthcare_provider=appointment.healthcare_provider,
-                        hospital=appointment.location,
-                        start__lt=new_end,
-                        end__gt=new_start,
-                        status=Slot.Status.FREE,
-                    )
-                    .order_by("start")
-                )
-
-                if not slots.exists():
+                if not new_start or not new_end:
                     return Response(
-                        {"detail": "No available slot for the requested time."},
+                        {"detail": "New start and end times are required for rescheduling."},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
-                coverage_start = slots.first().start if slots else None
-                coverage_end = slots.last().end if slots else None
-                if not (coverage_start <= new_start and coverage_end >= new_end):
-                    return Response(
-                        {"detail": "No continuous free block for the requested time."},
-                        status=400,
+                if isinstance(new_start, str):
+                    new_start = parse_datetime(new_start)
+                if isinstance(new_end, str):
+                    new_end = parse_datetime(new_end)
+
+                # Get and release current slot
+                old_slot = appointment.slot 
+                if old_slot:
+                    old_slot.appointment = None
+                    old_slot.status = Slot.Status.FREE
+                    old_slot.save()
+                
+                # Find and book the new slot
+                try:
+                    new_slot = Slot.objects.select_for_update().get(
+                        healthcare_provider=appointment.healthcare_provider,
+                        hospital=appointment.location,
+                        start=new_start,
+                        end=new_end,
+                        status=Slot.Status.FREE
                     )
+                except Slot.DoesNotExist:
+                    return Response(
+                        {"detail": "No free slot available for the exact requested time."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                
+                # Book the new slot
+                new_slot.appointment = appointment
+                new_slot.status = Slot.Status.BOOKED
+                new_slot.save()
+                
+                # Update appointment times and status
+                appointment.appointment_start_datetime_utc = new_start
+                appointment.appointment_end_datetime_utc = new_end
+            elif new_status == Appointment.Status.CANCELLED:
+                # Reset slot
+                if appointment.status == Appointment.Status.CONFIRMED and appointment.slot:
+                    slot = appointment.slot
+                    slot.appointment = None
+                    slot.status = Slot.Status.FREE
+                    slot.save()
+                
+                # Update appointment status
+                appointment.cancelled_at = timezone.now()
+            elif new_status == Appointment.Status.CONFIRMED:
+                if appointment.status == Appointment.Status.REQUESTED:
+                    try:
+                        slot = Slot.objects.select_for_update().get(
+                            healthcare_provider=appointment.healthcare_provider,
+                            hospital=appointment.location,
+                            start=appointment.appointment_start_datetime_utc,
+                            end=appointment.appointment_end_datetime_utc,
+                        )
+                    except Slot.DoesNotExist:
+                        return Response(
+                            {"detail": "No free slot available for this appointment time."},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
 
-                slots.update(status=Slot.Status.BOOKED)
+                # Check if slot is booked by a different appointment
+                if slot.status == Slot.Status.BOOKED and slot.appointment and slot.appointment != appointment:
+                    return Response(
+                        {"detail": "This time slot is already booked for another appointment."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                # Update slot info only if necessary
+                if slot.status != Slot.Status.BOOKED or slot.appointment != appointment:
+                    slot.appointment = appointment
+                    slot.status = Slot.Status.BOOKED
+                    slot.save()
+            
+            appointment.status = new_status
 
-                # Release old slots
-                old_start = appointment.appointment_start_datetime_utc
-                old_end = appointment.appointment_end_datetime_utc
-                Slot.objects.filter(
-                    healthcare_provider=appointment.healthcare_provider,
-                    hospital=appointment.location,
-                    start__lt=old_end,
-                    end__gt=old_start,
-                    status=Slot.Status.BOOKED,
-                ).update(status=Slot.Status.FREE)
+            update_fields = ["status"]
+            if new_status == Appointment.Status.RESCHEDULED:
+                update_fields.extend(["appointment_start_datetime_utc", "appointment_end_datetime_utc"])
+            if new_status == Appointment.Status.CANCELLED:
+                update_fields.append("cancelled_at")
 
-            appointment.appointment_start_datetime_utc = new_start
-            appointment.appointment_end_datetime_utc = new_end
-        elif new_status == Appointment.Status.CANCELLED:
-            appointment.cancelled_at = timezone.now()
-            Slot.objects.filter(
-                healthcare_provider=appointment.healthcare_provider,
-                hospital=appointment.location,
-                start__lt=appointment.appointment_end_datetime_utc,
-                end__gt=appointment.appointment_start_datetime_utc,
-                status=Slot.Status.BOOKED,
-            ).update(status=Slot.Status.FREE)
-        elif new_status == Appointment.Status.CONFIRMED:
-            Slot.objects.filter(
-                healthcare_provider=appointment.healthcare_provider,
-                hospital=appointment.location,
-                start__lt=appointment.appointment_end_datetime_utc,
-                end__gt=appointment.appointment_start_datetime_utc,
-                status=Slot.Status.FREE,
-            ).update(status=Slot.Status.BOOKED)
+            appointment.save(update_fields=update_fields)
 
-        # save status (and new times if rescheduled)
-        appointment.save(
-            update_fields=[
-                "status",
-                "cancelled_at",
-                "appointment_start_datetime_utc",
-                "appointment_end_datetime_utc",
-            ]
-        )
         return Response({"detail": f"Appointment {new_status.lower()}."})
 
     @action(detail=False, methods=["post"], url_path="generate-slots")
