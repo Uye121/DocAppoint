@@ -23,6 +23,10 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     queryset = Appointment.objects.select_related(
         "patient__user", "healthcare_provider__user", "location"
     )
+    filterset_fields = ["status", "patient", "healthcare_provider"] 
+    search_fields = ["reason", "patient__user__first_name", "patient__user__last_name"]
+    ordering_fields = ["appointment_start_datetime_utc", "created_at"]
+    ordering = ["-appointment_start_datetime_utc"]
 
     def get_serializer_class(self):
         if self.action == "list":

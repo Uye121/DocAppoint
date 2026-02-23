@@ -37,14 +37,28 @@ class SlotSerializer(CamelCaseMixin, serializers.ModelSerializer):
         read_only_fields = ["id", "duration"]
 
     def validate(self, attrs):
-        if attrs["start"] >= attrs["end"]:
-            raise serializers.ValidationError(
-                {"end": "End time must be after start time."}
-            )
-        if attrs["end"] < timezone.now():
+        if "start" in attrs and "end" in attrs:
+            if attrs["start"] >= attrs["end"]:
+                raise serializers.ValidationError(
+                    {"end": "End time must be after start time."}
+                )
+
+        if "end" in attrs and attrs["end"] < timezone.now():
             raise serializers.ValidationError(
                 {"end": "Cannot create/modify a slot in the past."}
             )
+
+        if "start" in attrs and self.instance:
+            if attrs["start"] >= self.instance.end:
+                raise serializers.ValidationError(
+                    {"start": "Start time must be before existing end time."}
+                )
+            
+        if "end" in attrs and self.instance:
+            if self.instance.start >= attrs["end"]:
+                raise serializers.ValidationError(
+                    {"end": "End time must be after existing start time."}
+                )
         return attrs
 
 

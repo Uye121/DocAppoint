@@ -4,7 +4,7 @@ from rest_framework import mixins, viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
-from ..models import HealthcareProvider
+from ..models import HealthcareProvider, Hospital, ProviderHospitalAssignment
 from ..serializers import (
     HealthcareProviderSerializer,
     HealthcareProviderCreateSerializer,
@@ -33,6 +33,8 @@ class HealthcareProviderViewSet(
         is_removed=False, user__is_active=True
     ).select_related("user", "speciality", "primary_hospital")
     pagination_class = PageNumberPagination
+    filterset_fields = ["speciality"]
+    search_fields = ["user__first_name", "user__last_name", "speciality__name"]
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -44,7 +46,12 @@ class HealthcareProviderViewSet(
         return HealthcareProviderSerializer
 
     def get_permissions(self):
-        if self.action in ("create", "update", "partial_update", "destroy", "onboard"):
+        staff_actions = [
+            "create", "update", "partial_update", "destroy", "onboard",
+            "assign_hospital", "unassign_hospital", "hospitals"
+        ]
+
+        if self.action in staff_actions:
             return [IsStaffOrAdmin()]
         return [permissions.IsAuthenticated()]
 
@@ -105,3 +112,87 @@ class HealthcareProviderViewSet(
             instance.save(update_fields=["removed_at"])
         else:
             super().perform_update(serializer)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsStaffOrAdmin])
+    def assign_hospital(self, request, pk=None):
+        provider = self.get_object()
+        hospital_id = request.data.get('hospital_id')
+        
+        try:
+            hospital = Hospital.objects.get(id=hospital_id)
+        except Hospital.DoesNotExist:
+            return Response(
+                {"error": "Hospital not found"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Check if assignment already exists
+        assignment, created = ProviderHospitalAssignment.objects.get_or_create(
+            healthcare_provider=provider,
+            hospital=hospital,
+            defaults={
+                'is_active': True,
+                'created_by': request.user,
+                'updated_by': request.user,
+            }
+        )
+        
+        if not created and not assignment.is_active:
+            assignment.is_active = True
+            assignment.save(update_fields=['is_active', 'updated_by'])
+            return Response({"message": "Assignment reactivated"}, status=status.HTTP_200_OK)
+        elif not created:
+            return Response(
+                {"error": "Assignment already exists"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        return Response(
+            {"message": "Hospital assigned successfully"}, 
+            status=status.HTTP_201_CREATED
+        )
+    
+    @action(detail=True, methods=['post'], permission_classes=[IsStaffOrAdmin])
+    def unassign_hospital(self, request, pk=None):
+        provider = self.get_object()
+        hospital_id = request.data.get('hospital_id')
+        
+        try:
+            assignment = ProviderHospitalAssignment.objects.get(
+                healthcare_provider=provider,
+                hospital_id=hospital_id,
+                is_active=True
+            )
+        except ProviderHospitalAssignment.DoesNotExist:
+            return Response(
+                {"error": "Active assignment not found"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        assignment.is_active = False
+        assignment.updated_by = request.user
+        assignment.save(update_fields=['is_active', 'updated_by'])
+        
+        return Response(
+            {"message": "Hospital unassigned successfully"}, 
+            status=status.HTTP_200_OK
+        )
+    
+    @action(detail=True, methods=['get'], permission_classes=[IsStaffOrAdmin])
+    def hospitals(self, request, pk=None):
+        provider = self.get_object()
+        assignments = provider.providerhospitalassignment_set.filter(is_active=True)
+        
+        primary_hospital_id = provider.primary_hospital.id if provider.primary_hospital else None
+
+        hospitals = [
+            {
+                'id': assignment.hospital.id,
+                'name': assignment.hospital.name,
+                'start_datetime_utc': assignment.start_datetime_utc,
+                'is_primary': primary_hospital_id == assignment.hospital.id
+            }
+            for assignment in assignments
+        ]
+        
+        return Response(hospitals)

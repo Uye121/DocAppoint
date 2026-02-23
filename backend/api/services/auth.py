@@ -28,12 +28,15 @@ def send_verification_email(user: User) -> None:
     link = f"{settings.FRONTEND_URL}/verify-email?token={token}"
 
     html = render_to_string(
-        "verify.html", {"first_name": user.first_name, "link": link}
+        "verify.html", {"first_name": user.first_name, "link": link, "expiry": 30}
+    )
+    plain_message = render_to_string(
+        "verify.txt", {"first_name": user.first_name, "link": link, "expiry": 30}
     )
 
     send_mail(
         subject="Confirmation Email",
-        message="",
+        message=plain_message,
         from_email=settings.DEFAULT_FROM_EMAIL,
         recipient_list=[user.email],
         html_message=html,

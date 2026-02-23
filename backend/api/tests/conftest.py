@@ -36,6 +36,16 @@ def provider_factory(healthcare_provider_factory):
     return healthcare_provider_factory
 
 @pytest.fixture
+def authenticated_user_client(user_factory):
+    def _create_user_client(**kwargs):
+        user = user_factory(**kwargs)
+        client = APIClient()
+        client.force_authenticate(user=user)
+        return client, user
+
+    return _create_user_client
+
+@pytest.fixture
 def authenticated_patient_client(patient_factory):
     def _create_patient_client(**kwargs):
         patient = patient_factory(**kwargs)
@@ -54,3 +64,13 @@ def authenticated_provider_client(provider_factory):
         return client, provider
 
     return _create_provider_client
+
+@pytest.fixture
+def authenticated_admin_client(admin_staff_factory):
+    def _create_admin_client(**kwargs):
+        admin = admin_staff_factory(**kwargs)
+        client = APIClient()
+        client.force_authenticate(user=admin.user)
+        return client, admin
+
+    return _create_admin_client

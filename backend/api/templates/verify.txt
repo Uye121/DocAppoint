@@ -1,0 +1,11 @@
+Hello {{ first_name }}!
+
+Please confirm your email address by visiting this link:
+{{ link }}
+
+This link will expire in {{ expiry }} minutes.
+
+If you didn't create an account, you can safely ignore this email.
+
+Best regards,
+Docappoint Team

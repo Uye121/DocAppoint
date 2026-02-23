@@ -3,6 +3,7 @@ import pytest
 from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 from rest_framework import status
+from api.models import ProviderHospitalAssignment, Hospital
 
 User = get_user_model()
 pytestmark = pytest.mark.django_db
@@ -240,3 +241,292 @@ class TestProviderSoftDelete:
 
         res = api_client.patch(url, payload, format="json")
         assert res.status_code == status.HTTP_403_FORBIDDEN
+
+class TestProviderHospitalAffiliations:
+    """Tests for provider hospital affiliation management endpoints"""
+    
+    def test_assign_hospital_success(
+        self, provider_factory, hospital_factory, admin_staff_factory
+    ):
+        """Test admin can assign a hospital to a provider"""
+        staff = admin_staff_factory()
+        provider = provider_factory()
+        hospital = hospital_factory()
+        api_client = APIClient()
+        
+        api_client.force_authenticate(user=staff.user)
+        url = f"/api/provider/{provider.user.pk}/assign_hospital/"
+        
+        response = api_client.post(url, {"hospital_id": hospital.id}, format="json")
+        assert response.status_code == status.HTTP_201_CREATED
+        assert response.data["message"] == "Hospital assigned successfully"
+        
+        # Verify assignment was created
+        provider.refresh_from_db()
+        assert hospital in provider.hospitals.all()
+
+    def test_assign_hospital_duplicate(
+        self, provider_factory, hospital_factory, admin_staff_factory
+    ):
+        """Test assigning same hospital twice fails"""
+        staff = admin_staff_factory()
+        provider = provider_factory()
+        hospital = hospital_factory()
+        api_client = APIClient()
+        
+        ProviderHospitalAssignment.objects.create(
+            healthcare_provider=provider,
+            hospital=hospital,
+            is_active=True,
+            created_by=staff.user,
+            updated_by=staff.user
+        )
+        
+        api_client.force_authenticate(user=staff.user)
+        url = f"/api/provider/{provider.user.pk}/assign_hospital/"
+        
+        response = api_client.post(url, {"hospital_id": hospital.id}, format="json")
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "already exists" in response.data["error"]
+
+    def test_assign_hospital_reactivate(
+        self, provider_factory, hospital_factory, admin_staff_factory
+    ):  
+        staff = admin_staff_factory()
+        provider = provider_factory()
+        hospital = hospital_factory()
+        api_client = APIClient()
+        
+        assignment = ProviderHospitalAssignment.objects.create(
+            healthcare_provider=provider,
+            hospital=hospital,
+            is_active=False,
+            created_by=staff.user,
+            updated_by=staff.user
+        )
+        
+        api_client.force_authenticate(user=staff.user)
+        url = f"/api/provider/{provider.user.pk}/assign_hospital/"
+        
+        response = api_client.post(url, {"hospital_id": hospital.id}, format="json")
+        assert response.status_code == status.HTTP_200_OK
+        assert "reactivated" in response.data["message"].lower()
+        
+        # Verify assignment is now active
+        assignment.refresh_from_db()
+        assert assignment.is_active is True
+
+    def test_assign_hospital_not_found(
+        self, provider_factory, admin_staff_factory
+    ):
+        """Test assigning non-existent hospital"""
+        staff = admin_staff_factory()
+        provider = provider_factory()
+        api_client = APIClient()
+        
+        api_client.force_authenticate(user=staff.user)
+        url = f"/api/provider/{provider.user.pk}/assign_hospital/"
+        
+        response = api_client.post(url, {"hospital_id": 99999}, format="json")
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert "Hospital not found" in response.data["error"]
+    
+    def test_unassign_hospital_success(
+        self, provider_factory, hospital_factory, admin_staff_factory
+    ):
+        """Test admin can unassign a hospital from a provider"""
+        staff = admin_staff_factory()
+        provider = provider_factory()
+        hospital = hospital_factory()
+        api_client = APIClient()
+        
+        # Create active assignment
+        ProviderHospitalAssignment.objects.create(
+            healthcare_provider=provider,
+            hospital=hospital,
+            is_active=True,
+            created_by=staff.user,
+            updated_by=staff.user
+        )
+        
+        api_client.force_authenticate(user=staff.user)
+        url = f"/api/provider/{provider.user.pk}/unassign_hospital/"
+        
+        response = api_client.post(url, {"hospital_id": hospital.id}, format="json")
+        assert response.status_code == status.HTTP_200_OK
+        assert "unassigned successfully" in response.data["message"]
+        
+        # Verify assignment is now inactive
+        assignment = ProviderHospitalAssignment.objects.get(
+            healthcare_provider=provider,
+            hospital=hospital
+        )
+        assert assignment.is_active is False
+
+    def test_unassign_hospital_not_active(
+        self, provider_factory, hospital_factory, admin_staff_factory
+    ):
+        """Test unassigning a hospital that isn't actively assigned"""
+        staff = admin_staff_factory()
+        provider = provider_factory()
+        hospital = hospital_factory()
+        api_client = APIClient()
+        
+        # Create inactive assignment
+        ProviderHospitalAssignment.objects.create(
+            healthcare_provider=provider,
+            hospital=hospital,
+            is_active=False,
+            created_by=staff.user,
+            updated_by=staff.user
+        )
+        
+        api_client.force_authenticate(user=staff.user)
+        url = f"/api/provider/{provider.user.pk}/unassign_hospital/"
+        
+        response = api_client.post(url, {"hospital_id": hospital.id}, format="json")
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert "Active assignment not found" in response.data["error"]
+    
+    def test_unassign_hospital_not_assigned(
+        self, provider_factory, hospital_factory, admin_staff_factory
+    ):
+        """Test unassigning a hospital that was never assigned"""
+        staff = admin_staff_factory()
+        provider = provider_factory()
+        hospital = hospital_factory()
+        api_client = APIClient()
+        
+        api_client.force_authenticate(user=staff.user)
+        url = f"/api/provider/{provider.user.pk}/unassign_hospital/"
+        
+        response = api_client.post(url, {"hospital_id": hospital.id}, format="json")
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert "Active assignment not found" in response.data["error"]
+
+    def test_list_hospitals(
+        self, provider_factory, hospital_factory, admin_staff_factory
+    ):
+        """Test retrieving list of hospitals assigned to a provider"""
+        staff = admin_staff_factory()
+        provider = provider_factory()
+        hospital1 = hospital_factory(name="General Hospital")
+        hospital2 = hospital_factory(name="City Medical Center")
+        api_client = APIClient()
+        ProviderHospitalAssignment.objects.filter(
+            healthcare_provider=provider
+        ).delete()
+        
+        # Assign hospitals
+        ProviderHospitalAssignment.objects.create(
+            healthcare_provider=provider,
+            hospital=hospital1,
+            is_active=True,
+            created_by=staff.user,
+            updated_by=staff.user
+        )
+        ProviderHospitalAssignment.objects.create(
+            healthcare_provider=provider,
+            hospital=hospital2,
+            is_active=True,
+            created_by=staff.user,
+            updated_by=staff.user
+        )
+        
+        # Set primary hospital
+        provider.primary_hospital = hospital1
+        provider.save()
+        
+        api_client.force_authenticate(user=staff.user)
+        url = f"/api/provider/{provider.user.pk}/hospitals/"
+        
+        response = api_client.get(url)
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data) == 2
+        
+        # Check hospital data structure
+        hospital_ids = [h['id'] for h in response.data]
+        assert hospital1.id in hospital_ids
+        assert hospital2.id in hospital_ids
+        
+        # Check primary flag
+        for hospital_data in response.data:
+            if hospital_data['id'] == hospital1.id:
+                assert hospital_data['is_primary'] is True
+                assert hospital_data['name'] == "General Hospital"
+            else:
+                assert hospital_data['is_primary'] is False
+    
+    def test_list_hospitals_no_primary(
+        self, provider_factory, hospital_factory, admin_staff_factory
+    ):
+        """Test hospitals list when no primary hospital is set"""
+        staff = admin_staff_factory()
+        provider = provider_factory(primary_hospital=None)
+        hospital = hospital_factory()
+        api_client = APIClient()
+        
+        ProviderHospitalAssignment.objects.create(
+            healthcare_provider=provider,
+            hospital=hospital,
+            is_active=True,
+            created_by=staff.user,
+            updated_by=staff.user
+        )
+        
+        api_client.force_authenticate(user=staff.user)
+        url = f"/api/provider/{provider.user.pk}/hospitals/"
+        
+        response = api_client.get(url)
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data) == 1
+        assert response.data[0]['is_primary'] is False
+
+    def test_hospital_actions_require_staff(
+        self, provider_factory, hospital_factory, user_factory
+    ):
+        """Test that non-staff users cannot manage hospital affiliations"""
+        provider = provider_factory()
+        hospital = hospital_factory()
+        regular_user = user_factory(is_staff=False)
+        api_client = APIClient()
+        
+        api_client.force_authenticate(user=regular_user)
+        
+        # Try assign
+        assign_url = f"/api/provider/{provider.user.pk}/assign_hospital/"
+        response = api_client.post(assign_url, {"hospital_id": hospital.id}, format="json")
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        
+        # Try unassign
+        unassign_url = f"/api/provider/{provider.user.pk}/unassign_hospital/"
+        response = api_client.post(unassign_url, {"hospital_id": hospital.id}, format="json")
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        
+        # Try list
+        list_url = f"/api/provider/{provider.user.pk}/hospitals/"
+        response = api_client.get(list_url)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+    
+    def test_hospital_actions_require_auth(
+        self, provider_factory, hospital_factory
+    ):
+        """Test that unauthenticated users cannot manage hospital affiliations"""
+        provider = provider_factory()
+        hospital = hospital_factory()
+        api_client = APIClient()
+        
+        # Try assign
+        assign_url = f"/api/provider/{provider.user.pk}/assign_hospital/"
+        response = api_client.post(assign_url, {"hospital_id": hospital.id}, format="json")
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+        
+        # Try unassign
+        unassign_url = f"/api/provider/{provider.user.pk}/unassign_hospital/"
+        response = api_client.post(unassign_url, {"hospital_id": hospital.id}, format="json")
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+        
+        # Try list
+        list_url = f"/api/provider/{provider.user.pk}/hospitals/"
+        response = api_client.get(list_url)
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
