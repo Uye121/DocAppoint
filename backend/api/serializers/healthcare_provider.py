@@ -63,7 +63,7 @@ class HealthcareProviderSerializer(CamelCaseMixin, serializers.ModelSerializer):
 
 class HealthcareProviderCreateSerializer(CamelCaseMixin, serializers.ModelSerializer):
     # user fields
-    id = serializers.UUIDField(source='user.id', read_only=True)
+    id = serializers.UUIDField(source="user.id", read_only=True)
     email = serializers.EmailField(write_only=True)
     username = serializers.CharField(write_only=True)
     password = serializers.CharField(

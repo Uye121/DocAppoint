@@ -116,7 +116,7 @@ class HealthcareProvider(models.Model):
     hospitals = models.ManyToManyField(
         Hospital,
         through="ProviderHospitalAssignment",
-        through_fields=('healthcare_provider', 'hospital'),
+        through_fields=("healthcare_provider", "hospital"),
     )
     primary_hospital = models.ForeignKey(
         Hospital,
@@ -148,9 +148,7 @@ class HealthcareProvider(models.Model):
 
     @property
     def active_hospitals(self):
-        return self.hospitals.filter(
-            providerhospitalassignment__is_active=True
-        )
+        return self.hospitals.filter(providerhospitalassignment__is_active=True)
 
 
 class AdminStaff(models.Model):

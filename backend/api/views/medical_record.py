@@ -44,7 +44,7 @@ class MedicalRecordViewSet(viewsets.ModelViewSet):
         "patient__user__last_name",
         "healthcare_provider__user__first_name",
         "healthcare_provider__user__last_name",
-        "hospital__name"
+        "hospital__name",
     ]
     ordering_fields = ["created_at", "updated_at"]
     ordering = ["-created_at"]
@@ -68,8 +68,17 @@ class MedicalRecordViewSet(viewsets.ModelViewSet):
         """Instantiate and return the list of permissions for this view."""
         if self.action == "create":
             permission_classes = [IsAuthenticated, IsHealthcareProvider]
-        elif self.action in ["update", "partial_update", "destroy", "removed", "restore"]:
-            permission_classes = [IsAuthenticated, IsHealthcareProvider | IsStaffOrAdmin]
+        elif self.action in [
+            "update",
+            "partial_update",
+            "destroy",
+            "removed",
+            "restore",
+        ]:
+            permission_classes = [
+                IsAuthenticated,
+                IsHealthcareProvider | IsStaffOrAdmin,
+            ]
         elif self.action == "list":
             permission_classes = [IsAuthenticated, IsPatientOrProvider]
         else:  # retrieve

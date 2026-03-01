@@ -44,7 +44,7 @@ class PatientViewSet(
                 else [permissions.IsAuthenticated()]
             )
         return [permissions.IsAuthenticated()]
-    
+
     @action(detail=False, methods=["get", "patch", "put"], url_path="me")
     def me(self, request):
         if not hasattr(request.user, "patient"):
@@ -97,8 +97,10 @@ class PatientViewSet(
         )
 
     def list(self, request, *args, **kwargs):
-        if not (request.user.is_staff or
-                hasattr(request.user, "admin_staff") or
-                hasattr(request.user, "system_admin")):
+        if not (
+            request.user.is_staff
+            or hasattr(request.user, "admin_staff")
+            or hasattr(request.user, "system_admin")
+        ):
             return Response(status=status.HTTP_403_FORBIDDEN)
         return super().list(request, *args, **kwargs)

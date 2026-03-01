@@ -195,6 +195,9 @@ ci-be-lint:
 	cd $(BACKEND_DIR) && poetry run ruff check .
 	cd $(BACKEND_DIR) && poetry run ruff format --check .
 
+ci-be-format:
+	cd $(BACKEND_DIR) && poetry run ruff format .
+
 ci-be-type-check:
 	cd $(BACKEND_DIR) && poetry run mypy api
 

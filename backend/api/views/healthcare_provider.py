@@ -47,8 +47,14 @@ class HealthcareProviderViewSet(
 
     def get_permissions(self):
         staff_actions = [
-            "create", "update", "partial_update", "destroy", "onboard",
-            "assign_hospital", "unassign_hospital", "hospitals"
+            "create",
+            "update",
+            "partial_update",
+            "destroy",
+            "onboard",
+            "assign_hospital",
+            "unassign_hospital",
+            "hospitals",
         ]
 
         if self.action in staff_actions:
@@ -113,86 +119,86 @@ class HealthcareProviderViewSet(
         else:
             super().perform_update(serializer)
 
-    @action(detail=True, methods=['post'], permission_classes=[IsStaffOrAdmin])
+    @action(detail=True, methods=["post"], permission_classes=[IsStaffOrAdmin])
     def assign_hospital(self, request, pk=None):
         provider = self.get_object()
-        hospital_id = request.data.get('hospital_id')
-        
+        hospital_id = request.data.get("hospital_id")
+
         try:
             hospital = Hospital.objects.get(id=hospital_id)
         except Hospital.DoesNotExist:
             return Response(
-                {"error": "Hospital not found"}, 
-                status=status.HTTP_404_NOT_FOUND
+                {"error": "Hospital not found"}, status=status.HTTP_404_NOT_FOUND
             )
-        
+
         # Check if assignment already exists
         assignment, created = ProviderHospitalAssignment.objects.get_or_create(
             healthcare_provider=provider,
             hospital=hospital,
             defaults={
-                'is_active': True,
-                'created_by': request.user,
-                'updated_by': request.user,
-            }
+                "is_active": True,
+                "created_by": request.user,
+                "updated_by": request.user,
+            },
         )
-        
+
         if not created and not assignment.is_active:
             assignment.is_active = True
-            assignment.save(update_fields=['is_active', 'updated_by'])
-            return Response({"message": "Assignment reactivated"}, status=status.HTTP_200_OK)
+            assignment.save(update_fields=["is_active", "updated_by"])
+            return Response(
+                {"message": "Assignment reactivated"}, status=status.HTTP_200_OK
+            )
         elif not created:
             return Response(
-                {"error": "Assignment already exists"}, 
-                status=status.HTTP_400_BAD_REQUEST
+                {"error": "Assignment already exists"},
+                status=status.HTTP_400_BAD_REQUEST,
             )
-        
+
         return Response(
-            {"message": "Hospital assigned successfully"}, 
-            status=status.HTTP_201_CREATED
+            {"message": "Hospital assigned successfully"},
+            status=status.HTTP_201_CREATED,
         )
-    
-    @action(detail=True, methods=['post'], permission_classes=[IsStaffOrAdmin])
+
+    @action(detail=True, methods=["post"], permission_classes=[IsStaffOrAdmin])
     def unassign_hospital(self, request, pk=None):
         provider = self.get_object()
-        hospital_id = request.data.get('hospital_id')
-        
+        hospital_id = request.data.get("hospital_id")
+
         try:
             assignment = ProviderHospitalAssignment.objects.get(
-                healthcare_provider=provider,
-                hospital_id=hospital_id,
-                is_active=True
+                healthcare_provider=provider, hospital_id=hospital_id, is_active=True
             )
         except ProviderHospitalAssignment.DoesNotExist:
             return Response(
-                {"error": "Active assignment not found"}, 
-                status=status.HTTP_404_NOT_FOUND
+                {"error": "Active assignment not found"},
+                status=status.HTTP_404_NOT_FOUND,
             )
-        
+
         assignment.is_active = False
         assignment.updated_by = request.user
-        assignment.save(update_fields=['is_active', 'updated_by'])
-        
+        assignment.save(update_fields=["is_active", "updated_by"])
+
         return Response(
-            {"message": "Hospital unassigned successfully"}, 
-            status=status.HTTP_200_OK
+            {"message": "Hospital unassigned successfully"}, status=status.HTTP_200_OK
         )
-    
-    @action(detail=True, methods=['get'], permission_classes=[IsStaffOrAdmin])
+
+    @action(detail=True, methods=["get"], permission_classes=[IsStaffOrAdmin])
     def hospitals(self, request, pk=None):
         provider = self.get_object()
         assignments = provider.providerhospitalassignment_set.filter(is_active=True)
-        
-        primary_hospital_id = provider.primary_hospital.id if provider.primary_hospital else None
+
+        primary_hospital_id = (
+            provider.primary_hospital.id if provider.primary_hospital else None
+        )
 
         hospitals = [
             {
-                'id': assignment.hospital.id,
-                'name': assignment.hospital.name,
-                'start_datetime_utc': assignment.start_datetime_utc,
-                'is_primary': primary_hospital_id == assignment.hospital.id
+                "id": assignment.hospital.id,
+                "name": assignment.hospital.name,
+                "start_datetime_utc": assignment.start_datetime_utc,
+                "is_primary": primary_hospital_id == assignment.hospital.id,
             }
             for assignment in assignments
         ]
-        
+
         return Response(hospitals)

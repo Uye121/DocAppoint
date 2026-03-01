@@ -23,7 +23,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     queryset = Appointment.objects.select_related(
         "patient__user", "healthcare_provider__user", "location"
     )
-    filterset_fields = ["status", "patient", "healthcare_provider"] 
+    filterset_fields = ["status", "patient", "healthcare_provider"]
     search_fields = ["reason", "patient__user__first_name", "patient__user__last_name"]
     ordering_fields = ["appointment_start_datetime_utc", "created_at"]
     ordering = ["-appointment_start_datetime_utc"]
@@ -117,7 +117,9 @@ class AppointmentViewSet(viewsets.ModelViewSet):
 
                 if not new_start or not new_end:
                     return Response(
-                        {"detail": "New start and end times are required for rescheduling."},
+                        {
+                            "detail": "New start and end times are required for rescheduling."
+                        },
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
@@ -127,12 +129,12 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                     new_end = parse_datetime(new_end)
 
                 # Get and release current slot
-                old_slot = appointment.slot 
+                old_slot = appointment.slot
                 if old_slot:
                     old_slot.appointment = None
                     old_slot.status = Slot.Status.FREE
                     old_slot.save()
-                
+
                 # Find and book the new slot
                 try:
                     new_slot = Slot.objects.select_for_update().get(
@@ -140,30 +142,35 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                         hospital=appointment.location,
                         start=new_start,
                         end=new_end,
-                        status=Slot.Status.FREE
+                        status=Slot.Status.FREE,
                     )
                 except Slot.DoesNotExist:
                     return Response(
-                        {"detail": "No free slot available for the exact requested time."},
+                        {
+                            "detail": "No free slot available for the exact requested time."
+                        },
                         status=status.HTTP_400_BAD_REQUEST,
                     )
-                
+
                 # Book the new slot
                 new_slot.appointment = appointment
                 new_slot.status = Slot.Status.BOOKED
                 new_slot.save()
-                
+
                 # Update appointment times and status
                 appointment.appointment_start_datetime_utc = new_start
                 appointment.appointment_end_datetime_utc = new_end
             elif new_status == Appointment.Status.CANCELLED:
                 # Reset slot
-                if appointment.status == Appointment.Status.CONFIRMED and appointment.slot:
+                if (
+                    appointment.status == Appointment.Status.CONFIRMED
+                    and appointment.slot
+                ):
                     slot = appointment.slot
                     slot.appointment = None
                     slot.status = Slot.Status.FREE
                     slot.save()
-                
+
                 # Update appointment status
                 appointment.cancelled_at = timezone.now()
             elif new_status == Appointment.Status.CONFIRMED:
@@ -177,14 +184,22 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                         )
                     except Slot.DoesNotExist:
                         return Response(
-                            {"detail": "No free slot available for this appointment time."},
+                            {
+                                "detail": "No free slot available for this appointment time."
+                            },
                             status=status.HTTP_400_BAD_REQUEST,
                         )
 
                 # Check if slot is booked by a different appointment
-                if slot.status == Slot.Status.BOOKED and slot.appointment and slot.appointment != appointment:
+                if (
+                    slot.status == Slot.Status.BOOKED
+                    and slot.appointment
+                    and slot.appointment != appointment
+                ):
                     return Response(
-                        {"detail": "This time slot is already booked for another appointment."},
+                        {
+                            "detail": "This time slot is already booked for another appointment."
+                        },
                         status=status.HTTP_400_BAD_REQUEST,
                     )
                 # Update slot info only if necessary
@@ -192,12 +207,14 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                     slot.appointment = appointment
                     slot.status = Slot.Status.BOOKED
                     slot.save()
-            
+
             appointment.status = new_status
 
             update_fields = ["status"]
             if new_status == Appointment.Status.RESCHEDULED:
-                update_fields.extend(["appointment_start_datetime_utc", "appointment_end_datetime_utc"])
+                update_fields.extend(
+                    ["appointment_start_datetime_utc", "appointment_end_datetime_utc"]
+                )
             if new_status == Appointment.Status.CANCELLED:
                 update_fields.append("cancelled_at")
 

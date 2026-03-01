@@ -53,7 +53,7 @@ class SlotSerializer(CamelCaseMixin, serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     {"start": "Start time must be before existing end time."}
                 )
-            
+
         if "end" in attrs and self.instance:
             if self.instance.start >= attrs["end"]:
                 raise serializers.ValidationError(
@@ -169,10 +169,12 @@ class AppointmentCreateSerializer(CamelCaseMixin, serializers.ModelSerializer):
         if Appointment.objects.filter(
             patient=attrs.get("patient"),
             healthcare_provider=attrs.get("healthcare_provider"),
-            appointment_start_datetime_utc=attrs.get('appointment_start_datetime_utc'),
-            cancelled_at__isnull=True
+            appointment_start_datetime_utc=attrs.get("appointment_start_datetime_utc"),
+            cancelled_at__isnull=True,
         ).exists():
-            raise serializers.ValidationError("An appointment already exist at this time")
+            raise serializers.ValidationError(
+                "An appointment already exist at this time"
+            )
 
         start = attrs.get("appointment_start_datetime_utc")
         end = attrs.get("appointment_end_datetime_utc")

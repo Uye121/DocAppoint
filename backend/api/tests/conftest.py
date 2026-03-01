@@ -35,6 +35,7 @@ def provider_factory(healthcare_provider_factory):
     """Alias for healthcare_provider_factory"""
     return healthcare_provider_factory
 
+
 @pytest.fixture
 def authenticated_user_client(user_factory):
     def _create_user_client(**kwargs):
@@ -44,6 +45,7 @@ def authenticated_user_client(user_factory):
         return client, user
 
     return _create_user_client
+
 
 @pytest.fixture
 def authenticated_patient_client(patient_factory):
@@ -55,6 +57,7 @@ def authenticated_patient_client(patient_factory):
 
     return _create_patient_client
 
+
 @pytest.fixture
 def authenticated_provider_client(provider_factory):
     def _create_provider_client(**kwargs):
@@ -65,6 +68,7 @@ def authenticated_provider_client(provider_factory):
 
     return _create_provider_client
 
+
 @pytest.fixture
 def authenticated_admin_client(admin_staff_factory):
     def _create_admin_client(**kwargs):
@@ -74,6 +78,7 @@ def authenticated_admin_client(admin_staff_factory):
         return client, admin
 
     return _create_admin_client
+
 
 @pytest.fixture
 def authenticated_system_admin_client(admin_staff_factory):

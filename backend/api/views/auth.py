@@ -114,9 +114,9 @@ class ResendVerifyView(generics.GenericAPIView):
         except User.DoesNotExist:
             return Response(
                 {"detail": "User with this email does not exist."},
-                status=status.HTTP_404_NOT_FOUND
+                status=status.HTTP_404_NOT_FOUND,
             )
-        
+
         if user.is_active:
             return Response(
                 {"detail": "account already verified"},

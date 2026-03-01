@@ -140,7 +140,7 @@ class AppointmentFactory(factory.django.DjangoModelFactory):
 class SlotFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Slot
-    
+
     healthcare_provider = factory.SubFactory(HealthcareProviderFactory)
     hospital = factory.SubFactory(HospitalFactory)
     appointment = factory.SubFactory(AppointmentFactory)
