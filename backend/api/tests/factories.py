@@ -9,6 +9,7 @@ from ..models import (
     SystemAdmin,
     Hospital,
     Speciality,
+    Slot,
     Appointment,
     MedicalRecord,
     ProviderHospitalAssignment,
@@ -134,6 +135,21 @@ class AppointmentFactory(factory.django.DjangoModelFactory):
 
     reason = "test"
     status = "CONFIRMED"
+
+
+class SlotFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Slot
+
+    healthcare_provider = factory.SubFactory(HealthcareProviderFactory)
+    hospital = factory.SubFactory(HospitalFactory)
+    appointment = factory.SubFactory(AppointmentFactory)
+
+    start = timezone.now() + timedelta(days=1)
+    end = start + timedelta(minutes=30)
+    status = "BOOKED"
+    created_by = factory.LazyAttribute(lambda o: o.healthcare_provider.user)
+    updated_by = factory.LazyAttribute(lambda o: o.healthcare_provider.user)
 
 
 class MedicalRecordFactory(factory.django.DjangoModelFactory):

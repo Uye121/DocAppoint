@@ -113,7 +113,11 @@ class HealthcareProvider(models.Model):
     certifications = models.TextField(_("Certifications"), blank=True)
 
     # Affiliations
-    hospitals = models.ManyToManyField(Hospital, through="ProviderHospitalAssignment")
+    hospitals = models.ManyToManyField(
+        Hospital,
+        through="ProviderHospitalAssignment",
+        through_fields=("healthcare_provider", "hospital"),
+    )
     primary_hospital = models.ForeignKey(
         Hospital,
         on_delete=models.SET_NULL,
@@ -141,6 +145,10 @@ class HealthcareProvider(models.Model):
                 condition=models.Q(license_number__regex=r"^[A-Z0-9]{6,20}$"),
             ),
         ]
+
+    @property
+    def active_hospitals(self):
+        return self.hospitals.filter(providerhospitalassignment__is_active=True)
 
 
 class AdminStaff(models.Model):

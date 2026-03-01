@@ -12,7 +12,7 @@ from ..serializers import (
     MedicalRecordListSerializer,
     MedicalRecordDetailSerializer,
 )
-from ..permissions import IsHealthcareProvider, IsPatientOrProvider, IsRecordOwner
+from ..permissions import IsHealthcareProvider, IsPatientOrProvider, IsStaffOrAdmin
 
 
 class MedicalRecordViewSet(viewsets.ModelViewSet):
@@ -28,7 +28,7 @@ class MedicalRecordViewSet(viewsets.ModelViewSet):
     - DELETE /api/medical-record/{id}/ - Soft delete (provider owner only)
     """
 
-    queryset = MedicalRecord.objects.filter(is_removed=False)
+    queryset = MedicalRecord.objects.all()
     permission_classes = [IsAuthenticated]
     filter_backends = [
         DjangoFilterBackend,
@@ -36,7 +36,16 @@ class MedicalRecordViewSet(viewsets.ModelViewSet):
         filters.OrderingFilter,
     ]
     filterset_fields = ["patient", "healthcare_provider", "hospital", "appointment"]
-    search_fields = ["diagnosis", "notes", "prescriptions"]
+    search_fields = [
+        "diagnosis",
+        "notes",
+        "prescriptions",
+        "patient__user__first_name",
+        "patient__user__last_name",
+        "healthcare_provider__user__first_name",
+        "healthcare_provider__user__last_name",
+        "hospital__name",
+    ]
     ordering_fields = ["created_at", "updated_at"]
     ordering = ["-created_at"]
 
@@ -59,8 +68,17 @@ class MedicalRecordViewSet(viewsets.ModelViewSet):
         """Instantiate and return the list of permissions for this view."""
         if self.action == "create":
             permission_classes = [IsAuthenticated, IsHealthcareProvider]
-        elif self.action in ["update", "partial_update", "destroy"]:
-            permission_classes = [IsAuthenticated, IsRecordOwner]
+        elif self.action in [
+            "update",
+            "partial_update",
+            "destroy",
+            "removed",
+            "restore",
+        ]:
+            permission_classes = [
+                IsAuthenticated,
+                IsHealthcareProvider | IsStaffOrAdmin,
+            ]
         elif self.action == "list":
             permission_classes = [IsAuthenticated, IsPatientOrProvider]
         else:  # retrieve
@@ -69,20 +87,20 @@ class MedicalRecordViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Filter queryset based on user role"""
-        queryset = super().get_queryset()
         user = self.request.user
+
+        if self.action == "restore":
+            queryset = MedicalRecord.objects.all()
+        else:
+            queryset = MedicalRecord.objects.filter(is_removed=False)
 
         # Patients can only see their own records
         if hasattr(user, "patient"):
             queryset = queryset.filter(patient=user.patient)
 
-        # Providers can only see records they created
-        elif hasattr(user, "provider"):
-            queryset = queryset.filter(healthcare_provider=user.provider)
-
-        # Admins/staff see all records
-        elif user.is_staff:
-            pass  # Return all records
+        # Providers can see all records
+        elif hasattr(user, "provider") or hasattr(user, "admin_staff") or user.is_staff:
+            pass
 
         else:
             # Other users see nothing
@@ -124,13 +142,6 @@ class MedicalRecordViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated])
     def removed(self, request):
-        """List soft-deleted records (admin/staff only)"""
-        if not request.user.is_staff:
-            return Response(
-                {"detail": "You do not have permission to view deleted records."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
         removed_records = MedicalRecord.objects.filter(is_removed=True)
         page = self.paginate_queryset(removed_records)
         if page is not None:
@@ -142,13 +153,6 @@ class MedicalRecordViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
     def restore(self, request, pk=None):
-        """Restore a soft-deleted record (admin/staff only)"""
-        if not request.user.is_staff:
-            return Response(
-                {"detail": "You do not have permission to restore records."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
         record = self.get_object()
         if not record.is_removed:
             return Response(

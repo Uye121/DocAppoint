@@ -109,7 +109,14 @@ class ResendVerifyView(generics.GenericAPIView):
                 {"detail": "email required"}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        user = get_object_or_404(User, email=email)
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response(
+                {"detail": "User with this email does not exist."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
         if user.is_active:
             return Response(
                 {"detail": "account already verified"},

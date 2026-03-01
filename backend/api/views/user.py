@@ -35,9 +35,6 @@ class UserViewSet(
             return [AllowAny()]
         return [IsAuthenticated()]
 
-    def get(self):
-        return self.request.user
-
     def perform_create(self, serializer):
         user = serializer.save()
         send_verification_email(user)

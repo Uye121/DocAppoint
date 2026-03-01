@@ -61,6 +61,7 @@ class TestMedicalRecordCreateSerializer:
         serializer = MedicalRecordCreateSerializer()
 
         expected_fields = [
+            "id",
             "patient_id",
             "hospital_id",
             "appointment_id",

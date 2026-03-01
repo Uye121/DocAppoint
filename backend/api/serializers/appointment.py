@@ -37,14 +37,28 @@ class SlotSerializer(CamelCaseMixin, serializers.ModelSerializer):
         read_only_fields = ["id", "duration"]
 
     def validate(self, attrs):
-        if attrs["start"] >= attrs["end"]:
-            raise serializers.ValidationError(
-                {"end": "End time must be after start time."}
-            )
-        if attrs["end"] < timezone.now():
+        if "start" in attrs and "end" in attrs:
+            if attrs["start"] >= attrs["end"]:
+                raise serializers.ValidationError(
+                    {"end": "End time must be after start time."}
+                )
+
+        if "end" in attrs and attrs["end"] < timezone.now():
             raise serializers.ValidationError(
                 {"end": "Cannot create/modify a slot in the past."}
             )
+
+        if "start" in attrs and self.instance:
+            if attrs["start"] >= self.instance.end:
+                raise serializers.ValidationError(
+                    {"start": "Start time must be before existing end time."}
+                )
+
+        if "end" in attrs and self.instance:
+            if self.instance.start >= attrs["end"]:
+                raise serializers.ValidationError(
+                    {"end": "End time must be after existing start time."}
+                )
         return attrs
 
 
@@ -79,12 +93,6 @@ class AppointmentListSerializer(CamelCaseMixin, serializers.ModelSerializer):
             "reason",
             "status",
         ]
-
-    # def get_patient_name(self, obj: Appointment) -> str:
-    #     return f"{obj.patient.user.first_name} {obj.patient.user.last_name}"
-
-    # def get_provider_name(self, obj: Appointment) -> str:
-    #     return f"{obj.healthcare_provider.user.first_name} {obj.healthcare_provider.user.last_name}"
 
 
 class AppointmentDetailSerializer(CamelCaseMixin, serializers.ModelSerializer):
@@ -141,6 +149,7 @@ class AppointmentCreateSerializer(CamelCaseMixin, serializers.ModelSerializer):
     class Meta:
         model = Appointment
         fields = [
+            "id",
             "patient",
             "provider",
             "appointment_start_datetime_utc",
@@ -157,6 +166,16 @@ class AppointmentCreateSerializer(CamelCaseMixin, serializers.ModelSerializer):
         return value
 
     def validate(self, attrs):
+        if Appointment.objects.filter(
+            patient=attrs.get("patient"),
+            healthcare_provider=attrs.get("healthcare_provider"),
+            appointment_start_datetime_utc=attrs.get("appointment_start_datetime_utc"),
+            cancelled_at__isnull=True,
+        ).exists():
+            raise serializers.ValidationError(
+                "An appointment already exist at this time"
+            )
+
         start = attrs.get("appointment_start_datetime_utc")
         end = attrs.get("appointment_end_datetime_utc")
         if start and end and end <= start:

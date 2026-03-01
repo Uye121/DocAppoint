@@ -9,6 +9,9 @@ class Hospital(AuditMixin, models.Model):
     name = models.CharField(max_length=255)
     address_line1 = models.CharField("Address line 1", max_length=1024)
     address_line2 = models.CharField("Address line 2", max_length=1024, blank=True)
+    city = models.CharField(max_length=50, blank=True)
+    state = models.CharField(max_length=2, blank=True)
+    zip_code = models.CharField(max_length=5, blank=True)
     phone_number = models.CharField(max_length=20)
     timezone = models.CharField(
         max_length=64,
