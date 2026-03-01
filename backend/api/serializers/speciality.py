@@ -20,7 +20,6 @@ class SpecialitySerializer(CamelCaseMixin, serializers.ModelSerializer):
             "id",
             "created_at",
             "updated_by",
-            "is_removed",
             "removed_at",
         )
 

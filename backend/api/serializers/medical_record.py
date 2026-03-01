@@ -92,6 +92,7 @@ class MedicalRecordCreateSerializer(MedicalRecordSerializer):
 
     class Meta(MedicalRecordSerializer.Meta):
         fields = [
+            "id",
             "patient_id",
             "hospital_id",
             "appointment_id",

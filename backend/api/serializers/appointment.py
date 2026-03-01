@@ -166,6 +166,14 @@ class AppointmentCreateSerializer(CamelCaseMixin, serializers.ModelSerializer):
         return value
 
     def validate(self, attrs):
+        if Appointment.objects.filter(
+            patient=attrs.get("patient"),
+            healthcare_provider=attrs.get("healthcare_provider"),
+            appointment_start_datetime_utc=attrs.get('appointment_start_datetime_utc'),
+            cancelled_at__isnull=True
+        ).exists():
+            raise serializers.ValidationError("An appointment already exist at this time")
+
         start = attrs.get("appointment_start_datetime_utc")
         end = attrs.get("appointment_end_datetime_utc")
         if start and end and end <= start:

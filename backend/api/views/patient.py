@@ -1,4 +1,4 @@
-from rest_framework import mixins, viewsets, permissions, status
+from rest_framework import mixins, viewsets, permissions, status, exceptions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
@@ -8,6 +8,7 @@ from ..serializers import (
     PatientCreateSerializer,
     PatientOnBoardSerializer,
 )
+from ..services.auth import send_verification_email
 
 
 class PatientViewSet(
@@ -43,12 +44,33 @@ class PatientViewSet(
                 else [permissions.IsAuthenticated()]
             )
         return [permissions.IsAuthenticated()]
+    
+    @action(detail=False, methods=["get", "patch", "put"], url_path="me")
+    def me(self, request):
+        if not hasattr(request.user, "patient"):
+            raise exceptions.NotFound("Patient profile not found.")
+
+        if request.method == "GET":
+            serializer = self.get_serializer(request.user.patient)
+            return Response(serializer.data)
+        else:  # PATCH/PUT
+            serializer = self.get_serializer(
+                request.user.patient,
+                data=request.data,
+                partial=(request.method == "PATCH"),
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
 
     def get_object(self):
-        return self.request.user.patient
+        return super().get_object()
 
     def perform_create(self, serializer):
-        return serializer.save()
+        patient = serializer.save()
+        send_verification_email(patient.user)
+
+        return patient
 
     def update(self, request, *args, **kwargs):
         """Only allow patients to update their own profile"""
@@ -75,6 +97,8 @@ class PatientViewSet(
         )
 
     def list(self, request, *args, **kwargs):
-        if not request.user.is_staff:
+        if not (request.user.is_staff or
+                hasattr(request.user, "admin_staff") or
+                hasattr(request.user, "system_admin")):
             return Response(status=status.HTTP_403_FORBIDDEN)
         return super().list(request, *args, **kwargs)

@@ -5,7 +5,12 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 from datetime import timedelta, datetime, time
 
-from api.models import HealthcareProvider, ProviderHospitalAssignment, Speciality, Slot
+from api.models import (
+    HealthcareProvider,
+    ProviderHospitalAssignment,
+    Appointment,
+    Slot
+)
 
 
 pytestmark = pytest.mark.django_db
@@ -384,3 +389,476 @@ class TestHealthcareProviderFlow:
         response = admin_client.post(onboard_url, onboard_data, format="json")
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert "Provider profile already exists" in str(response.data)
+
+class TestHealthcareProviderValidation:
+    """Test validation rules for healthcare providers"""
+
+    def test_provider_creation_validation(self, authenticated_admin_client, 
+                                          speciality_factory, hospital_factory):
+        """Test validation errors during provider creation"""
+        admin_client, _ = authenticated_admin_client()
+        speciality = speciality_factory()
+        hospital = hospital_factory()
+        
+        url = reverse("provider-list")
+        
+        # Test invalid fees (<= 0)
+        invalid_fees_data = {
+            "email": "dr.invalid@example.com",
+            "username": "drinvalid",
+            "password": "ComplexPass123!",
+            "first_name": "Invalid",
+            "last_name": "Doctor",
+            "speciality": speciality.id,
+            "fees": "-50.00",  # Invalid
+            "address_line1": "123 Medical Center Dr",
+            "city": "Boston",
+            "state": "MA",
+            "zip_code": "02115",
+            "license_number": "MD123456",
+            "about": "Test",
+            "primary_hospital": hospital.id
+        }
+        
+        response = admin_client.post(url, invalid_fees_data, format="json")
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "fees" in str(response.data).lower()
+        
+        # Test invalid license format
+        invalid_license_data = {
+            "email": "dr.license@example.com",
+            "username": "drlicense",
+            "password": "ComplexPass123!",
+            "first_name": "License",
+            "last_name": "Doctor",
+            "speciality": speciality.id,
+            "fees": "150.00",
+            "address_line1": "123 Medical Center Dr",
+            "city": "Boston",
+            "state": "MA",
+            "zip_code": "02115",
+            "license_number": "abc",  # Too short
+            "about": "Test",
+            "primary_hospital": hospital.id
+        }
+        
+        response = admin_client.post(url, invalid_license_data, format="json")
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "license" in str(response.data).lower()
+        
+        # Test missing speciality
+        missing_speciality_data = {
+            "email": "dr.missing@example.com",
+            "username": "drmissing",
+            "password": "ComplexPass123!",
+            "first_name": "Missing",
+            "last_name": "Doctor",
+            # speciality missing
+            "fees": "150.00",
+            "address_line1": "123 Medical Center Dr",
+            "city": "Boston",
+            "state": "MA",
+            "zip_code": "02115",
+            "license_number": "MD123456",
+            "about": "Test",
+            "primary_hospital": hospital.id
+        }
+        
+        response = admin_client.post(url, missing_speciality_data, format="json")
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "speciality" in str(response.data).lower()
+
+class TestHealthcareProviderProfileAccess:
+    """Test access control for provider profiles"""
+
+    def test_provider_cannot_update_others_profile(self, provider_factory, 
+                                                   authenticated_provider_client):
+        """Test provider cannot update another provider's profile"""
+        provider2 = provider_factory()
+        
+        client, _ = authenticated_provider_client()
+        
+        # Try to update provider2's profile via detail URL
+        url = reverse("provider-detail", kwargs={"pk": provider2.user.pk})
+        update_data = {"about": "Hacked!"}
+        
+        response = client.patch(url, update_data, format="json")
+        
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        
+        # Verify provider2's profile unchanged
+        provider2.refresh_from_db()
+        assert provider2.about != "Hacked!"
+
+    def test_provider_me_endpoint_no_profile(self, authenticated_user_client):
+        """Test /me endpoint returns 404 for user without provider profile"""
+        user_client, _ = authenticated_user_client()
+        
+        url = reverse("provider-me")
+        response = user_client.get(url)
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+class TestHealthcareProviderSlotValidation:
+    """Test slot management validation rules"""
+
+    def test_provider_cannot_create_past_slot(self, authenticated_provider_client):
+        """Test provider cannot create slots in the past"""
+        provider_client, provider = authenticated_provider_client()
+        hospital = provider.primary_hospital
+        
+        url = reverse("slot-list")
+        
+        # Past time
+        past_start = timezone.now() - timedelta(days=1)
+        past_end = past_start + timedelta(minutes=30)
+        
+        slot_data = {
+            "healthcare_provider": provider.user_id,
+            "hospital_id": hospital.id,
+            "start": past_start.isoformat(),
+            "end": past_end.isoformat(),
+            "status": "FREE"
+        }
+        
+        response = provider_client.post(url, slot_data, format="json")
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "past" in str(response.data).lower()
+
+    def test_provider_cannot_create_slot_with_end_before_start(self, authenticated_provider_client):
+        """Test validation for end time after start time"""
+        provider_client, provider = authenticated_provider_client()
+        hospital = provider.primary_hospital
+        
+        url = reverse("slot-list")
+        
+        future_date = timezone.now() + timedelta(days=3)
+        
+        # End before start
+        slot_data = {
+            "healthcare_provider": provider.user_id,
+            "hospital_id": hospital.id,
+            "start": future_date.isoformat(),
+            "end": (future_date - timedelta(minutes=30)).isoformat(),  # Earlier
+            "status": "FREE"
+        }
+        
+        response = provider_client.post(url, slot_data, format="json")
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "after start" in str(response.data).lower() or "end" in str(response.data).lower()
+
+    def test_provider_cannot_duplicate_slot(self, authenticated_provider_client):
+        """Test unique constraint for provider + start time"""
+        provider_client, provider = authenticated_provider_client()
+        hospital = provider.primary_hospital
+        
+        url = reverse("slot-list")
+        
+        start_time = timezone.now() + timedelta(days=3, hours=10)
+        end_time = start_time + timedelta(minutes=30)
+        
+        # First slot
+        slot_data = {
+            "healthcare_provider": provider.user_id,
+            "hospital_id": hospital.id,
+            "start": start_time.isoformat(),
+            "end": end_time.isoformat(),
+            "status": "FREE"
+        }
+        
+        response = provider_client.post(url, slot_data, format="json")
+        assert response.status_code == status.HTTP_201_CREATED
+        
+        # Duplicate slot
+        response = provider_client.post(url, slot_data, format="json")
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+class TestHealthcareProviderAppointmentManagement:
+    """Test provider's ability to manage appointments"""
+
+    def test_provider_confirm_appointment(self, authenticated_provider_client,
+                                        authenticated_patient_client, slot_factory):
+        """Test provider can confirm a requested appointment"""
+        provider_client, provider = authenticated_provider_client()
+        patient_client, patient = authenticated_patient_client()
+        hospital = provider.primary_hospital
+        
+        # Create a free slot
+        start_time = timezone.now() + timedelta(days=3)
+        end_time = start_time + timedelta(minutes=30)
+        
+        slot = slot_factory(
+            healthcare_provider=provider,
+            hospital=hospital,
+            start=start_time,
+            end=end_time,
+            status=Slot.Status.FREE,
+            appointment=None
+        )
+        
+        # Patient books appointment
+        appointment_url = reverse("appointment-list")
+        appointment_data = {
+            "patient": patient.pk,
+            "provider": provider.pk,
+            "location": hospital.id,
+            "appointment_start_datetime_utc": start_time.isoformat(),
+            "appointment_end_datetime_utc": end_time.isoformat(),
+            "reason": "Checkup"
+        }
+        
+        response = patient_client.post(appointment_url, appointment_data, format="json")
+        assert response.status_code == status.HTTP_201_CREATED
+        appointment_id = response.data["id"]
+        
+        # Provider confirms
+        set_status_url = reverse("appointment-set-status", args=[appointment_id])
+        response = provider_client.post(set_status_url, {"status": "CONFIRMED"}, format="json")
+        assert response.status_code == status.HTTP_200_OK
+        
+        slot.refresh_from_db()
+        assert slot.status == Slot.Status.BOOKED
+
+    def test_provider_cancel_appointment(self, authenticated_provider_client,
+                                         appointment_factory, patient_factory, slot_factory):
+        """Test provider can cancel an appointment"""
+        provider_client, provider = authenticated_provider_client()
+        patient = patient_factory()
+        hospital = provider.primary_hospital
+        
+        # Create slot and appointment
+        start_time = timezone.now() + timedelta(days=3)
+        end_time = start_time + timedelta(minutes=30)
+        
+        slot = slot_factory(
+            healthcare_provider=provider,
+            hospital=hospital,
+            start=start_time,
+            end=end_time,
+            status=Slot.Status.BOOKED
+        )
+        
+        appointment = appointment_factory(
+            healthcare_provider=provider,
+            patient=patient,
+            appointment_start_datetime_utc=start_time,
+            appointment_end_datetime_utc=end_time,
+            status="CONFIRMED"
+        )
+        
+        # Link slot to appointment
+        slot.appointment = appointment
+        slot.save()
+        
+        # Cancel appointment
+        set_status_url = reverse("appointment-set-status", args=[appointment.id])
+        response = provider_client.post(set_status_url, {"status": "CANCELLED"}, format="json")
+        assert response.status_code == status.HTTP_200_OK
+        
+        appointment.refresh_from_db()
+        assert appointment.status == "CANCELLED"
+        assert appointment.cancelled_at is not None
+        
+        # Verify slot is freed
+        slot.refresh_from_db()
+        assert slot.status == Slot.Status.FREE
+        assert slot.appointment is None
+
+    def test_provider_reschedule_appointment(self, authenticated_provider_client,
+                                             appointment_factory, patient_factory, slot_factory,
+                                             authenticated_patient_client):
+        """Test provider can reschedule an appointment"""
+        provider_client, provider = authenticated_provider_client()
+        patient_client, patient = authenticated_patient_client()
+        hospital = provider.primary_hospital
+        
+        # Create original slot and appointment
+        original_start = timezone.now() + timedelta(hours=10)
+        original_end = original_start + timedelta(minutes=30)
+        
+        original_slot = slot_factory(
+            healthcare_provider=provider,
+            hospital=hospital,
+            start=original_start,
+            end=original_end,
+            status=Slot.Status.FREE,
+            appointment=None
+        )
+        
+        appointment_url = reverse("appointment-list")
+        appointment_data = {
+            "patient": patient.pk,
+            "provider": provider.pk,
+            "location": hospital.id,
+            "appointment_start_datetime_utc": original_start.isoformat(),
+            "appointment_end_datetime_utc": original_end.isoformat(),
+            "reason": "Initial checkup"
+        }
+
+        response = patient_client.post(appointment_url, appointment_data, format="json")
+        assert response.status_code == status.HTTP_201_CREATED
+        appointment_id = response.data["id"]
+
+        # Verify original slot is now booked
+        original_slot.refresh_from_db()
+        assert original_slot.status == Slot.Status.BOOKED
+        assert original_slot.appointment_id == appointment_id
+            
+        # Provider confirms the appointment (optional step)
+        set_status_url = reverse("appointment-set-status", args=[appointment_id])
+        response = provider_client.post(set_status_url, {"status": "CONFIRMED"}, format="json")
+        assert response.status_code == status.HTTP_200_OK
+        
+        # Create new free slot for rescheduling
+        new_start = timezone.now() + timedelta(days=4, hours=14)
+        new_end = new_start + timedelta(minutes=30)
+        
+        new_slot = slot_factory(
+            healthcare_provider=provider,
+            hospital=hospital,
+            start=new_start,
+            end=new_end,
+            status=Slot.Status.FREE,
+            appointment=None
+        )
+        
+        # Provider reschedules the appointment
+        reschedule_data = {
+            "status": "RESCHEDULED",
+            "new_start_datetime_utc": new_start.isoformat(),
+            "new_end_datetime_utc": new_end.isoformat()
+        }
+        
+        response = provider_client.post(set_status_url, reschedule_data, format="json")
+        assert response.status_code == status.HTTP_200_OK
+        
+        # Verify appointment updated
+        appointment = Appointment.objects.get(id=appointment_id)
+        assert appointment.status == "RESCHEDULED"
+        assert appointment.appointment_start_datetime_utc == new_start
+        assert appointment.appointment_end_datetime_utc == new_end
+        
+        # Verify original slot freed
+        original_slot.refresh_from_db()
+        assert original_slot.status == Slot.Status.FREE
+        assert original_slot.appointment is None
+        
+        # Verify new slot booked
+        new_slot.refresh_from_db()
+        assert new_slot.status == Slot.Status.BOOKED
+        assert new_slot.appointment_id == appointment_id
+        
+        # Verify appointment has correct slot relationship
+        assert hasattr(appointment, 'slot')
+        assert appointment.slot == new_slot
+
+class TestHealthcareProviderEdgeCases:
+    """Test edge cases for healthcare providers"""
+
+    def test_provider_invalid_status_transitions(self, authenticated_provider_client,
+                                                 authenticated_patient_client,
+                                                 slot_factory):
+        """Test invalid appointment status transitions"""
+        provider_client, provider = authenticated_provider_client()
+        patient_client, patient = authenticated_patient_client()
+        hospital = provider.primary_hospital
+        
+        start_time = timezone.now() + timedelta(days=3)
+        end_time = start_time + timedelta(minutes=30)
+        
+        slot = slot_factory(
+            healthcare_provider=provider,
+            hospital=hospital,
+            start=start_time,
+            end=end_time,
+            status=Slot.Status.FREE,
+            appointment=None
+        )
+        
+        appointment_url = reverse("appointment-list")
+        appointment_data = {
+            "patient": patient.pk,
+            "provider": provider.pk,
+            "location": hospital.id,
+            "appointment_start_datetime_utc": start_time.isoformat(),
+            "appointment_end_datetime_utc": end_time.isoformat(),
+            "reason": "Test appointment"
+        }
+        
+        response = patient_client.post(appointment_url, appointment_data, format="json")
+        assert response.status_code == status.HTTP_201_CREATED
+        appointment_id = response.data["id"]
+        
+        set_status_url = reverse("appointment-set-status", args=[appointment_id])
+        
+        # Invalid going from REQUESTED to RESCHEDULED due to missing time
+        response = provider_client.post(set_status_url, {"status": "RESCHEDULED"}, format="json")
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        
+        # Update to CONFIRMED
+        response = provider_client.post(set_status_url, {"status": "CONFIRMED"}, format="json")
+        assert response.status_code == status.HTTP_200_OK
+        
+        # Verify slot is now booked
+        slot.refresh_from_db()
+        assert slot.status == Slot.Status.BOOKED
+        
+        # Invalid going from CONFIRMED to REQUESTED
+        response = provider_client.post(set_status_url, {"status": "REQUESTED"}, format="json")
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_provider_reschedule_to_unavailable_slot(self, authenticated_provider_client,
+                                                    authenticated_patient_client, slot_factory):
+        """Test reschedule fails if requested slot is not free"""
+        provider_client, provider = authenticated_provider_client()
+        patient_client, patient = authenticated_patient_client()
+        hospital = provider.primary_hospital
+        
+        original_start = timezone.now() + timedelta(days=3)
+        original_end = original_start + timedelta(minutes=30)
+        
+        original_slot = slot_factory(
+            healthcare_provider=provider,
+            hospital=hospital,
+            start=original_start,
+            end=original_end,
+            status=Slot.Status.FREE,
+            appointment=None
+        )
+        
+        # Patient books appointment via API
+        appointment_url = reverse("appointment-list")
+        appointment_data = {
+            "patient": patient.pk,
+            "provider": provider.pk,
+            "location": hospital.id,
+            "appointment_start_datetime_utc": original_start.isoformat(),
+            "appointment_end_datetime_utc": original_end.isoformat(),
+            "reason": "Original appointment"
+        }
+        
+        response = patient_client.post(appointment_url, appointment_data, format="json")
+        assert response.status_code == status.HTTP_201_CREATED
+        appointment_id = response.data["id"]
+        
+        # Refresh slot and check status
+        original_slot.refresh_from_db()        
+        assert original_slot.status == Slot.Status.BOOKED, f"Slot status is {original_slot.status}, expected BOOKED"
+        
+        # Provider confirms the appointment
+        set_status_url = reverse("appointment-set-status", args=[appointment_id])
+        response = provider_client.post(set_status_url, {"status": "CONFIRMED"}, format="json")
+        assert response.status_code == status.HTTP_200_OK
+        
+        # Try to reschedule to a time with NO slot
+        new_start = timezone.now() + timedelta(days=4, hours=14)
+        new_end = new_start + timedelta(minutes=30)
+        
+        reschedule_data = {
+            "status": "RESCHEDULED",
+            "new_start_datetime_utc": new_start.isoformat(),
+            "new_end_datetime_utc": new_end.isoformat()
+        }
+        
+        response = provider_client.post(set_status_url, reschedule_data, format="json")
+        assert response.status_code == status.HTTP_400_BAD_REQUEST

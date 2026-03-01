@@ -10,7 +10,6 @@ from datetime import timedelta
 from django.conf import settings
 
 from api.models import User
-from api.services.auth import build_verification_jwt
 
 pytestmark = pytest.mark.django_db
 

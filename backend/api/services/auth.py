@@ -1,3 +1,4 @@
+import logging
 from django.utils import timezone
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
@@ -13,13 +14,15 @@ else:
 
     User = get_user_model()
 
+logger = logging.getLogger(__name__)
 
 def send_verification_email(user: User) -> None:
     """
     Build and send a one-time verification email to user
     """
     if user.is_active:
-        raise ValueError("Account is already verified.")
+        logger.warning(f"Attempted to send verification email to already active user: {user.email}")
+        return
 
     user.reset_sent_at = timezone.now()
     user.save(update_fields=["reset_sent_at"])

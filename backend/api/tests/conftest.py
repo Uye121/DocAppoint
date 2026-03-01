@@ -74,3 +74,13 @@ def authenticated_admin_client(admin_staff_factory):
         return client, admin
 
     return _create_admin_client
+
+@pytest.fixture
+def authenticated_system_admin_client(admin_staff_factory):
+    def _create_system_admin_client(**kwargs):
+        admin = admin_staff_factory(**kwargs)
+        client = APIClient()
+        client.force_authenticate(user=admin.user)
+        return client, admin
+
+    return _create_system_admin_client
