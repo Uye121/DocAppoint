@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import axios from "axios";
 import MockAdapter from "axios-mock-adapter";
 
-import { mock } from "../../../test/server";
+import { mock } from "../../../__tests__/server";
 import { api } from "../axios";
 
 // Attach to global axios object to trap the refresh request, which was

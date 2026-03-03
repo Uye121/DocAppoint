@@ -10,6 +10,7 @@ import {
 } from "../api/auth";
 import { getMe } from "../api/users";
 import { AuthContext } from "./AuthContext";
+import { getErrorMessage } from "../../utils/errorMap";
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -29,8 +30,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         const me = await getMe();
         setUser(me);
       } catch (err) {
-        console.log(err);
+        console.error(getErrorMessage(err));
         localStorage.clear();
+        setUser(null);
       } finally {
         setLoading(false);
       }
@@ -51,9 +53,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const logout = async () => {
-    await apiLogout();
-    localStorage.clear();
-    setUser(null);
+    try {
+      await apiLogout();
+    } catch (err) {
+      console.error("Logout error: ", getErrorMessage(err));
+    } finally {
+      localStorage.clear();
+      setUser(null);
+    }
   };
 
   const refreshUser = async () => {

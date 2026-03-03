@@ -55,7 +55,7 @@ api.interceptors.response.use(
       isRefreshing = true;
       const refresh = localStorage.getItem("refresh");
 
-      // Redirec tto login if no refresh
+      // Redirec to login if no refresh
       if (!refresh) {
         processQueue(null);
         localStorage.clear();

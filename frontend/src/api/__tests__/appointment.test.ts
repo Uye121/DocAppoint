@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { mock } from "../../../test/server";
+import { mock } from "../../../__tests__/server";
 import {
   scheduleAppointment,
   getSlotsByRange,

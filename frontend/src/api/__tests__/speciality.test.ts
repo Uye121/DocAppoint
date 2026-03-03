@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { mock } from "../../../test/server";
+import { mock } from "../../../__tests__/server";
 import { getSpecialities } from "../speciality";
 import type { Speciality } from "../../types/speciality";
 

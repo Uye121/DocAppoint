@@ -33,7 +33,9 @@ const Signup = (): React.JSX.Element => {
       await signup(form);
       nav("/verify");
     } catch (err) {
-      setError(getErrorMessage(err));
+      const error = getErrorMessage(err);
+      console.error("Sign up error: ", error);
+      setError(error);
     } finally {
       setLoading(false);
     }
@@ -41,7 +43,7 @@ const Signup = (): React.JSX.Element => {
 
   return (
     <form onSubmit={handleSubmit} className="min-h-[80vh] flex items-center">
-      <div className="flex flex-col gap-3 m-auto items-start p-8 min-w-[340px] sm:min-w-96 max-w-md border rounded-xl text-zinc-600 text-sm shadow-lg">
+      <div className="flex flex-col gap-3 m-auto items-start p-8 min-w-85 sm:min-w-96 max-w-md border rounded-xl text-zinc-600 text-sm shadow-lg">
         {error && (
           <div
             className="w-full max-w-full text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2"

@@ -3,6 +3,7 @@ import { NavLink, useNavigate, useLocation } from "react-router-dom";
 
 import { assets } from "../assets/assets_frontend/assets";
 import { useAuth } from "../../hooks/useAuth";
+import { getErrorMessage } from "../../utils/errorMap";
 
 const Navbar = (): React.JSX.Element => {
   const nav = useNavigate();
@@ -22,7 +23,7 @@ const Navbar = (): React.JSX.Element => {
     try {
       await logout();
     } catch (err) {
-      console.error("Logout error: ", err);
+      console.error("Logout error: ", getErrorMessage(err));
     } finally {
       nav("/login");
     }

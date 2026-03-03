@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { AxiosError } from "axios";
 
-import { mock } from "../../../test/server";
+import { mock } from "../../../__tests__/server";
 import {
   getMedicalRecordByAppointment,
   createMedicalRecord,
