@@ -22,11 +22,15 @@ const RelatedDoctors = ({
     const doctorsData = doctors.filter(
       (doc) => doc.specialityName == speciality && doc.id.toString() != docId,
     );
+
     setRelDoc(doctorsData);
   }, [doctors, speciality, docId]);
 
   return (
-    <div className="flex flex-col items-center gap-4 my-16 text-foreground md:mx-10">
+    <div
+      className="flex flex-col items-center gap-4 my-16 text-foreground md:mx-10"
+      data-testid="related-doctors"
+    >
       <h2 className="text-3xl font-medium">Top Doctors to Book</h2>
       <p className="sm:w-1/3 text-center text-sm">
         Simply browse through our extensive list of trusted doctors.

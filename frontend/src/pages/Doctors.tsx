@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { useDoctor } from "../../hooks/useDoctor";
+import { useSpeciality } from "../../hooks/useSpeciality";
 import type { DoctorListItem } from "../types/doctor";
 
 const Doctors = (): React.JSX.Element => {
@@ -10,13 +11,7 @@ const Doctors = (): React.JSX.Element => {
   const [filteredDoc, setFilteredDoc] = useState<DoctorListItem[]>([]);
   const [showFilter, setShowFilter] = useState(false);
   const { doctors = [] } = useDoctor();
-  const specialities = [
-    "General Physician",
-    "Gynecologist",
-    "Dermatologist",
-    "Pediatricians",
-    "Neurologist",
-  ];
+  const { specialities = [] } = useSpeciality();
 
   useEffect(() => {
     const applyFilter = () => {
@@ -61,20 +56,21 @@ const Doctors = (): React.JSX.Element => {
           className={`flex flex-col gap-4 text-sm text-gray-600 ${showFilter ? "flex" : "hidden sm:flex"}`}
           data-testid="filter-panel"
         >
-          {specialities.map((spec) => (
-            <button
-              key={spec}
-              type="button"
-              onClick={() => handleSpecialityClick(spec)}
-              className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all text-left ${
-                isSpecialityActive(spec)
-                  ? "bg-indigo-100 text-black"
-                  : "bg-white"
-              }`}
-            >
-              {spec}
-            </button>
-          ))}
+          {specialities &&
+            specialities.map(({ name }) => (
+              <button
+                key={name}
+                type="button"
+                onClick={() => handleSpecialityClick(name)}
+                className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all text-left ${
+                  isSpecialityActive(name)
+                    ? "bg-indigo-100 text-black"
+                    : "bg-white"
+                }`}
+              >
+                {name}
+              </button>
+            ))}
         </div>
         <div className="w-full grid grid-cols-fluid gap-4 gap-y-6">
           {filteredDoc.map((item: DoctorListItem, index: number) => (
