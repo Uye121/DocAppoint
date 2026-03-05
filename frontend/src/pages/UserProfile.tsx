@@ -9,12 +9,14 @@ import { Spinner } from "../components";
 import type { PatientDetail } from "../types/patient";
 import type { User } from "../types/user";
 import { US_STATES } from "../../utils/states";
+import { getErrorMessage } from "../../utils/errorMap";
 
 const UserProfile = (): React.JSX.Element => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [isEditing, setisEditing] = useState(false);
   const [localData, setLocalData] = useState<PatientDetail>({});
+  const [error, setError] = useState<string | null>(null);
 
   const { data: patientData, isLoading } = useQuery({
     queryKey: ["patient-info", user?.id],
@@ -29,6 +31,10 @@ const UserProfile = (): React.JSX.Element => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["patient-info"] });
       setisEditing(false);
+      setError(null);
+    },
+    onError: (err) => {
+      setError(getErrorMessage(err, "Failed to update profile"));
     },
   });
 
@@ -114,6 +120,14 @@ const UserProfile = (): React.JSX.Element => {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
+      {error && (
+        <div
+          className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700"
+          role="alert"
+        >
+          {error}
+        </div>
+      )}
       {/* Header */}
       <div className="flex items-start justify-between mb-8">
         <div className="flex items-center gap-6">

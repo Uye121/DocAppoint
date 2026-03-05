@@ -7,7 +7,6 @@ import { useSpeciality } from "../../hooks/useSpeciality";
 
 const SpecialtyMenu = (): React.JSX.Element => {
   const { specialities, loading, error } = useSpeciality();
-  console.log("specs: ", specialities);
 
   if (loading) {
     return (
