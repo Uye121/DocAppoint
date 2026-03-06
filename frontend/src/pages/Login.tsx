@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 import { useAuth } from "../../hooks/useAuth";
 import { getErrorMessage } from "../../utils/errorMap";
@@ -14,7 +15,6 @@ const Login = (): React.JSX.Element => {
     password: "",
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const handleRedirect = () => {
     nav("/signup");
@@ -22,7 +22,6 @@ const Login = (): React.JSX.Element => {
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [event.target.name]: event.target.value });
-    setError(null);
   };
 
   const handleSubmit = async (event: React.SyntheticEvent<HTMLFormElement>) => {
@@ -33,7 +32,7 @@ const Login = (): React.JSX.Element => {
       await login(form);
       nav("/");
     } catch (err) {
-      setError(getErrorMessage(err, "Network error"));
+      toast.error(getErrorMessage(err, "Network error"));
     } finally {
       setLoading(false);
     }
@@ -71,14 +70,6 @@ const Login = (): React.JSX.Element => {
             required
           />
         </div>
-        {error && (
-          <div
-            className="w-full max-w-full text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2"
-            role="alert"
-          >
-            {error}
-          </div>
-        )}
         <button
           disabled={loading}
           type="submit"

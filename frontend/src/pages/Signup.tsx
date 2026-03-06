@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 import { useAuth } from "../../hooks/useAuth";
 import { getErrorMessage } from "../../utils/errorMap";
@@ -16,7 +17,6 @@ const Signup = (): React.JSX.Element => {
     lastName: "",
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const handleRedirect = () => {
     nav("/login");
@@ -33,9 +33,7 @@ const Signup = (): React.JSX.Element => {
       await signup(form);
       nav("/verify");
     } catch (err) {
-      const error = getErrorMessage(err);
-      console.error("Sign up error: ", error);
-      setError(error);
+      toast.error(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -44,14 +42,6 @@ const Signup = (): React.JSX.Element => {
   return (
     <form onSubmit={handleSubmit} className="min-h-[80vh] flex items-center">
       <div className="flex flex-col gap-3 m-auto items-start p-8 min-w-85 sm:min-w-96 max-w-md border rounded-xl text-zinc-600 text-sm shadow-lg">
-        {error && (
-          <div
-            className="w-full max-w-full text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2"
-            role="alert"
-          >
-            {error}
-          </div>
-        )}
         <h2 className="text-2xl font-semibold">Create Account</h2>
         <div className="w-full">
           <label htmlFor="username">Username</label>

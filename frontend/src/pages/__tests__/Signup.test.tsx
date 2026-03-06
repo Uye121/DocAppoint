@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
+import { toast } from "react-toastify";
 import Signup from "../Signup";
 
 // Mock dependencies
@@ -144,10 +145,10 @@ describe("Signup page", () => {
 
     // Wait for error to appear - it should be the first element in the form
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toBeInTheDocument();
+      expect(toast.error).toHaveBeenCalledWith(
+        expect.stringContaining("Email already exists"),
+      );
     });
-
-    expect(screen.getByRole("alert")).toHaveTextContent("Email already exists");
   });
 
   it("displays formatted errors on Axios error without detail", async () => {
@@ -181,12 +182,10 @@ describe("Signup page", () => {
     await user.click(screen.getByRole("button", { name: /create account/i }));
 
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toBeInTheDocument();
+      expect(toast.error).toHaveBeenCalledWith(
+        expect.stringContaining("Username"),
+      );
     });
-
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "Username: This field is required",
-    );
   });
 
   it("displays error message on generic Error", async () => {
@@ -209,10 +208,10 @@ describe("Signup page", () => {
     await user.click(screen.getByRole("button", { name: /create account/i }));
 
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toBeInTheDocument();
+      expect(toast.error).toHaveBeenCalledWith(
+        expect.stringContaining("Network error"),
+      );
     });
-
-    expect(screen.getByRole("alert")).toHaveTextContent("Network error");
   });
 
   it("disables submit button while loading", async () => {
@@ -255,11 +254,5 @@ describe("Signup page", () => {
     await waitFor(() => {
       expect(screen.getByTestId("login-page")).toBeInTheDocument();
     });
-  });
-
-  it("shows error alert when error state is set", () => {
-    render(<Signup />, { wrapper: TestWrapper });
-
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 });

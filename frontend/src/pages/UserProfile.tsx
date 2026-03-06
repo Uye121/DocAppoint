@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
+import { toast } from "react-toastify";
 
 import { useAuth } from "../../hooks/useAuth";
 import { assets } from "../assets/assets_frontend/assets";
@@ -16,7 +17,6 @@ const UserProfile = (): React.JSX.Element => {
   const queryClient = useQueryClient();
   const [isEditing, setisEditing] = useState(false);
   const [localData, setLocalData] = useState<PatientDetail>({});
-  const [error, setError] = useState<string | null>(null);
 
   const { data: patientData, isLoading } = useQuery({
     queryKey: ["patient-info", user?.id],
@@ -31,10 +31,9 @@ const UserProfile = (): React.JSX.Element => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["patient-info"] });
       setisEditing(false);
-      setError(null);
     },
     onError: (err) => {
-      setError(getErrorMessage(err, "Failed to update profile"));
+      toast.error(getErrorMessage(err, "Failed to update profile"));
     },
   });
 
@@ -120,14 +119,6 @@ const UserProfile = (): React.JSX.Element => {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
-      {error && (
-        <div
-          className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700"
-          role="alert"
-        >
-          {error}
-        </div>
-      )}
       {/* Header */}
       <div className="flex items-start justify-between mb-8">
         <div className="flex items-center gap-6">

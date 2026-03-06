@@ -2,11 +2,13 @@ import clsx from "clsx";
 import { useState } from "react";
 import { formatInTimeZone } from "date-fns-tz";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-toastify";
 
 import { updateAppointmentStatus } from "../api/appointment";
 import type { AppointmentListItem } from "../types/appointment";
 import { assets } from "../assets/assets_frontend/assets";
 import MedicalRecordModal from "./MedicalRecordModal";
+import { getErrorMessage } from "../../utils/errorMap";
 
 interface AppointmentCardProps {
   item: AppointmentListItem;
@@ -21,7 +23,7 @@ const AppointmentCard = ({
 }: AppointmentCardProps) => {
   const queryClient = useQueryClient();
   const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const [showMedicalRecord, setShowMedicalRecord] = useState(false);
+  const [showMedicalRecord, setShowMedicalRecord] = useState<boolean>(false);
 
   const showButtons = (status: string) =>
     !isPast &&
@@ -47,15 +49,17 @@ const AppointmentCard = ({
   };
 
   const handleStatus = async (appt: AppointmentListItem, status: string) => {
-    await updateAppointmentStatus(appt.id, status);
-
-    await queryClient.invalidateQueries({
-      queryKey: ["patient-appointments", userId],
-    });
+    try {
+      await updateAppointmentStatus(appt.id, status);
+      await queryClient.invalidateQueries({
+        queryKey: ["patient-appointments", userId],
+      });
+    } catch (err) {
+      toast.error(getErrorMessage(err, "Failed to update appointment."));
+    }
   };
 
   const handleViewRecord = () => {
-    console.log("View Record clicked for appointment:", item.id);
     setShowMedicalRecord(true);
   };
 
@@ -63,7 +67,7 @@ const AppointmentCard = ({
     <>
       <article
         className={clsx(
-          "card flex items-center gap-4 p-4",
+          "card flex items-center gap-4 p-4 relative",
           !isPast && "hover:card-hover transition-all duration-200",
           isPast && "bg-surface",
         )}

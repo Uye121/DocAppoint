@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { toast } from "react-toastify";
+
 import { useAuth } from "../../hooks/useAuth";
 import {
   getProviderAppointments,
@@ -18,7 +20,6 @@ const ProviderHome = (): React.JSX.Element => {
     null,
   );
   const [showRecords, setShowRecords] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   /* ---------- appointments ---------- */
   const {
@@ -38,9 +39,9 @@ const ProviderHome = (): React.JSX.Element => {
       await updateAppointmentStatus(appt.id, status);
       refetchAppts();
     } catch (err) {
-      const errMsg = getErrorMessage(err);
-      setError(errMsg);
-      console.error("Failed to update appointment status:", errMsg);
+      const error = getErrorMessage(err);
+      toast.error(error);
+      console.error("Failed to update appointment status:", error);
     }
   };
 
@@ -57,12 +58,6 @@ const ProviderHome = (): React.JSX.Element => {
       <main className="max-w-6xl mx-auto px-4 py-6 grid md:grid-cols-3 gap-6">
         {/* Left column – appointment tabs */}
         <div className="md:col-span-2 space-y-6">
-          {/* Error message display */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-              {error}
-            </div>
-          )}
           {["REQUESTED", "CONFIRMED", "RESCHEDULED", "COMPLETED"].map((st) => (
             <section
               key={st}

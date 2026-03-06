@@ -3,6 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route, Outlet } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { toast } from "react-toastify";
 
 import {
   AuthProvider,
@@ -185,8 +186,8 @@ describe("Login Flow", () => {
     await user.click(screen.getByRole("button", { name: /login/i }));
 
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent(
-        /invalid credentials/i,
+      expect(toast.error).toHaveBeenCalledWith(
+        expect.stringContaining("Invalid credentials"),
       );
     });
 
@@ -210,7 +211,9 @@ describe("Login Flow", () => {
     await user.click(screen.getByRole("button", { name: /login/i }));
 
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent(/user not found/i);
+      expect(toast.error).toHaveBeenCalledWith(
+        expect.stringContaining("User not found"),
+      );
     });
   });
 
@@ -226,7 +229,9 @@ describe("Login Flow", () => {
     await user.click(screen.getByRole("button", { name: /login/i }));
 
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent(/too many attempts/i);
+      expect(toast.error).toHaveBeenCalledWith(
+        expect.stringContaining("try again later"),
+      );
     });
   });
 

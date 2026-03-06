@@ -3,6 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route, Outlet } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { toast } from "react-toastify";
 
 import {
   AuthProvider,
@@ -452,12 +453,10 @@ describe("Patient Profile Management Flow", () => {
 
     // Should show error message
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toBeInTheDocument();
+      expect(toast.error).toHaveBeenCalledWith(
+        expect.stringContaining("Server error"),
+      );
     });
-
-    // Verify error message content (adjust based on your error display)
-    const alert = screen.getByRole("alert");
-    expect(alert).toHaveTextContent(/server error|failed|error/i);
 
     // Should stay in edit mode (form fields still visible with edited value)
     expect(screen.getByDisplayValue("B-")).toBeInTheDocument();
