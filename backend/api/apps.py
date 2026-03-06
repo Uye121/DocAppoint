@@ -7,4 +7,4 @@ class ApiConfig(AppConfig):
     label = "api"
 
     def ready(self):
-        pass
+        import api.services.signals 

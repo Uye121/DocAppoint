@@ -63,7 +63,7 @@ const ProviderHome = (): React.JSX.Element => {
               {error}
             </div>
           )}
-          {["REQUESTED", "CONFIRMED", "RESCHEDULED"].map((st) => (
+          {["REQUESTED", "CONFIRMED", "RESCHEDULED", "COMPLETED"].map((st) => (
             <section
               key={st}
               className="bg-white rounded-xl border border-gray-200 p-4"
@@ -115,7 +115,7 @@ const ProviderHome = (): React.JSX.Element => {
                             </button>
                           </div>
                         )}
-                        {st === "CONFIRMED" && (
+                        {["CONFIRMED", "COMPLETED"].includes(st) && (
                           <button
                             onClick={() => {
                               setSelectedAppt(appt);
