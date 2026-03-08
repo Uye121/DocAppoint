@@ -145,12 +145,10 @@ describe("Token Refresh Flow", () => {
   });
 
   it("should redirect to login if refresh token is invalid", async () => {
-    // Mock getMe endpoint - fails with 401
     mock.onGet("http://localhost:8000/api/users/me").reply(401, {
       detail: "Token expired",
     });
 
-    // Mock refresh endpoint - also fails
     standaloneMock
       .onPost("http://localhost:8000/api/auth/token/refresh/")
       .reply(401, {
@@ -182,7 +180,7 @@ describe("Token Refresh Flow", () => {
 
     // Mock getMe endpoint - fail first, succeed after refresh
     mock.onGet("http://localhost:8000/api/users/me").reply(() => {
-      getMeCalls++;
+      getMeCalls += 1;
       console.log(
         `📞 getMe call #${getMeCalls}, refreshCount: ${refreshCount}`,
       );

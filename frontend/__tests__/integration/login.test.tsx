@@ -62,7 +62,6 @@ describe("Login Flow", () => {
   };
 
   it("should successfully log in unassigned user and redirect to onboard", async () => {
-    // Mock successful login for unassigned user
     mock.onPost("http://localhost:8000/api/auth/login/").reply(200, {
       user: {
         id: "123",
@@ -99,7 +98,6 @@ describe("Login Flow", () => {
   });
 
   it("should successfully log in patient user and redirect to patient home", async () => {
-    // Mock successful login for patient
     mock.onPost("http://localhost:8000/api/auth/login/").reply(200, {
       user: {
         id: "123",

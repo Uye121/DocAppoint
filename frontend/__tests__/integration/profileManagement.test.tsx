@@ -156,7 +156,6 @@ describe("Patient Profile Management Flow", () => {
       expect(screen.getByText("John Doe")).toBeInTheDocument();
     });
 
-    // Click edit button
     const editButton = screen.getByRole("button", { name: /edit profile/i });
     await user.click(editButton);
 
@@ -199,7 +198,6 @@ describe("Patient Profile Management Flow", () => {
   });
 
   it("should update profile information successfully", async () => {
-    // Mock successful profile update
     mock.onPatch("http://localhost:8000/api/patient/patient-123/").reply(200, {
       user: {
         firstName: "Jonathan",
@@ -221,7 +219,6 @@ describe("Patient Profile Management Flow", () => {
       expect(screen.getByText("John Doe")).toBeInTheDocument();
     });
 
-    // Click edit button
     const editButton = screen.getByRole("button", { name: /edit profile/i });
     await user.click(editButton);
 
@@ -303,7 +300,7 @@ describe("Patient Profile Management Flow", () => {
       expect(screen.getByText("75 kg")).toBeInTheDocument();
     });
 
-    // Edit button should reappear (confirming we're back in view mode)
+    // Edit button should reappear/view mode
     expect(
       screen.getByRole("button", { name: /edit profile/i }),
     ).toBeInTheDocument();
@@ -317,7 +314,6 @@ describe("Patient Profile Management Flow", () => {
       expect(screen.getByText("John Doe")).toBeInTheDocument();
     });
 
-    // Click edit button
     const editButton = screen.getByRole("button", { name: /edit profile/i });
     await user.click(editButton);
 
@@ -342,13 +338,12 @@ describe("Patient Profile Management Flow", () => {
     expect(screen.getByDisplayValue("Jonathan")).toBeInTheDocument();
     expect(screen.getByDisplayValue("B-")).toBeInTheDocument();
 
-    // Click cancel
     const cancelButton = screen.getByRole("button", { name: /cancel/i });
     await user.click(cancelButton);
 
     // Wait for view mode to reappear with original values
     await waitFor(() => {
-      // Should be back in view mode (no input fields)
+      // Should be back in view mode
       expect(screen.queryByDisplayValue("Jonathan")).not.toBeInTheDocument();
       expect(screen.queryByDisplayValue("B-")).not.toBeInTheDocument();
 
@@ -374,7 +369,6 @@ describe("Patient Profile Management Flow", () => {
       expect(screen.getByText("John Doe")).toBeInTheDocument();
     });
 
-    // Click edit button
     const editButton = screen.getByRole("button", { name: /edit profile/i });
     await user.click(editButton);
 
@@ -430,7 +424,6 @@ describe("Patient Profile Management Flow", () => {
       expect(screen.getByText("John Doe")).toBeInTheDocument();
     });
 
-    // Click edit button
     const editButton = screen.getByRole("button", { name: /edit profile/i });
     await user.click(editButton);
 
@@ -447,7 +440,6 @@ describe("Patient Profile Management Flow", () => {
     // Verify the input was updated
     expect(screen.getByDisplayValue("B-")).toBeInTheDocument();
 
-    // Save changes
     const saveButton = screen.getByRole("button", { name: /save changes/i });
     await user.click(saveButton);
 
@@ -470,7 +462,6 @@ describe("Patient Profile Management Flow", () => {
   });
 
   it("should allow partial updates", async () => {
-    // Mock successful partial update
     mock.onPatch("http://localhost:8000/api/patient/patient-123/").reply(200, {
       user: {
         phoneNumber: "555-777-1234",
@@ -484,7 +475,6 @@ describe("Patient Profile Management Flow", () => {
       expect(screen.getByText("John Doe")).toBeInTheDocument();
     });
 
-    // Click edit button
     const editButton = screen.getByRole("button", { name: /edit profile/i });
     await user.click(editButton);
 
@@ -498,7 +488,6 @@ describe("Patient Profile Management Flow", () => {
     await user.clear(phoneInput);
     await user.type(phoneInput, "555-777-1234");
 
-    // Save changes
     const saveButton = screen.getByRole("button", { name: /save changes/i });
     await user.click(saveButton);
 

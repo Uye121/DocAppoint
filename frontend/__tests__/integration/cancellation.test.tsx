@@ -109,7 +109,6 @@ describe("Appointment Cancellation Flow", () => {
       <QueryClientProvider client={queryClient}>
         <MemoryRouter initialEntries={["/provider-home"]}>
           <AuthProvider>
-            {/* <Navbar /> */}
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route element={<ProtectedRoutes />}>
@@ -160,10 +159,14 @@ describe("Appointment Cancellation Flow", () => {
     }));
 
     mock
-      .onGet("http://localhost:8000/api/appointment/?patient=patient-123")
+      .onGet("http://localhost:8000/api/appointment/", {
+        params: { patient: "patient-123" },
+      })
       .reply(200, appointments);
     mock
-      .onGet("http://localhost:8000/api/appointment/?provider=provider-123")
+      .onGet("http://localhost:8000/api/appointment/", {
+        params: { provider: "provider-123" },
+      })
       .reply(200, appointments);
   };
 
@@ -187,7 +190,9 @@ describe("Appointment Cancellation Flow", () => {
       pastDate.setDate(pastDate.getDate() - 7);
 
       mock
-        .onGet("http://localhost:8000/api/appointment/?patient=patient-123")
+        .onGet("http://localhost:8000/api/appointment/", {
+          params: { patient: "patient-123" },
+        })
         .reply(200, [
           {
             id: "appt-1",
@@ -301,7 +306,9 @@ describe("Appointment Cancellation Flow", () => {
       futureDate.setDate(futureDate.getDate() + 7); // 7 days in future from fixed date
 
       mock
-        .onGet("http://localhost:8000/api/appointment/?patient=patient-123")
+        .onGet("http://localhost:8000/api/appointment/", {
+          params: { patient: "patient-123" },
+        })
         .reply(() => {
           return [
             200,
@@ -451,7 +458,6 @@ describe("Appointment Cancellation Flow", () => {
     it("should handle provider rejection API errors", async () => {
       mockAppointments(["REQUESTED"]);
 
-      // Mock failed rejection
       mock
         .onPost("http://localhost:8000/api/appointment/appt-1/set-status/")
         .reply(500, {
@@ -469,7 +475,7 @@ describe("Appointment Cancellation Flow", () => {
       const rejectButton = screen.getByRole("button", { name: /reject/i });
       await user.click(rejectButton);
 
-      // Wait for error message (if your app shows one)
+      // Wait for error message
       await waitFor(() => {
         const errorElement = screen.queryByText(/server error|failed|error/i);
         if (errorElement) {
@@ -494,7 +500,9 @@ describe("Appointment Cancellation Flow", () => {
       futureDate.setDate(futureDate.getDate() + 7);
 
       mock
-        .onGet("http://localhost:8000/api/appointment/?provider=provider-123")
+        .onGet("http://localhost:8000/api/appointment/", {
+          params: { provider: "provider-123" },
+        })
         .reply(() => {
           return [
             200,
@@ -564,7 +572,6 @@ describe("Appointment Cancellation Flow", () => {
     it("should allow confirming a requested appointment instead of cancelling", async () => {
       mockAppointments(["REQUESTED"]);
 
-      // Mock successful confirmation
       mock
         .onPost("http://localhost:8000/api/appointment/appt-1/set-status/")
         .reply(200, {
@@ -597,7 +604,9 @@ describe("Appointment Cancellation Flow", () => {
   describe("Cross-role Cancellation Scenarios", () => {
     it("should not allow patient to cancel already cancelled appointment", async () => {
       mock
-        .onGet("http://localhost:8000/api/appointment/?patient=patient-123")
+        .onGet("http://localhost:8000/api/appointment/", {
+          params: { patient: "patient-123" },
+        })
         .reply(200, [
           {
             id: "appt-1",

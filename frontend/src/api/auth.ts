@@ -18,7 +18,7 @@ export const signup = (payload: AuthPayload) =>
 
 export const verifyEmail = (token: string) =>
   api
-    .get<{ detail: string }>(`/auth/verify/?token=${token}`)
+    .get<{ detail: string }>("/auth/verify/", { params: { token: token } })
     .then((res) => res.data);
 
 export const resendVerify = (payload: ResendVerifyPayload) =>

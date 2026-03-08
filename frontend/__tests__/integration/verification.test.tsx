@@ -38,10 +38,11 @@ describe("Email Verification Flow", () => {
   };
 
   it("should successfully verify email with valid token", async () => {
-    // Mock successful verification
-    mock.onGet(/\/auth\/verify\/\?token=valid-token/).reply(200, {
-      detail: "Email verified successfully",
-    });
+    mock
+      .onGet("/auth/verify/", { params: { token: "valid-token" } })
+      .reply(200, {
+        detail: "Email verified successfully",
+      });
 
     render(<VerifyEmail />, {
       wrapper: createWrapper("/verify-email?token=valid-token"),
@@ -68,9 +69,11 @@ describe("Email Verification Flow", () => {
 
   it("should show error for invalid token", async () => {
     // Mock failed verification
-    mock.onGet(/\/auth\/verify\/\?token=invalid-token/).reply(400, {
-      detail: "Invalid token",
-    });
+    mock
+      .onGet("/auth/verify/", { params: { token: "invalid-token" } })
+      .reply(400, {
+        detail: "Invalid token",
+      });
 
     render(<VerifyEmail />, {
       wrapper: createWrapper("/verify-email?token=invalid-token"),
@@ -97,9 +100,11 @@ describe("Email Verification Flow", () => {
 
   it("should allow resending verification email", async () => {
     // Mock failed verification first
-    mock.onGet(/\/auth\/verify\/\?token=expired-token/).reply(400, {
-      detail: "Invalid token",
-    });
+    mock
+      .onGet("/auth/verify/", { params: { token: "expired-token" } })
+      .reply(400, {
+        detail: "Invalid token",
+      });
 
     // Mock resend endpoint
     mock.onPost("http://localhost:8000/api/auth/resend-verify/").reply(200, {

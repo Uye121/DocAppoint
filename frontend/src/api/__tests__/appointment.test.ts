@@ -64,9 +64,9 @@ describe("appointment API", () => {
     const end = "2026-01-21";
 
     mock
-      .onGet(
-        `/slot/range/?provider=${provider}&start_date=${start}&end_date=${end}`,
-      )
+      .onGet("/slot/range/", {
+        params: { provider: provider, start_date: start, end_date: end },
+      })
       .reply(200, SLOTS);
     const res = await getSlotsByRange({
       providerId: "2",
@@ -77,13 +77,17 @@ describe("appointment API", () => {
   });
 
   it("getProviderAppointments adds provider query", async () => {
-    mock.onGet("/appointment/?provider=2").reply(200, [APPT]);
+    mock
+      .onGet("/appointment/", { params: { provider: "2" } })
+      .reply(200, [APPT]);
     const res = await getProviderAppointments("2");
     expect(res).toEqual([APPT]);
   });
 
   it("getPatientAppointments adds patient query", async () => {
-    mock.onGet("/appointment/?patient=1").reply(200, [APPT]);
+    mock
+      .onGet("/appointment/", { params: { patient: "1" } })
+      .reply(200, [APPT]);
     const res = await getPatientAppointments("1");
     expect(res).toEqual([APPT]);
   });

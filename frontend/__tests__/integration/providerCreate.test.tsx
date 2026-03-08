@@ -77,7 +77,9 @@ describe("Provider Medical Records Flow", () => {
     futureDate.setHours(futureDate.getHours() + 2);
 
     mock
-      .onGet("http://localhost:8000/api/appointment/?provider=provider-123")
+      .onGet("http://localhost:8000/api/appointment/", {
+        params: { provider: "provider-123" },
+      })
       .reply(200, [
         {
           id: "appt-1",
@@ -203,7 +205,6 @@ describe("Provider Medical Records Flow", () => {
       })
       .reply(200, []);
 
-    // Mock successful record creation
     mock.onPost("http://localhost:8000/api/medical-record/").reply(201, {
       id: 1,
       patientId: "patient-123",
@@ -224,7 +225,6 @@ describe("Provider Medical Records Flow", () => {
       expect(screen.getByText("John Doe")).toBeInTheDocument();
     });
 
-    // Click add record button
     const addRecordButton = screen.getByRole("button", {
       name: /add.*record/i,
     });
@@ -267,7 +267,6 @@ describe("Provider Medical Records Flow", () => {
     const saveButton = screen.getByRole("button", { name: /create record/i });
     expect(saveButton).not.toBeDisabled();
 
-    // Click save
     await user.click(saveButton);
 
     // Verify API was called
@@ -359,7 +358,6 @@ describe("Provider Medical Records Flow", () => {
       expect(screen.getByText("John Doe")).toBeInTheDocument();
     });
 
-    // Click add record button
     const addRecordButton = screen.getByRole("button", {
       name: /add.*record/i,
     });

@@ -110,7 +110,6 @@ describe("Patient Onboarding Flow", () => {
   };
 
   it("should successfully submit onboarding form with all fields", async () => {
-    // Mock successful onboarding
     mock.onPost("http://localhost:8000/api/patient/onboard/").reply(() => {
       userRole = "patient";
       return [
@@ -183,7 +182,6 @@ describe("Patient Onboarding Flow", () => {
   });
 
   it("should submit onboarding form with minimal fields (optional fields)", async () => {
-    // Mock successful onboarding with minimal data
     mock.onPost("http://localhost:8000/api/patient/onboard/").reply(() => {
       userRole = "patient";
       return [
@@ -233,7 +231,6 @@ describe("Patient Onboarding Flow", () => {
   });
 
   it("should handle API errors during onboarding", async () => {
-    // Mock failed onboarding
     mock.onPost("http://localhost:8000/api/patient/onboard/").reply(500, {
       detail: "Server error",
     });
@@ -249,7 +246,6 @@ describe("Patient Onboarding Flow", () => {
     const saveButton = screen.getByRole("button", { name: /save profile/i });
     await user.click(saveButton);
 
-    // Should show error message (if implemented) or stay on page
     await waitFor(() => {
       expect(screen.getByText(/complete your profile/i)).toBeInTheDocument();
     });
@@ -272,7 +268,7 @@ describe("Patient Onboarding Flow", () => {
     await user.type(weightInput, "abc");
     await user.type(heightInput, "xyz");
 
-    // Should not accept non-numeric input (HTML5 number inputs handle this)
+    // Should not accept non-numeric input
     expect(weightInput).toHaveValue(null);
     expect(heightInput).toHaveValue(null);
 
@@ -286,7 +282,6 @@ describe("Patient Onboarding Flow", () => {
 
   it("should navigate to home if user is already onboarded", async () => {
     userRole = "patient";
-    // Mock doctors and specialities for home page
     mock
       .onGet("http://localhost:8000/api/speciality/")
       .reply(200, [{ id: 1, name: "Cardiology", image: "cardio.jpg" }]);

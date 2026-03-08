@@ -67,7 +67,6 @@ describe("Logout Flow", () => {
   };
 
   it("should successfully log out and clear tokens", async () => {
-    // Mock successful logout
     mock.onPost("http://localhost:8000/api/auth/logout/").reply(200, {
       detail: "Logged out successfully",
     });
@@ -76,7 +75,6 @@ describe("Logout Flow", () => {
     localStorage.setItem("access", "valid-token");
     localStorage.setItem("refresh", "valid-refresh");
 
-    // Mock user data
     mock.onGet("http://localhost:8000/api/users/me").reply(200, {
       id: "123",
       email: "test@example.com",
@@ -114,7 +112,6 @@ describe("Logout Flow", () => {
   });
 
   it("should handle logout when no refresh token exists", async () => {
-    // Set only access token, no refresh token
     localStorage.setItem("access", "valid-token");
 
     mock.onGet("http://localhost:8000/api/users/me").reply(200, {
@@ -193,7 +190,6 @@ describe("Logout Flow", () => {
   });
 
   it("should clear tokens even if logout API fails", async () => {
-    // Mock failed logout
     mock.onPost("http://localhost:8000/api/auth/logout/").reply(500, {
       detail: "Server error",
     });
@@ -282,7 +278,6 @@ describe("Logout Flow", () => {
     localStorage.setItem("access", "valid-token");
     localStorage.setItem("refresh", "valid-refresh");
 
-    // Mock user data
     mock.onGet("http://localhost:8000/api/users/me").reply(200, {
       id: "123",
       email: "test@example.com",

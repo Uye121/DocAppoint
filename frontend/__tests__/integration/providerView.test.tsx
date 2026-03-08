@@ -184,7 +184,9 @@ describe("Provider Dashboard Flow", () => {
     }
 
     mock
-      .onGet("http://localhost:8000/api/appointment/?provider=provider-123")
+      .onGet("http://localhost:8000/api/appointment/", {
+        params: { provider: "provider-123" },
+      })
       .reply(200, appointments);
   };
 
@@ -268,7 +270,9 @@ describe("Provider Dashboard Flow", () => {
       let appointmentStatus = "REQUESTED";
 
       mock
-        .onGet("http://localhost:8000/api/appointment/?provider=provider-123")
+        .onGet("http://localhost:8000/api/appointment/", {
+          params: { provider: "provider-123" },
+        })
         .reply(() => {
           return [
             200,
@@ -331,7 +335,9 @@ describe("Provider Dashboard Flow", () => {
       let appointmentStatus = "REQUESTED";
 
       mock
-        .onGet("http://localhost:8000/api/appointment/?provider=provider-123")
+        .onGet("http://localhost:8000/api/appointment/", {
+          params: { provider: "provider-123" },
+        })
         .reply(() => {
           return [
             200,
@@ -390,7 +396,9 @@ describe("Provider Dashboard Flow", () => {
 
     it("should handle API error when confirming appointment", async () => {
       mock
-        .onGet("http://localhost:8000/api/appointment/?provider=provider-123")
+        .onGet("http://localhost:8000/api/appointment/", {
+          params: { provider: "provider-123" },
+        })
         .reply(200, [
           {
             id: "requested-0",
@@ -562,7 +570,9 @@ describe("Provider Dashboard Flow", () => {
 
     it("should open medical record modal for completed appointments", async () => {
       mock
-        .onGet("http://localhost:8000/api/appointment/?provider=provider-123")
+        .onGet("http://localhost:8000/api/appointment/", {
+          params: { provider: "provider-123" },
+        })
         .reply(200, [
           {
             id: "completed-0",
@@ -662,7 +672,9 @@ describe("Provider Dashboard Flow", () => {
   describe("Error Handling", () => {
     it("should display error message when appointments fail to load", async () => {
       mock
-        .onGet("http://localhost:8000/api/appointment/?provider=provider-123")
+        .onGet("http://localhost:8000/api/appointment/", {
+          params: { provider: "provider-123" },
+        })
         .reply(500, {
           detail: "Failed to load appointments",
         });
@@ -678,7 +690,9 @@ describe("Provider Dashboard Flow", () => {
 
     it("should handle network errors gracefully", async () => {
       mock
-        .onGet("http://localhost:8000/api/appointment/?provider=provider-123")
+        .onGet("http://localhost:8000/api/appointment/", {
+          params: { provider: "provider-123" },
+        })
         .networkError();
 
       renderProviderDashboard();
@@ -698,7 +712,9 @@ describe("Provider Dashboard Flow", () => {
       futureDate.setDate(futureDate.getDate() + 7);
 
       mock
-        .onGet("http://localhost:8000/api/appointment/?provider=provider-123")
+        .onGet("http://localhost:8000/api/appointment/", {
+          params: { provider: "provider-123" },
+        })
         .reply(200, [
           {
             id: "rescheduled-0",
@@ -753,7 +769,9 @@ describe("Provider Dashboard Flow", () => {
       const fixedDate = new Date("2024-01-16T12:00:00Z");
 
       mock
-        .onGet("http://localhost:8000/api/appointment/?provider=provider-123")
+        .onGet("http://localhost:8000/api/appointment/", {
+          params: { provider: "provider-123" },
+        })
         .reply(200, [
           {
             id: "today-1",
@@ -833,7 +851,9 @@ describe("Provider Dashboard Flow", () => {
       futureDate.setDate(futureDate.getDate() + 1);
 
       mock
-        .onGet("http://localhost:8000/api/appointment/?provider=provider-123")
+        .onGet("http://localhost:8000/api/appointment/", {
+          params: { provider: "provider-123" },
+        })
         .reply(200, [
           {
             id: "future",

@@ -39,7 +39,6 @@ describe("Signup Flow", () => {
   };
 
   it("should successfully sign up a new user", async () => {
-    // Mock successful signup
     mock.onPost("http://localhost:8000/api/users/").reply(201, {
       id: "123",
       email: "test@example.com",
@@ -69,7 +68,6 @@ describe("Signup Flow", () => {
   });
 
   it("should show error when email already exists", async () => {
-    // Mock duplicate email error
     mock.onPost("http://localhost:8000/api/users/").reply(400, {
       email: ["User with this email already exists."],
     });
@@ -105,7 +103,6 @@ describe("Signup Flow", () => {
 
     await user.click(screen.getByRole("button", { name: /create account/i }));
 
-    // HTML5 validation should prevent submission
     // No API call should be made
     expect(mock.history.post.length).toBe(0);
   });

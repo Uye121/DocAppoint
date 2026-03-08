@@ -91,7 +91,9 @@ describe("Patient Medical Records Flow", () => {
     pastDate.setDate(pastDate.getDate() - 7);
 
     mock
-      .onGet("http://localhost:8000/api/appointment/?patient=patient-123")
+      .onGet("http://localhost:8000/api/appointment/", {
+        params: { patient: "patient-123" },
+      })
       .reply(200, [
         {
           id: "appt-1",
@@ -211,7 +213,7 @@ describe("Patient Medical Records Flow", () => {
     const completedBadges = screen.getAllByText("COMPLETED");
     expect(completedBadges).toHaveLength(2);
 
-    // There should be no Cancel buttons (since appointments are completed)
+    // There should be no Cancel buttons for completed appointments
     const cancelButtons = screen.queryAllByRole("button", { name: /cancel/i });
     expect(cancelButtons).toHaveLength(0);
   });
@@ -367,7 +369,6 @@ describe("Patient Medical Records Flow", () => {
     expect(appointmentSection).toBeInTheDocument();
 
     // Look for the formatted date in the appointment details
-    // The actual format from the output is "Jan 15, 2024, 9:00 AM - 9:30 AM"
     expect(appointmentSection).toHaveTextContent(/2024/);
     expect(appointmentSection).toHaveTextContent(/Jan/);
     expect(appointmentSection).toHaveTextContent(/15/);
@@ -404,7 +405,9 @@ describe("Patient Medical Records Flow", () => {
     futureDate.setDate(futureDate.getDate() + 7);
 
     mock
-      .onGet("http://localhost:8000/api/appointment/?patient=patient-123")
+      .onGet("http://localhost:8000/api/appointment/", {
+        params: { patient: "patient-123" },
+      })
       .reply(200, [
         {
           id: "appt-3",
