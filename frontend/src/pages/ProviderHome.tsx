@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { toast } from "react-toastify";
@@ -25,6 +25,8 @@ const ProviderHome = (): React.JSX.Element => {
   const {
     data: appointments = [],
     isLoading,
+    isError,
+    error,
     refetch: refetchAppts,
   } = useQuery({
     queryKey: ["provider-appointments", providerId],
@@ -33,6 +35,14 @@ const ProviderHome = (): React.JSX.Element => {
     staleTime: 3,
     refetchOnWindowFocus: true,
   });
+
+  useEffect(() => {
+    if (isError && error) {
+      const errorMessage = getErrorMessage(error);
+      toast.error(errorMessage);
+      console.error("Appointment loading error: ", errorMessage);
+    }
+  }, [isError, error]);
 
   const handleStatus = async (appt: AppointmentListItem, status: string) => {
     try {
