@@ -1,9 +1,11 @@
 import axios from "axios";
 
 interface ApiErrorData {
-  message?: string;
+  message?: string | string[];
   detail?: string;
   error?: string;
+  non_field_errors?: string[];
+  [key: string]: unknown;
 }
 
 const isAxiosError = (err: unknown): err is import("axios").AxiosError => {
@@ -16,10 +18,31 @@ export const getErrorMessage = (
 ): string => {
   // Axios error
   if (isAxiosError(err)) {
-    const data = err?.response?.data as ApiErrorData | undefined;
-    const apiMessage = data?.message || data?.detail || data?.error;
+    const data = err?.response?.data;
 
-    if (apiMessage) return String(apiMessage);
+    if (typeof data === "string") {
+      return data;
+    }
+
+    if (data && typeof data === "object") {
+      const errorData = data as ApiErrorData;
+
+      const fieldErrors = Object.values(errorData).find((value) =>
+        Array.isArray(value),
+      );
+      if (fieldErrors && fieldErrors.length > 0) {
+        return String(fieldErrors[0]);
+      }
+
+      if (errorData.message) {
+        return Array.isArray(errorData.message)
+          ? errorData.message[0]
+          : errorData.message;
+      }
+      if (errorData.detail) return errorData.detail;
+      if (errorData.error) return errorData.error;
+      if (errorData.non_field_errors?.[0]) return errorData.non_field_errors[0];
+    }
 
     return err.message || `Request failed with status ${err.response?.status}`;
   }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
+import { toast } from "react-toastify";
 
 import { useAuth } from "../../hooks/useAuth";
 import { assets } from "../assets/assets_frontend/assets";
@@ -9,6 +10,7 @@ import { Spinner } from "../components";
 import type { PatientDetail } from "../types/patient";
 import type { User } from "../types/user";
 import { US_STATES } from "../../utils/states";
+import { getErrorMessage } from "../../utils/errorMap";
 
 const UserProfile = (): React.JSX.Element => {
   const { user } = useAuth();
@@ -29,6 +31,9 @@ const UserProfile = (): React.JSX.Element => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["patient-info"] });
       setisEditing(false);
+    },
+    onError: (err) => {
+      toast.error(getErrorMessage(err, "Failed to update profile"));
     },
   });
 

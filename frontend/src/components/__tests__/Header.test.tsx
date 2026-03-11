@@ -1,5 +1,5 @@
 import { it, expect } from "vitest";
-import { renderWithRouter } from "../../../test/utils";
+import { renderWithRouter } from "../../../__tests__/utils";
 import Header from "../Header";
 
 it("links to #specialty section", () => {

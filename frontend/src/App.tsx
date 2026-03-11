@@ -1,5 +1,7 @@
 import React from "react";
 import { Outlet, Route, Routes } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
+
 import {
   About,
   Appointments,
@@ -23,6 +25,14 @@ const App = (): React.JSX.Element => {
   return (
     <div className="mx-4 sm:mx-[10%]">
       <Navbar />
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        closeOnClick
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
       <Routes>
         {/* public */}
         <Route path="/" element={<Landing />} />

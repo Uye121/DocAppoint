@@ -3,6 +3,7 @@ import { NavLink, useNavigate, useLocation } from "react-router-dom";
 
 import { assets } from "../assets/assets_frontend/assets";
 import { useAuth } from "../../hooks/useAuth";
+import { getErrorMessage } from "../../utils/errorMap";
 
 const Navbar = (): React.JSX.Element => {
   const nav = useNavigate();
@@ -11,18 +12,34 @@ const Navbar = (): React.JSX.Element => {
   const [showMenu, setShowMenu] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
 
-  const navItems = [
-    { path: "/", label: "Home", testId: "home-link" },
-    { path: "/doctors", label: "All Doctors", testId: "doctors-link" },
-    { path: "/about", label: "About", testId: "about-link" },
-    { path: "/contact", label: "Contact", testId: "contact-link" },
-  ];
+  const getNavItems = () => {
+    if (!user) {
+      return [];
+    }
+
+    if (user.userRole === "patient") {
+      return [
+        { path: "/", label: "Home", testId: "home-link" },
+        { path: "/doctors", label: "All Doctors", testId: "doctors-link" },
+        { path: "/about", label: "About", testId: "about-link" },
+        { path: "/contact", label: "Contact", testId: "contact-link" },
+      ];
+    }
+
+    if (user.userRole === "provider") {
+      return [{ path: "/", label: "Home", testId: "home-link" }];
+    }
+
+    return [{ path: "/", label: "Home", testId: "home-link" }];
+  };
+
+  const navItems = getNavItems();
 
   const handleLogout = async () => {
     try {
       await logout();
     } catch (err) {
-      console.error("Logout error: ", err);
+      console.error("Logout error: ", getErrorMessage(err));
     } finally {
       nav("/login");
     }
@@ -82,22 +99,24 @@ const Navbar = (): React.JSX.Element => {
       </button>
 
       {/* Desktop Navigation */}
-      <ul className="hidden md:flex items-start gap-5 font-medium">
-        {navItems.map((item) => (
-          <li key={item.path}>
-            <NavLink
-              to={item.path}
-              className={({ isActive }) =>
-                `py-1 block ${isActive ? "text-primary font-semibold" : "text-foreground"}`
-              }
-              end={item.path === "/"}
-              data-testid={`desktop-${item.testId}`}
-            >
-              {item.label}
-            </NavLink>
-          </li>
-        ))}
-      </ul>
+      {navItems.length > 0 && (
+        <ul className="hidden md:flex items-start gap-5 font-medium">
+          {navItems.map((item) => (
+            <li key={item.path}>
+              <NavLink
+                to={item.path}
+                className={({ isActive }) =>
+                  `py-1 block ${isActive ? "text-primary font-semibold" : "text-foreground"}`
+                }
+                end={item.path === "/"}
+                data-testid={`desktop-${item.testId}`}
+              >
+                {item.label}
+              </NavLink>
+            </li>
+          ))}
+        </ul>
+      )}
 
       {/* Right side actions */}
       <div className="flex items-center gap-4">
@@ -246,27 +265,31 @@ const Navbar = (): React.JSX.Element => {
           </div>
 
           <nav className="mt-5 px-5">
-            <ul className="flex flex-col gap-2 text-lg font-medium">
-              {navItems.map((item) => (
-                <li key={item.path}>
-                  <button
-                    onClick={() => {
-                      nav(item.path);
-                      setShowMenu(false);
-                    }}
-                    className="w-full text-left px-4 py-3 rounded hover:bg-gray-50 bg-transparent border-none"
-                    data-testid={`mobile-${item.testId}`}
-                    type="button"
-                  >
-                    {item.label}
-                  </button>
-                </li>
-              ))}
-            </ul>
+            {navItems.length > 0 && (
+              <>
+                <ul className="flex flex-col gap-2 text-lg font-medium">
+                  {navItems.map((item) => (
+                    <li key={item.path}>
+                      <button
+                        onClick={() => {
+                          nav(item.path);
+                          setShowMenu(false);
+                        }}
+                        className="w-full text-left px-4 py-3 rounded hover:bg-gray-50 bg-transparent border-none"
+                        data-testid={`mobile-${item.testId}`}
+                        type="button"
+                      >
+                        {item.label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
 
             {user ? (
               <>
-                <div className="my-6 border-t"></div>
+                {navItems.length > 0 && <div className="my-6 border-t"></div>}
                 <ul className="flex flex-col gap-2 text-lg font-medium">
                   {userMenuItems.map((item) => (
                     <li key={item.label}>

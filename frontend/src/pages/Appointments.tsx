@@ -83,6 +83,8 @@ const Appointments = (): React.JSX.Element | null => {
   if (isLoading) return <Spinner loadingText="Loading provider data..." />;
   if (!docInfo) return null;
 
+  console.log("sel: ", selectedSlot);
+
   return (
     docInfo && (
       <div>
@@ -116,10 +118,14 @@ const Appointments = (): React.JSX.Element | null => {
 
               {selectedSlot?.id && (
                 <div className="mt-3">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="reason"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
                     Reason for visit <span className="text-red-500">*</span>
                   </label>
                   <textarea
+                    id="reason"
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
                     rows={3}

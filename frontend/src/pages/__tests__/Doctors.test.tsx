@@ -5,10 +5,10 @@ import { MemoryRouter, Routes, Route } from "react-router-dom";
 
 import Doctors from "../Doctors";
 import { useDoctor } from "../../../hooks/useDoctor";
+import { useSpeciality } from "../../../hooks/useSpeciality";
 
-vi.mock("../../../hooks/useDoctor", () => ({
-  useDoctor: vi.fn(),
-}));
+vi.mock("../../../hooks/useDoctor");
+vi.mock("../../../hooks/useSpeciality");
 
 const mockDoctors = [
   {
@@ -34,6 +34,14 @@ const mockDoctors = [
   },
 ];
 
+const mockSpecialities = [
+  { id: 1, name: "General Physician", image: "gp.jpg" },
+  { id: 2, name: "Gynecologist", image: "gyn.jpg" },
+  { id: 3, name: "Dermatologist", image: "derm.jpg" },
+  { id: 4, name: "Pediatricians", image: "ped.jpg" },
+  { id: 5, name: "Neurologist", image: "neuro.jpg" },
+];
+
 const createTestWrapper = (initialRoute: string = "/doctors") => {
   return function TestWrapper({ children }: { children: React.ReactNode }) {
     return (
@@ -54,8 +62,13 @@ const createTestWrapper = (initialRoute: string = "/doctors") => {
 describe("Doctors page", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-
     vi.mocked(useDoctor).mockReturnValue({ doctors: mockDoctors });
+    vi.mocked(useSpeciality).mockReturnValue({
+      specialities: mockSpecialities,
+      loading: false,
+      error: null,
+      getSpecialities: vi.fn(),
+    });
   });
 
   it("renders all doctors when no speciality filter", async () => {

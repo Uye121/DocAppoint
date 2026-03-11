@@ -1,6 +1,6 @@
 import { it, expect, vi } from "vitest";
 
-import { renderWithRouter } from "../../../test/utils";
+import { renderWithRouter } from "../../../__tests__/utils";
 import Banner from "../Banner";
 
 it("navigates to login and scrolls to top on button click", async () => {

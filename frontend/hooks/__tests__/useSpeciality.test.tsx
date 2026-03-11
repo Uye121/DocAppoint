@@ -2,7 +2,7 @@ import React from "react";
 import { describe, it, expect } from "vitest";
 import { SpecialityContext } from "../../src/context";
 import { useSpeciality } from "../useSpeciality";
-import { renderHookInProvider } from "../../test/utils";
+import { renderHookInProvider } from "../../__tests__/utils";
 
 const wrapper = ({ children }: { children: React.ReactNode }) => (
   <SpecialityContext.Provider

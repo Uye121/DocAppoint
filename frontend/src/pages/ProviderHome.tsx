@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { toast } from "react-toastify";
+
 import { useAuth } from "../../hooks/useAuth";
 import {
   getProviderAppointments,
@@ -18,12 +20,13 @@ const ProviderHome = (): React.JSX.Element => {
     null,
   );
   const [showRecords, setShowRecords] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   /* ---------- appointments ---------- */
   const {
     data: appointments = [],
     isLoading,
+    isError,
+    error,
     refetch: refetchAppts,
   } = useQuery({
     queryKey: ["provider-appointments", providerId],
@@ -33,14 +36,22 @@ const ProviderHome = (): React.JSX.Element => {
     refetchOnWindowFocus: true,
   });
 
+  useEffect(() => {
+    if (isError && error) {
+      const errorMessage = getErrorMessage(error);
+      toast.error(errorMessage);
+      console.error("Appointment loading error: ", errorMessage);
+    }
+  }, [isError, error]);
+
   const handleStatus = async (appt: AppointmentListItem, status: string) => {
     try {
       await updateAppointmentStatus(appt.id, status);
       refetchAppts();
     } catch (err) {
-      const errMsg = getErrorMessage(err);
-      setError(errMsg);
-      console.error("Failed to update appointment status:", errMsg);
+      const error = getErrorMessage(err);
+      toast.error(error);
+      console.error("Failed to update appointment status:", error);
     }
   };
 
@@ -57,13 +68,7 @@ const ProviderHome = (): React.JSX.Element => {
       <main className="max-w-6xl mx-auto px-4 py-6 grid md:grid-cols-3 gap-6">
         {/* Left column – appointment tabs */}
         <div className="md:col-span-2 space-y-6">
-          {/* Error message display */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-              {error}
-            </div>
-          )}
-          {["REQUESTED", "CONFIRMED", "RESCHEDULED"].map((st) => (
+          {["REQUESTED", "CONFIRMED", "RESCHEDULED", "COMPLETED"].map((st) => (
             <section
               key={st}
               className="bg-white rounded-xl border border-gray-200 p-4"
@@ -115,7 +120,7 @@ const ProviderHome = (): React.JSX.Element => {
                             </button>
                           </div>
                         )}
-                        {st === "CONFIRMED" && (
+                        {["CONFIRMED", "COMPLETED"].includes(st) && (
                           <button
                             onClick={() => {
                               setSelectedAppt(appt);

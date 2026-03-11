@@ -104,22 +104,115 @@ describe("Navbar", () => {
     expect(mobileMenu).toHaveClass("translate-x-full");
   });
 
-  it("closes mobile menu on navigation link click", async () => {
+  it("closes mobile menu on navigation link click for authenticated patient user", async () => {
     const user = userEvent.setup();
-    vi.mocked(useAuth).mockReturnValue({ ...mockAuthUser, user: null });
+    // Mock authenticated patient user
+    vi.mocked(useAuth).mockReturnValue(mockAuthUser);
 
     renderWithRouter(<Navbar />);
 
-    // Open mobile menu - get the button with exact text "Open menu"
+    // Open mobile menu
     const menuBtn = screen.getByRole("button", { name: "Open menu" });
     await user.click(menuBtn);
 
+    // Find and click the Home button (should be visible for patient users)
     const homeButton = screen.getByRole("button", { name: "Home" });
     await user.click(homeButton);
 
     // Check mobile menu is closed
     const mobileMenu = screen.getByLabelText("Mobile navigation menu");
     expect(mobileMenu).toHaveClass("translate-x-full");
+  });
+
+  it("does not show navigation links when user is not authenticated", async () => {
+    const user = userEvent.setup();
+    // Mock unauthenticated user
+    vi.mocked(useAuth).mockReturnValue({ ...mockAuthUser, user: null });
+
+    renderWithRouter(<Navbar />);
+
+    // Open mobile menu
+    const menuBtn = screen.getByRole("button", { name: "Open menu" });
+    await user.click(menuBtn);
+
+    // Verify that no navigation links are shown
+    const navItems = ["Home", "All Doctors", "About", "Contact"];
+    for (const item of navItems) {
+      const navButton = screen.queryByRole("button", { name: item });
+      expect(navButton).not.toBeInTheDocument();
+    }
+
+    // Verify that the auth button is shown instead
+    const mobileMenu = screen.getByLabelText("Mobile navigation menu");
+    const authButton = within(mobileMenu).getByRole("button", {
+      name: location.pathname === "/login" ? "Create Account" : "Login",
+    });
+    expect(authButton).toBeInTheDocument();
+  });
+
+  it("shows limited navigation links for provider user", async () => {
+    const user = userEvent.setup();
+    // Mock provider user
+    const providerUser = {
+      ...mockAuthUser,
+      user: {
+        ...mockAuthUser.user,
+        userRole: "provider",
+      },
+    };
+    vi.mocked(useAuth).mockReturnValue(providerUser);
+
+    renderWithRouter(<Navbar />);
+
+    // Open mobile menu
+    const menuBtn = screen.getByRole("button", { name: "Open menu" });
+    await user.click(menuBtn);
+
+    // Verify that only Home is shown
+    expect(screen.getByRole("button", { name: "Home" })).toBeInTheDocument();
+
+    // Verify that other navigation items are not shown
+    const otherNavItems = ["All Doctors", "About", "Contact"];
+    for (const item of otherNavItems) {
+      const navButton = screen.queryByRole("button", { name: item });
+      expect(navButton).not.toBeInTheDocument();
+    }
+
+    // Verify that user menu items are shown
+    expect(
+      screen.getByRole("button", { name: "My Profile" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "My Appointments" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Logout" })).toBeInTheDocument();
+  });
+
+  it("shows all navigation links for patient user", async () => {
+    const user = userEvent.setup();
+    // Mock patient user (default)
+    vi.mocked(useAuth).mockReturnValue(mockAuthUser);
+
+    renderWithRouter(<Navbar />);
+
+    // Open mobile menu
+    const menuBtn = screen.getByRole("button", { name: "Open menu" });
+    await user.click(menuBtn);
+
+    // Verify that all navigation items are shown
+    const navItems = ["Home", "All Doctors", "About", "Contact"];
+    for (const item of navItems) {
+      expect(screen.getByRole("button", { name: item })).toBeInTheDocument();
+    }
+
+    // Verify that user menu items are shown
+    expect(
+      screen.getByRole("button", { name: "My Profile" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "My Appointments" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Logout" })).toBeInTheDocument();
   });
 
   it("shows 'Create Account' when on login page", () => {

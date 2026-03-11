@@ -3,7 +3,7 @@ import { Banner, Header, SpecialtyMenu, TopDoctors } from "../components";
 
 const Home = (): React.JSX.Element => {
   return (
-    <div>
+    <div data-testid="patient-home">
       <Header />
       <SpecialtyMenu />
       <TopDoctors />

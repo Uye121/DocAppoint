@@ -10,9 +10,7 @@ const Verify = (): React.JSX.Element => {
 
   return (
     <div>
-      <div className="text-center text-2xl pt-10 text-gray-500">
-        Verify Email
-      </div>
+      <h3 className="text-center text-2xl pt-10 text-gray-500">Verify Email</h3>
       <div className="text-center text-2base pt-8 text-gray-500">
         Please check email to verify email.
       </div>

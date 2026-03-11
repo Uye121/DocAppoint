@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { renderWithRouter } from "../../../test/utils";
+import { renderWithRouter } from "../../../__tests__/utils";
 import ProtectedRoutes from "../ProtectedRoutes";
 
 vi.mock("../../../hooks/useAuth", () => ({

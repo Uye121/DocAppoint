@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { AuthContext } from "../../src/context";
 import { useAuth } from "../useAuth";
-import { renderHookInProvider } from "../../test/utils";
+import { renderHookInProvider } from "../../__tests__/utils";
 
 const wrapper = ({ children }: { children: React.ReactNode }) => (
   <AuthContext.Provider

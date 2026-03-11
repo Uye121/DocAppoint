@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
+import { toast } from "react-toastify";
 import Login from "../Login";
 
 vi.mock("../../../hooks/useAuth", () => ({
@@ -117,8 +118,8 @@ describe("Login page", () => {
     await user.click(screen.getByRole("button", { name: /login/i }));
 
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent(
-        "Invalid credentials",
+      expect(toast.error).toHaveBeenCalledWith(
+        expect.stringContaining("Invalid credentials"),
       );
     });
   });
@@ -143,8 +144,8 @@ describe("Login page", () => {
     await user.click(screen.getByRole("button", { name: /login/i }));
 
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent(
-        JSON.stringify({ email: ["This field is required"] }),
+      expect(toast.error).toHaveBeenCalledWith(
+        expect.stringContaining("email"),
       );
     });
   });
@@ -160,7 +161,9 @@ describe("Login page", () => {
     await user.click(screen.getByRole("button", { name: /login/i }));
 
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent("Network error");
+      expect(toast.error).toHaveBeenCalledWith(
+        expect.stringContaining("Network error"),
+      );
     });
   });
 
@@ -175,7 +178,9 @@ describe("Login page", () => {
     await user.click(screen.getByRole("button", { name: /login/i }));
 
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent("Unexpected error");
+      expect(toast.error).toHaveBeenCalledWith(
+        expect.stringContaining("Unexpected error"),
+      );
     });
   });
 
@@ -219,7 +224,9 @@ describe("Login page", () => {
     await user.click(screen.getByRole("button", { name: /login/i }));
 
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toBeInTheDocument();
+      expect(toast.error).toHaveBeenCalledWith(
+        expect.stringContaining("Invalid credentials"),
+      );
     });
 
     await user.type(screen.getByLabelText(/email/i), "newemail@example.com");

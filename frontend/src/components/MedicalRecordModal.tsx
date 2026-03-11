@@ -29,6 +29,7 @@ const MedicalRecordModal = ({
   const [notes, setNotes] = useState("");
   const [prescriptions, setPrescriptions] = useState("");
   const [isEditing, setIsEditing] = useState(false);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   /* ---------- medical records ---------- */
   const { data: record, isLoading: recordLoading } = useQuery({
@@ -44,6 +45,7 @@ const MedicalRecordModal = ({
     setNotes("");
     setPrescriptions("");
     setIsEditing(false);
+    setShowSuccessMessage(false);
   };
 
   useEffect(() => {
@@ -63,7 +65,11 @@ const MedicalRecordModal = ({
       queryClient.invalidateQueries({
         queryKey: ["appointment-record", selectedAppt?.id],
       });
-      setIsEditing(false);
+      setShowSuccessMessage(true);
+      setTimeout(() => {
+        setIsEditing(false);
+        onClose();
+      }, 1000);
     },
   });
 
@@ -79,7 +85,11 @@ const MedicalRecordModal = ({
       queryClient.invalidateQueries({
         queryKey: ["appointment-record", selectedAppt?.id],
       });
-      setIsEditing(false);
+      setShowSuccessMessage(true);
+      setTimeout(() => {
+        setIsEditing(false);
+        onClose();
+      }, 1500);
     },
   });
 
@@ -101,6 +111,7 @@ const MedicalRecordModal = ({
         payload,
       });
     } else {
+      console.log("creating...");
       createMutation.mutate(payload);
     }
   };
@@ -498,7 +509,7 @@ const MedicalRecordModal = ({
                   </p>
                 )}
 
-                {(createMutation.isSuccess || updateMutation.isSuccess) && (
+                {showSuccessMessage && (
                   <p className="mt-4 text-sm text-green-600">
                     Record successfully{" "}
                     {createMutation.isSuccess ? "created" : "updated"}!
