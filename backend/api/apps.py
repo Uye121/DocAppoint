@@ -7,4 +7,4 @@ class ApiConfig(AppConfig):
     label = "api"
 
     def ready(self):
-        import api.services.signals # noqa: F401
+        import api.services.signals  # noqa: F401
