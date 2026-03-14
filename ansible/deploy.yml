@@ -1,0 +1,42 @@
+---
+# Needs to be updated to Koyeb
+- name: Deploy to Render
+  hosts: localhost
+  connection: local
+  vars:
+    render_api_key: "{{ lookup('env', 'RENDER_API_KEY') }}"
+    backend_service_id: "{{ lookup('env', 'BACKEND_SERVICE_ID') }}"
+    frontend_service_id: "{{ lookup('env', 'FRONTEND_SERVICE_ID') }}"
+    build_number: "{{ build_number | default('unknown') }}"
+    git_commit: "{{ git_commit | default('unknown') }}"
+    
+  tasks:
+    - name: Trigger backend deploy
+      uri:
+        url: "https://api.render.com/v1/services/{{ backend_service_id }}/deploys"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ render_api_key }}"
+        body_format: json
+        body:
+          clearCache: false
+          metadata:
+            triggerBy: "Jenkins"
+            buildNumber: "{{ build_number }}"
+            commit: "{{ git_commit }}"
+      register: backend_deploy
+    
+    - name: Trigger frontend deploy
+      uri:
+        url: "https://api.render.com/v1/services/{{ frontend_service_id }}/deploys"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ render_api_key }}"
+        body_format: json
+      register: frontend_deploy
+    
+    - name: Print deploy results
+      debug:
+        msg: 
+          - "Backend deploy: {{ backend_deploy.status }}"
+          - "Frontend deploy: {{ frontend_deploy.status }}"
