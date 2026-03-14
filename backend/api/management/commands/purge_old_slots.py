@@ -5,7 +5,7 @@ from api.models import Slot
 
 
 class Command(BaseCommand):
-    help = "Delete appointment slots older than the current ISO week"
+    help = "Delete appointment slots older than the current ISO week."
     table = Slot._meta.db_table
 
     def handle(self, *args, **options):

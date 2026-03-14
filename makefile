@@ -9,7 +9,7 @@ IS_CI := $(if $(CI),true,)
 # =============================================================================
 # DEVELOPMENT
 # =============================================================================
-.PHONY: dev dev-down dev-clean dev-restart
+.PHONY: dev dev-down dev-clean ci-clean ci-clean-containers ci-clean-volume ci-clean-images dev-restart dev-restart-detached
 
 ## Start development environment
 dev:
@@ -28,8 +28,29 @@ dev-clean:
 	$(DC) down -v
 	rm -rf $(FRONTEND_DIR)/node_modules
 
+ci-clean: ci-clean-containers ci-clean-volumes ci-clean-images
+	@echo "✅ CI cleanup completed"
+
+ci-clean-containers:
+	@echo "Cleaning up containers..."
+	-docker ps -q --filter "name=docappoint" | xargs -r docker stop
+	-docker ps -aq --filter "name=docappoint" | xargs -r docker rm
+	@echo "✅ Containers cleaned"
+
+ci-clean-volumes:
+	@echo "Cleaning up volumes..."
+	-docker volume ls -q --filter "name=docappoint" | xargs -r docker volume rm -f
+	@echo "✅ Volumes cleaned"
+
+ci-clean-images:
+	@echo "Cleaning up images..."
+	-docker images -q --filter "reference=*docappoint*" | xargs -r docker rmi -f
+	@echo "✅ Images cleaned"
+
 ## Restart development environment
 dev-restart: dev-down dev
+
+dev-restart-detached: dev-down dev-detached
 
 ## Watch for changes
 dev-watch:
@@ -210,7 +231,7 @@ ci-be-migrations-check-docker:
 		-e POSTGRES_DB="$(POSTGRES_DB)" \
 		-e DJANGO_SECRET_KEY="$(DJANGO_SECRET_KEY)" \
 		-e DJANGO_SETTINGS_MODULE="$(DJANGO_SETTINGS_MODULE)" \
-		$(shell echo $(REGISTRY)/$(IMAGE_NAME)-backend:$(TAG) | tr '[:upper:]' '[:lower:]') \
+		$(shell echo $(REGISTRY)/$(IMAGE_NAME)/backend:$(TAG) | tr '[:upper:]' '[:lower:]') \
 		python manage.py makemigrations --check --dry-run
 
 ci-be-test:
