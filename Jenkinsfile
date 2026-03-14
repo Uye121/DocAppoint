@@ -7,7 +7,7 @@ pipeline {
         DOCKER_BUILDKIT = '1'
         CI = 'true'
 
-        // Test database config
+        // Test database configs
         POSTGRES_DB = 'docappoint_test'
         POSTGRES_USER = 'postgres'
         POSTGRES_PASSWORD = 'password'
