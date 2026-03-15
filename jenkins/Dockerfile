@@ -6,7 +6,6 @@ USER root
 RUN apk update && apk add --no-cache \
     python3 \
     py3-pip \
-    pipx \
     nodejs \
     npm \
     make \
@@ -14,7 +13,7 @@ RUN apk update && apk add --no-cache \
     docker-cli \
     && rm -rf /var/cache/apk/*
 
-# Install Docker Compose plugin (same as before)
+# Install Docker Compose plugin
 RUN mkdir -p /usr/local/lib/docker/cli-plugins && \
     curl -SL https://github.com/docker/compose/releases/download/v2.39.2/docker-compose-linux-x86_64 \
     -o /usr/local/lib/docker/cli-plugins/docker-compose && \
@@ -27,4 +26,6 @@ RUN mkdir -p /cache/npm /cache/poetry && \
 USER jenkins
 
 RUN curl -sSL https://install.python-poetry.org | python3 -
+
+# Add poetry to PATH
 ENV PATH="/home/jenkins/.local/bin:${PATH}"

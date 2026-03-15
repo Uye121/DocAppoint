@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    options {
+        timeout(time: 30, unit: 'MINUTES')
+    }
+
     environment {
         REGISTRY = 'registry.gitlab.com'
         IMAGE_NAME = 'docappoint/DocAppoint'
