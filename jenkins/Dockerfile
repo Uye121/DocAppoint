@@ -25,3 +25,6 @@ RUN mkdir -p /cache/npm /cache/poetry && \
     chown -R jenkins:jenkins /cache
 
 USER jenkins
+
+RUN curl -sSL https://install.python-poetry.org | python3 -
+ENV PATH="/home/jenkins/.local/bin:${PATH}"
