@@ -152,19 +152,15 @@ pipeline {
             parallel {
                 stage('Frontend Lint & Type Check') {
                     steps {
-                        dir('frontend') {
-                            sh 'make ci-fe-lint'
-                            sh 'make ci-fe-type-check'
-                        }
+                        sh 'make ci-fe-lint'
+                        sh 'make ci-fe-type-check'
                     }
                 }
 
                 stage('Backend Lint & Type Check') {
                     steps {
-                        dir('backend') {
-                            sh 'make ci-be-lint'
-                            sh 'make ci-be-type-check'
-                        }
+                        sh 'make ci-be-lint'
+                        sh 'make ci-be-type-check'
                     }
                 }
 
@@ -198,16 +194,12 @@ pipeline {
             parallel {
                 stage('Backend Tests') {
                     steps {
-                        dir('backend') {
-                            sh 'make ci-be-test'
-                        }
+                        sh 'make ci-be-test'
                     }
                 }
                 stage('Frontend Tests') {
                     steps {
-                        dir('frontend') {
-                            sh 'make ci-fe-test'
-                        }
+                        sh 'make ci-fe-test'
                     }
                 }
             }
