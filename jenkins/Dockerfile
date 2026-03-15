@@ -28,4 +28,4 @@ USER jenkins
 RUN curl -sSL https://install.python-poetry.org | python3 -
 
 # Add poetry to PATH
-ENV PATH="/home/jenkins/.local/bin:${PATH}"
+ENV PATH="/var/jenkins_home/.local/bin:${PATH}"
