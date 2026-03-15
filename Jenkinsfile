@@ -92,8 +92,13 @@ pipeline {
 
                                             sh '''
                                                 echo "=== Setting up Frontend ==="
-                                                rm -rf node_modules package-lock.json
-                                                
+                                                rm -rf node_modules
+
+                                                if [ ! -f package-lock.json ]; then
+                                                    echo "⚠️ package-lock.json not found, generating one..."
+                                                    npm install --package-lock-only
+                                                fi
+
                                                 npm ci --cache /cache/npm --prefer-offline
                                             '''
                                         }
@@ -116,13 +121,6 @@ pipeline {
 
                                             sh '''
                                                 echo "=== Setting up Backend ==="
-
-                                                # Install pipx
-                                                apk add pipx
-                                                pipx ensurepath
-
-                                                # Install Poetry
-                                                pip install poetry
 
                                                 # Configure Poetry (venv in project)
                                                 poetry config virtualenvs.create true
