@@ -170,6 +170,12 @@ pipeline {
         stage('Start Docker') {
             steps {
                 sh '''
+                    # Create .env from example if it doesn't exist
+                    if [ ! -f .env ]; then
+                        cp .env.example .env
+                        echo "Created .env from template"
+                    fi
+
                     make dev-restart-detached
 
                     # Wait for docker to finish
