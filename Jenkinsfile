@@ -92,6 +92,8 @@ pipeline {
 
                                             sh '''
                                                 echo "=== Setting up Frontend ==="
+                                                rm -rf node_modules package-lock.json
+                                                
                                                 npm ci --cache /cache/npm --prefer-offline
                                             '''
                                         }
@@ -114,6 +116,11 @@ pipeline {
 
                                             sh '''
                                                 echo "=== Setting up Backend ==="
+
+                                                # Install pipx
+                                                apk add pipx
+                                                pipx ensurepath
+
                                                 # Install Poetry
                                                 pip install poetry
 
