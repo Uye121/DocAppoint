@@ -11,7 +11,19 @@ RUN apk update && apk add --no-cache \
     make \
     curl \
     docker-cli \
+    shadow \
     && rm -rf /var/cache/apk/*
+
+# Add jenkins user to docker group (using host socket's GID)
+RUN set -ex; \
+    DOCKER_GID=$(stat -c %g /var/run/docker.sock 2>/dev/null || echo 999); \
+    if getent group $DOCKER_GID > /dev/null 2>&1; then \
+        EXISTING_GROUP=$(getent group $DOCKER_GID | cut -d: -f1); \
+        adduser jenkins $EXISTING_GROUP; \
+    else \
+        addgroup -g $DOCKER_GID docker; \
+        adduser jenkins docker; \
+    fi
 
 # Install Docker Compose plugin
 RUN mkdir -p /usr/local/lib/docker/cli-plugins && \
