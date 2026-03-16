@@ -136,7 +136,6 @@ pipeline {
                                         sh '''
                                             # Verify setup
                                             poetry --version
-                                            poetry show
                                             echo "Backend setup complete"
                                         '''
                                     }
@@ -179,7 +178,7 @@ pipeline {
                     make dev-restart-detached
 
                     # Wait for docker to finish
-                    timeout 60s sh -c 'until curl -s -f http://localhost:8000/api/ > /dev/null; do sleep 3; done'
+                    timeout 360s sh -c 'until curl -s -f http://localhost:8000/api/ > /dev/null; do sleep 3; done'
                 '''
             }
         }
