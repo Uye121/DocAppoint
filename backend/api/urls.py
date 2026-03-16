@@ -61,7 +61,7 @@ urlpatterns: List[Union[URLPattern, URLResolver]] = [
     path("admin/", admin.site.urls),
     path("api/auth/", include(authpatterns)),
     path("api/", include(router.urls)),
-    path("api/health/", health_check, name="health_check"), 
+    path("api/health/", health_check, name="health_check"),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
