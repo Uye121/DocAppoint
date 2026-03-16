@@ -11,6 +11,12 @@ services:
       - postgres_data:/var/lib/postgresql/data
   backend:
     build: ./backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health/"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
     develop:
       watch:
         - action: rebuild

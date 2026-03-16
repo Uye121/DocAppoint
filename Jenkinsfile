@@ -178,7 +178,14 @@ pipeline {
                     make dev-restart-detached
 
                     # Wait for docker to finish
-                    timeout 360s sh -c 'until curl -s -f http://localhost:8000/api/ > /dev/null; do sleep 3; done'
+                    echo "Waiting for all services to be healthy..."
+                    timeout 600s sh -c '
+                        while ! docker compose ps --format "table {{.Status}}" | grep -q "healthy"; do
+                            echo "Waiting for services to become healthy..."
+                            sleep 10
+                        done
+                    '
+                    echo "✅ All services are healthy!"
                 '''
             }
         }

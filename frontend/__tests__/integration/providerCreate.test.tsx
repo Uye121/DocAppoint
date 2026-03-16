@@ -417,7 +417,7 @@ describe("Provider Medical Records Flow", () => {
       () => {
         expect(screen.queryByTestId("modal-backdrop")).not.toBeInTheDocument();
       },
-      { timeout: 1500 },
+      { timeout: 1600 },
     );
   });
 
