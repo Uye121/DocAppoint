@@ -179,7 +179,7 @@ pipeline {
 
                     # Wait for docker to finish
                     echo "Waiting for all services to be healthy..."
-                    timeout 600s sh -c '
+                    timeout 1200s sh -c '
                         while ! docker compose ps --format "table {{.Status}}" | grep -q "healthy"; do
                             echo "Waiting for services to become healthy..."
                             sleep 10
