@@ -10,7 +10,7 @@ import {
   SpecialitiesProvider,
   DoctorProvider,
 } from "../../src/context";
-import { ProviderHome, Login } from "../../src/pages/";
+import { ProviderHome, Login } from "../../src/pages";
 import { ProtectedRoutes } from "../../src/components";
 import { mock } from "../server";
 

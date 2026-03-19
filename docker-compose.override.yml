@@ -1,0 +1,19 @@
+services:
+  backend:
+    build:
+      target: development 
+    volumes:
+      - ./backend:/app 
+    environment:
+      - DEBUG=1
+      - DJANGO_SETTINGS_MODULE=api.settings.development
+
+  frontend:
+    build:
+      target: development
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    command: npm run dev

@@ -52,7 +52,7 @@ repos:
         pass_filenames: false
 
       - id: be-test
-        name: BE fast tests
-        entry: docker compose exec -T backend pytest --lf --nf
+        name: BE tests
+        entry: docker compose exec -T backend sh -c "python manage.py migrate && pytest --lf --nf"
         language: system
         pass_filenames: false

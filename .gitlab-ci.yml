@@ -1,0 +1,94 @@
+stages:
+  - lint-typecheck
+  - test
+  - build
+  - trigger-vm
+
+variables:
+  REGISTRY: $CI_REGISTRY
+  IMAGE_TAG_BACKEND: $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA
+  IMAGE_TAG_FRONTEND: $CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA
+
+before_script:
+  - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+
+lint-frontend:
+  stage: lint-typecheck
+  image: node:24-alpine
+  script:
+    - cd frontend
+    - npm ci
+    - make ci-fe-lint
+    - make ci-fe-type-check
+
+lint-backend:
+  stage: lint-typecheck
+  image: python:3.11-slim
+  script:
+    - cd backend
+    - pip install poetry
+    - poetry install --with dev
+    - make ci-be-lint
+    - make ci-be-type-check
+
+test-backend:
+  stage: test
+  image: docker:latest
+  services:
+    - docker:dind
+    - postgres:14
+    - redis:7-alpine
+  variables:
+    POSTGRES_DB: docappoint_test
+    POSTGRES_USER: postgres
+    DJANGO_SECRET_KEY: test-secret-key
+    POSTGRES_PASSWORD: password
+    REDIS_URL: redis://redis:6379/0
+    DJANGO_SETTINGS_MODULE: api.settings.development
+  script:
+    - cd backend
+    - make ci-be-dev-build
+    - make ci-be-migrations-check-docker \
+        POSTGRES_DB=$POSTGRES_DB \
+        DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY \
+        DJANGO_SETTINGS_MODULE=$DJANGO_SETTINGS_MODULE
+    - make ci-be-run-migrations \
+        POSTGRES_DB=$POSTGRES_DB \
+        DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY \
+        DJANGO_SETTINGS_MODULE=$DJANGO_SETTINGS_MODULE
+    - make ci-be-test-docker
+
+test-frontend:
+  stage: test
+  image: node:24-alpine
+  script:
+    - cd frontend
+    - npm ci
+    - make ci-fe-test-run-docker
+
+build-backend:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - docker build -t $IMAGE_TAG_BACKEND ./backend
+    - docker push $IMAGE_TAG_BACKEND
+
+build-frontend:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - docker build -t $IMAGE_TAG_FRONTEND ./frontend
+    - docker push $IMAGE_TAG_FRONTEND
+
+# trigger-vm:
+#   stage: trigger-vm
+#   script:
+#     - curl -X POST https://us-central1-docappoint-devops.cloudfunctions.net/start-vm \
+#       -H "Content-Type: application/json" \
+#       -d "{\"commit\": \"$CI_COMMIT_SHA\", \"backend_image\": \"$IMAGE_TAG_BACKEND\", \"frontend_image\": \"$IMAGE_TAG_FRONTEND\"}"
+#   only:
+#     - main
