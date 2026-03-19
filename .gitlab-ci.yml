@@ -1,4 +1,5 @@
 stages:
+  - build-ci-image
   - lint-typecheck
   - test
   - build
@@ -9,9 +10,21 @@ variables:
   IMAGE_TAG_BACKEND: $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA
   IMAGE_TAG_FRONTEND: $CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA
 
+build-ci-image:
+  stage: .pre
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE/ci:latest -f Dockerfile.ci .
+    - docker push $CI_REGISTRY_IMAGE/ci:latest
+  only:
+    changes:
+      - Dockerfile.ci
+
 lint-frontend:
   stage: lint-typecheck
-  image: node:24-alpine
+  image: $CI_REGISTRY_IMAGE/ci:latest
   script:
     - cd frontend
     - npm ci
@@ -20,7 +33,7 @@ lint-frontend:
 
 lint-backend:
   stage: lint-typecheck
-  image: python:3.11-slim
+  image: $CI_REGISTRY_IMAGE/ci:latest
   script:
     - cd backend
     - pip install poetry
@@ -30,7 +43,7 @@ lint-backend:
 
 test-backend:
   stage: test
-  image: docker:latest
+  image: $CI_REGISTRY_IMAGE/ci:latest
   services:
     - docker:dind
     - postgres:14
@@ -57,7 +70,7 @@ test-backend:
 
 test-frontend:
   stage: test
-  image: node:24-alpine
+  image: $CI_REGISTRY_IMAGE/ci:latest
   script:
     - cd frontend
     - npm ci
@@ -65,7 +78,7 @@ test-frontend:
 
 build-backend:
   stage: build
-  image: docker:latest
+  image: $CI_REGISTRY_IMAGE/ci:latest
   services:
     - docker:dind
   before_script:
@@ -76,7 +89,7 @@ build-backend:
 
 build-frontend:
   stage: build
-  image: docker:latest
+  image: $CI_REGISTRY_IMAGE/ci:latest
   services:
     - docker:dind
   before_script:

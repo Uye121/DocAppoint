@@ -1,0 +1,20 @@
+FROM python:3.11-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    make \
+    curl \
+    docker.io \
+    nodejs \
+    npm \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install poetry
+
+RUN mkdir -p /usr/local/lib/docker/cli-plugins && \
+    curl -SL https://github.com/docker/compose/releases/download/v2.39.2/docker-compose-linux-x86_64 \
+    -o /usr/local/lib/docker/cli-plugins/docker-compose && \
+    chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+
+RUN mkdir -p /root/.cache/pypoetry /root/.npm
+
+WORKDIR /app
