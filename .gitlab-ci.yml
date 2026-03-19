@@ -30,6 +30,7 @@ lint-frontend:
   script:
     - cd frontend
     - npm ci
+    - cd ..
     - make ci-fe-lint
     - make ci-fe-type-check
 
@@ -38,8 +39,8 @@ lint-backend:
   image: $CI_REGISTRY_IMAGE/ci:latest
   script:
     - cd backend
-    - pip install poetry
     - poetry install --with dev
+    - cd ..
     - make ci-be-lint
     - make ci-be-type-check
 
