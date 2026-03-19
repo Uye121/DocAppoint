@@ -16,12 +16,14 @@ build-ci-image:
   services:
     - docker:dind
   before_script:
-    - echo "Registry: $CI_REGISTRY"
-    - echo "Image: $CI_REGISTRY_IMAGE/ci:latest"
+    - echo "Registry: ${CI_REGISTRY}"
+    - echo "Image: ${CI_REGISTRY_IMAGE}/ci:latest"
+    # Use deploy token instead of CI_REGISTRY_USER
+    - echo "$CI_DEPLOY_PASSWORD" | docker login $CI_REGISTRY -u $CI_DEPLOY_USER --password-stdin
   script:
-    - docker pull $CI_REGISTRY_IMAGE/ci:latest || echo "Image not found"
-    - docker build -t $CI_REGISTRY_IMAGE/ci:latest -f Dockerfile.ci .
-    - docker push $CI_REGISTRY_IMAGE/ci:latest
+    - docker pull ${CI_REGISTRY_IMAGE}/ci:latest || echo "Image not found"
+    - docker build -t ${CI_REGISTRY_IMAGE}/ci:latest -f Dockerfile.ci .
+    - docker push ${CI_REGISTRY_IMAGE}/ci:latest
   only:
     changes:
       - Dockerfile.ci
