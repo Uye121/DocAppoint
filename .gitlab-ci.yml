@@ -15,6 +15,9 @@ build-ci-image:
   image: docker:latest
   services:
     - docker:dind
+  before_script:
+    - echo "Registry: $CI_REGISTRY"
+    - echo "Image: $CI_REGISTRY_IMAGE/ci:latest"
   script:
     - docker pull $CI_REGISTRY_IMAGE/ci:latest || echo "Image not found"
     - docker build -t $CI_REGISTRY_IMAGE/ci:latest -f Dockerfile.ci .
@@ -22,9 +25,6 @@ build-ci-image:
   only:
     changes:
       - Dockerfile.ci
-  before_script:
-    - echo "Registry: $CI_REGISTRY"
-    - echo "Image: $CI_REGISTRY_IMAGE/ci:latest"
 
 lint-frontend:
   stage: lint-typecheck
