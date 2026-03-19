@@ -9,9 +9,6 @@ variables:
   IMAGE_TAG_BACKEND: $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA
   IMAGE_TAG_FRONTEND: $CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA
 
-before_script:
-  - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
-
 lint-frontend:
   stage: lint-typecheck
   image: node:24-alpine
@@ -71,6 +68,8 @@ build-backend:
   image: docker:latest
   services:
     - docker:dind
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
   script:
     - docker build -t $IMAGE_TAG_BACKEND ./backend
     - docker push $IMAGE_TAG_BACKEND
@@ -80,6 +79,8 @@ build-frontend:
   image: docker:latest
   services:
     - docker:dind
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
   script:
     - docker build -t $IMAGE_TAG_FRONTEND ./frontend
     - docker push $IMAGE_TAG_FRONTEND
