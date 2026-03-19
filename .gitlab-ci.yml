@@ -20,9 +20,9 @@ build-ci-image:
   script:
     - docker build -t $CI_REGISTRY_IMAGE/ci:latest -f Dockerfile.ci .
     - docker push $CI_REGISTRY_IMAGE/ci:latest
-  only:
-    changes:
-      - Dockerfile.ci
+  # only:
+  #   changes:
+  #     - Dockerfile.ci
 
 lint-frontend:
   stage: lint-typecheck
