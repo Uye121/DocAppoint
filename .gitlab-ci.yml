@@ -49,25 +49,16 @@ test-backend:
   variables:
     POSTGRES_DB: docappoint_test
     POSTGRES_USER: postgres
-    POSTGRES_HOST: localhost
+    POSTGRES_HOST: postgres
     DJANGO_SECRET_KEY: test-secret-key
     POSTGRES_PASSWORD: password
-    REDIS_URL: redis://localhost:6379/0
+    REDIS_URL: redis://redis:6379/0
     DJANGO_SETTINGS_MODULE: api.settings.development
   before_script:
     - apk add --no-cache make
     - docker network ls
   script:
     - make ci-be-dev-build
-    - docker run -d --name postgres \
-        -e POSTGRES_DB=$POSTGRES_DB \
-        -e POSTGRES_USER=$POSTGRES_USER \
-        -e POSTGRES_PASSWORD=$POSTGRES_PASSWORD \
-        -p 5432:5432 \
-        postgres:latest
-    - sleep 5
-    - docker ps -a
-    - docker network ls
     - make ci-be-migrations-check-docker \
         CI_NETWORK=$CI_NETWORK \
         POSTGRES_DB=$POSTGRES_DB \
