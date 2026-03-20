@@ -43,20 +43,33 @@ test-backend:
   stage: test
   image: docker:24
   services:
-    - docker:dind
+    - docker:24-dind
   variables:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
-    POSTGRES_DB: docappoint_test
-    POSTGRES_USER: postgres
-    POSTGRES_PASSWORD: password
-    DJANGO_SECRET_KEY: test-secret-key
-    DJANGO_SETTINGS_MODULE: api.settings.development
+    # POSTGRES_DB: docappoint_test
+    # POSTGRES_USER: postgres
+    # POSTGRES_PASSWORD: password
+    # DJANGO_SECRET_KEY: test-secret-key
+    # DJANGO_SETTINGS_MODULE: api.settings.development
   before_script:
-    - apk add --no-cache docker-compose
+    - docker info
+    - docker compose version
+    # - apk add --no-cache docker-compose
   script:
-    - docker-compose -f docker-compose.ci.backend.yml build backend-test
-    - docker-compose -f docker-compose.ci.backend.yml run --rm backend-test
+    # - docker-compose -f docker-compose.ci.backend.yml build backend-test
+    # - docker-compose -f docker-compose.ci.backend.yml run --rm backend-test
+    - docker-compose build --build-arg TARGET=development backend
+    - docker compose run --rm backend sh -c "
+        until pg_isready -h postgres -U postgres; do
+          echo 'Waiting for postgres...';
+          sleep 2;
+        done &&
+        python manage.py migrate &&
+        pytest
+      "
+  after_script:
+    - docker compose down -v
 
 test-frontend:
   stage: test
