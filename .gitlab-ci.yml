@@ -49,10 +49,10 @@ test-backend:
   variables:
     POSTGRES_DB: docappoint_test
     POSTGRES_USER: postgres
-    POSTGRES_HOST: postgres
+    POSTGRES_HOST: localhost
     DJANGO_SECRET_KEY: test-secret-key
     POSTGRES_PASSWORD: password
-    REDIS_URL: redis://redis:6379/0
+    REDIS_URL: redis://localhost:6379/0
     DJANGO_SETTINGS_MODULE: api.settings.development
   before_script:
     - apk add --no-cache make
