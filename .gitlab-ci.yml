@@ -49,6 +49,7 @@ test-backend:
   variables:
     POSTGRES_DB: docappoint_test
     POSTGRES_USER: postgres
+    POSTGRES_HOST: postgres
     DJANGO_SECRET_KEY: test-secret-key
     POSTGRES_PASSWORD: password
     REDIS_URL: redis://redis:6379/0
@@ -75,6 +76,7 @@ test-frontend:
   before_script:
     - apk add --no-cache nodejs npm make
   script:
+    - cd frontend
     - npm ci
     - make ci-fe-test-run-docker
 
@@ -99,12 +101,3 @@ build-frontend:
   script:
     - docker build -t $IMAGE_TAG_FRONTEND ./frontend
     - docker push $IMAGE_TAG_FRONTEND
-
-# trigger-vm:
-#   stage: trigger-vm
-#   script:
-#     - curl -X POST https://us-central1-docappoint-devops.cloudfunctions.net/start-vm \
-#       -H "Content-Type: application/json" \
-#       -d "{\"commit\": \"$CI_COMMIT_SHA\", \"backend_image\": \"$IMAGE_TAG_BACKEND\", \"frontend_image\": \"$IMAGE_TAG_FRONTEND\"}"
-#   only:
-#     - main
