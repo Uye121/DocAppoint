@@ -44,34 +44,19 @@ test-backend:
   image: docker:24
   services:
     - docker:dind
-    - postgres:14
-    - redis:7-alpine
   variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
     POSTGRES_DB: docappoint_test
     POSTGRES_USER: postgres
-    POSTGRES_HOST: postgres
-    DJANGO_SECRET_KEY: test-secret-key
     POSTGRES_PASSWORD: password
-    REDIS_URL: redis://redis:6379/0
+    DJANGO_SECRET_KEY: test-secret-key
     DJANGO_SETTINGS_MODULE: api.settings.development
   before_script:
-    - apk add --no-cache make
-    - docker network ls
+    - apk add --no-cache docker-compose
   script:
-    - make ci-be-dev-build
-    - make ci-be-migrations-check-docker \
-        CI_NETWORK=$CI_NETWORK \
-        POSTGRES_DB=$POSTGRES_DB \
-        POSTGRES_HOST=$POSTGRES_HOST \
-        DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY \
-        DJANGO_SETTINGS_MODULE=$DJANGO_SETTINGS_MODULE
-    - make ci-be-run-migrations \
-        CI_NETWORK=$CI_NETWORK \
-        POSTGRES_DB=$POSTGRES_DB \
-        POSTGRES_HOST=$POSTGRES_HOST \
-        DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY \
-        DJANGO_SETTINGS_MODULE=$DJANGO_SETTINGS_MODULE
-    - make ci-be-test-docker
+    - docker-compose -f docker-compose.ci.backend.yml build backend-test
+    - docker-compose -f docker-compose.ci.backend.yml run --rm backend-test
 
 test-frontend:
   stage: test
