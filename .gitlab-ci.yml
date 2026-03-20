@@ -58,6 +58,10 @@ test-backend:
     - apk add --no-cache make
   script:
     - make ci-be-dev-build
+    - echo "=== DEBUG: What containers are running ==="
+    - docker ps -a
+    - echo "=== DEBUG: Networks ==="
+    - docker network ls
     - make ci-be-migrations-check-docker \
         POSTGRES_DB=$POSTGRES_DB \
         POSTGRES_HOST=$POSTGRES_HOST \
