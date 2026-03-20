@@ -19,7 +19,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-      target: production
+      target: development
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/health/"]
       interval: 10s
@@ -57,7 +57,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      target: production
+      target: development
     develop:
       watch:
         - action: sync
