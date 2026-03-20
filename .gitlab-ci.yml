@@ -55,6 +55,7 @@ test-backend:
   before_script:
     - docker info
     - docker compose version
+    - cp .env.example .env
     # - apk add --no-cache docker-compose
   script:
     # - docker-compose -f docker-compose.ci.backend.yml build backend-test
