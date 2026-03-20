@@ -14,6 +14,7 @@ variables:
   image: python:3.11
   before_script:
     - apt-get update && apt-get install -y --no-install-recommends make && rm -rf /var/lib/apt/lists/*
+    - pip install poetry
 
 .default-node-job:
   image: node:20-slim
