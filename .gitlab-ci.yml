@@ -56,14 +56,18 @@ test-backend:
     DJANGO_SETTINGS_MODULE: api.settings.development
   before_script:
     - apk add --no-cache make
+    - export CI_NETWORK=$(docker network ls --format '{{.Name}}' | grep -E 'test-backend|default' | head -1)
+    - echo "Using network - $CI_NETWORK"
   script:
     - make ci-be-dev-build
     - make ci-be-migrations-check-docker \
+        CI_NETWORK=$CI_NETWORK \
         POSTGRES_DB=$POSTGRES_DB \
         POSTGRES_HOST=$POSTGRES_HOST \
         DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY \
         DJANGO_SETTINGS_MODULE=$DJANGO_SETTINGS_MODULE
     - make ci-be-run-migrations \
+        CI_NETWORK=$CI_NETWORK \
         POSTGRES_DB=$POSTGRES_DB \
         POSTGRES_HOST=$POSTGRES_HOST \
         DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY \

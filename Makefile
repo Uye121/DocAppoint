@@ -223,7 +223,7 @@ ci-be-migrations-check:
 
 ci-be-migrations-check-docker:
 	cd $(BACKEND_DIR) && docker run --rm \
-		--network $$CI_NETWORK_NAME \
+		--network $(CI_NETWORK) \
 		-e POSTGRES_DB="$(POSTGRES_DB)" \
 		-e POSTGRES_HOST="$(POSTGRES_HOST)" \
 		-e DJANGO_SECRET_KEY="$(DJANGO_SECRET_KEY)" \
@@ -233,7 +233,7 @@ ci-be-migrations-check-docker:
 
 ci-be-run-migrations:
 	cd $(BACKEND_DIR) && docker run --rm \
-		--network $$CI_NETWORK_NAME \
+		--network $(CI_NETWORK) \
 		-e POSTGRES_DB="$(POSTGRES_DB)" \
 		-e POSTGRES_HOST="$(POSTGRES_HOST)" \
 		-e DJANGO_SECRET_KEY="$(DJANGO_SECRET_KEY)" \
