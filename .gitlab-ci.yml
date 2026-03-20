@@ -59,6 +59,13 @@ test-backend:
     - docker network ls
   script:
     - make ci-be-dev-build
+    - docker run -d --name postgres \
+        -e POSTGRES_DB=$POSTGRES_DB \
+        -e POSTGRES_USER=$POSTGRES_USER \
+        -e POSTGRES_PASSWORD=$POSTGRES_PASSWORD \
+        -p 5432:5432 \
+        postgres:latest
+    - sleep 5
     - docker ps -a
     - docker network ls
     - make ci-be-migrations-check-docker \
