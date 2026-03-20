@@ -57,10 +57,10 @@ test-backend:
   before_script:
     - apk add --no-cache make
     - docker network ls
-    - export CI_NETWORK=$(docker network ls --format '{{.Name}}' | grep -v "bridge\|host\|none" | head -1)
-    - echo "Using network - $CI_NETWORK"
   script:
     - make ci-be-dev-build
+    - docker ps -a
+    - docker network ls
     - make ci-be-migrations-check-docker \
         CI_NETWORK=$CI_NETWORK \
         POSTGRES_DB=$POSTGRES_DB \
