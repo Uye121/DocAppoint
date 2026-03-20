@@ -60,10 +60,12 @@ test-backend:
     - make ci-be-dev-build
     - make ci-be-migrations-check-docker \
         POSTGRES_DB=$POSTGRES_DB \
+        POSTGRES_HOST=$POSTGRES_HOST \
         DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY \
         DJANGO_SETTINGS_MODULE=$DJANGO_SETTINGS_MODULE
     - make ci-be-run-migrations \
         POSTGRES_DB=$POSTGRES_DB \
+        POSTGRES_HOST=$POSTGRES_HOST \
         DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY \
         DJANGO_SETTINGS_MODULE=$DJANGO_SETTINGS_MODULE
     - make ci-be-test-docker
@@ -78,7 +80,7 @@ test-frontend:
   script:
     - cd frontend
     - npm ci
-    - make ci-fe-test-run-docker
+    - make -C .. ci-fe-test-run-docker
 
 build-backend:
   stage: build
