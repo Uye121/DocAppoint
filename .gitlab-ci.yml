@@ -61,11 +61,9 @@ test-backend:
     # - docker-compose -f docker-compose.ci.backend.yml build backend-test
     # - docker-compose -f docker-compose.ci.backend.yml run --rm backend-test
     - docker-compose build --build-arg TARGET=development backend
+    - docker compose up -d postgres
+    - docker-compose exec postgres sh -c "until pg_isready -U postgres; do echo 'Waiting for postgres...'; sleep 2; done"
     - docker compose run --rm backend sh -c "
-        until pg_isready -h postgres -U postgres; do
-          echo 'Waiting for postgres...';
-          sleep 2;
-        done &&
         python manage.py migrate &&
         pytest
       "
