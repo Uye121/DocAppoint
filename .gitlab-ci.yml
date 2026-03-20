@@ -41,7 +41,7 @@ lint-backend:
 
 test-backend:
   stage: test
-  extends: .default-python-job
+  image: docker:24
   services:
     - docker:dind
     - postgres:14
@@ -69,7 +69,9 @@ test-backend:
 
 test-frontend:
   stage: test
-  extends: .default-node-job
+  image: docker:24
+  services:
+    - docker:dind
   before_script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
   script:
