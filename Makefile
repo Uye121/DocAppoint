@@ -237,7 +237,7 @@ ci-be-run-migrations:
 		-e DJANGO_SECRET_KEY="$(DJANGO_SECRET_KEY)" \
 		-e DJANGO_SETTINGS_MODULE="$(DJANGO_SETTINGS_MODULE)" \
 		backend:test \
-		sh -c "python manage.py migrate"
+		python manage.py migrate
 
 ci-be-test:
 	cd $(BACKEND_DIR) && DJANGO_SETTINGS_MODULE=api.settings.development poetry run pytest --cov=api --cov-report=xml --cov-report=html
