@@ -190,7 +190,7 @@ ifneq ($(IS_CI),true)
 endif
 
 ci-fe-test-run-docker:
-	docker run --rm \
+	cd $(FRONTEND_DIR) && docker run --rm \
 		-e CI=true \
 		npm run test:run
 
@@ -219,7 +219,7 @@ ci-be-migrations-check:
 	cd $(BACKEND_DIR) && DJANGO_SETTINGS_MODULE=api.settings.development poetry run python manage.py makemigrations --check --dry-run
 
 ci-be-migrations-check-docker:
-	docker run --rm \
+	cd $(BACKEND_DIR) && docker run --rm \
 		--network host \
 		-e POSTGRES_DB="$(POSTGRES_DB)" \
 		-e DJANGO_SECRET_KEY="$(DJANGO_SECRET_KEY)" \
@@ -228,7 +228,7 @@ ci-be-migrations-check-docker:
 		python manage.py makemigrations --check --dry-run
 
 ci-be-run-migrations:
-	docker run --rm \
+	cd $(BACKEND_DIR) && docker run --rm \
 		--network host \
 		-e POSTGRES_DB="$(POSTGRES_DB)" \
 		-e DJANGO_SECRET_KEY="$(DJANGO_SECRET_KEY)" \
@@ -248,10 +248,10 @@ ci-db-setup:
 	cd $(BACKEND_DIR) && DJANGO_SETTINGS_MODULE=api.settings.development poetry run python manage.py migrate
 
 ci-be-dev-build:
-	docker build --target development -t backend:test .
+	cd $(BACKEND_DIR) && docker build --target development -t backend:test .
 
 ci-be-test-docker:
-	docker run --rm \
+	cd $(BACKEND_DIR) && docker run --rm \
 		--network host \
 		-e POSTGRES_DB="$(POSTGRES_DB)" \
 		-e REDIS_URL="$(REDIS_URL)" \
