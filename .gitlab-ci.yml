@@ -10,23 +10,19 @@ variables:
   IMAGE_TAG_BACKEND: $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA
   IMAGE_TAG_FRONTEND: $CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA
 
-build-ci-image:
-  stage: .pre
-  image: docker:latest
-  services:
-    - docker:dind
+.default-python-job:
+  image: python:3.11
   before_script:
-    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
-  script:
-    - docker build -t $CI_REGISTRY_IMAGE/ci:latest -f Dockerfile.ci .
-    - docker push $CI_REGISTRY_IMAGE/ci:latest
-  # only:
-  #   changes:
-  #     - Dockerfile.ci
+    - apt-get update && apt-get install -y --no-install-recommends make && rm -rf /var/lib/apt/lists/*
+
+.default-node-job:
+  image: node:20-slim
+  before_script:
+    - apt-get update && apt-get install -y --no-install-recommends make && rm -rf /var/lib/apt/lists/*
 
 lint-frontend:
   stage: lint-typecheck
-  image: $CI_REGISTRY_IMAGE/ci:latest
+  extends: .default-node-job
   script:
     - cd frontend
     - npm ci
@@ -35,7 +31,7 @@ lint-frontend:
 
 lint-backend:
   stage: lint-typecheck
-  image: $CI_REGISTRY_IMAGE/ci:latest
+  extends: .default-python-job
   script:
     - cd backend
     - poetry install --with dev
@@ -44,7 +40,7 @@ lint-backend:
 
 test-backend:
   stage: test
-  image: $CI_REGISTRY_IMAGE/ci:latest
+  extends: .default-python-job
   services:
     - docker:dind
     - postgres:14
@@ -72,7 +68,7 @@ test-backend:
 
 test-frontend:
   stage: test
-  image: $CI_REGISTRY_IMAGE/ci:latest
+  extends: .default-node-job
   before_script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
   script:
@@ -81,7 +77,7 @@ test-frontend:
 
 build-backend:
   stage: build
-  image: $CI_REGISTRY_IMAGE/ci:latest
+  extends: .default-python-job
   services:
     - docker:dind
   before_script:
@@ -92,7 +88,7 @@ build-backend:
 
 build-frontend:
   stage: build
-  image: $CI_REGISTRY_IMAGE/ci:latest
+  extends: .default-node-job
   services:
     - docker:dind
   before_script:
