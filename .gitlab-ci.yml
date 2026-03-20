@@ -54,7 +54,7 @@ test-backend:
     REDIS_URL: redis://redis:6379/0
     DJANGO_SETTINGS_MODULE: api.settings.development
   before_script:
-    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+    - apk add --no-cache make
   script:
     - make ci-be-dev-build
     - make ci-be-migrations-check-docker \
@@ -73,7 +73,7 @@ test-frontend:
   services:
     - docker:dind
   before_script:
-    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+    - apk add --no-cache nodejs npm make
   script:
     - npm ci
     - make ci-fe-test-run-docker
