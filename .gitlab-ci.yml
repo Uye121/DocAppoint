@@ -89,6 +89,8 @@ test-backend:
     - docker ps -a
     - docker network ls
     - docker compose run --rm backend sh -c "
+        python manage.py makemigrations api --noinput &&
+        python manage.py migrate api &&
         python manage.py migrate &&
         pytest
       "
