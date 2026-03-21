@@ -57,8 +57,8 @@ test-backend:
     - docker compose version
     - cp .env.example .env
 
-    - docker compose -f docker-compose.ci.backend.yml -f docker-compose.override.yml build --build-arg TARGET=development backend-test
-    - docker compose -f docker-compose.ci.backend.yml up -d postgres
+    - docker compose -f docker-compose.ci.backend.yml -f docker-compose.override.yml build --build-arg TARGET=development backend
+    - docker compose -f docker-compose.ci.backend.yml -f docker-compose.override.yml up -d postgres
 
     - |
       # Wait for postgres with timeout
@@ -67,7 +67,7 @@ test-backend:
       attempt=1
       
       while [ $attempt -le $max_attempts ]; do
-        if docker compose -f docker-compose.ci.backend.yml exec -T postgres pg_isready -U postgres 2>/dev/null; then
+        if docker compose -f docker-compose.ci.backend.yml -f docker-compose.override.yml exec -T postgres pg_isready -U postgres 2>/dev/null; then
           echo "Postgres is ready (attempt $attempt/$max_attempts)"
           break
         fi
