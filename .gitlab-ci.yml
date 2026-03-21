@@ -47,11 +47,6 @@ test-backend:
   variables:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
-    # POSTGRES_DB: docappoint_test
-    # POSTGRES_USER: postgres
-    # POSTGRES_PASSWORD: password
-    # DJANGO_SECRET_KEY: test-secret-key
-    # DJANGO_SETTINGS_MODULE: api.settings.development
   before_script:
     - docker info
     - docker compose version
@@ -84,7 +79,6 @@ test-backend:
         docker compose -f docker-compose.ci.backend.yml logs postgres
         exit 1
       fi
-    # - docker-compose exec postgres sh -c "until pg_isready -U postgres; do echo 'Waiting for postgres...'; sleep 2; done"
   script:
     - docker ps -a
     - docker network ls
@@ -130,3 +124,31 @@ build-frontend:
   script:
     - docker build --target production -t $IMAGE_TAG_FRONTEND ./frontend
     - docker push $IMAGE_TAG_FRONTEND
+
+push-backend:
+  stage: build
+  image: docker:24
+  services:
+    - docker:dind
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+  script:
+    - docker pull $IMAGE_TAG_BACKEND
+    - docker tag $IMAGE_TAG_BACKEND $CI_REGISTRY_IMAGE/backend:latest
+    - docker push $CI_REGISTRY_IMAGE/backend:latest
+
+push-frontend:
+  stage: build
+  image: docker:24
+  services:
+    - docker:dind
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+  script:
+    - docker pull $IMAGE_TAG_FRONTEND
+    - docker tag $IMAGE_TAG_FRONTEND $CI_REGISTRY_IMAGE/frontend:latest
+    - docker push $CI_REGISTRY_IMAGE/frontend:latest
