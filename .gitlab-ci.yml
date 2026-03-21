@@ -56,24 +56,34 @@ test-backend:
     - docker info
     - docker compose version
     - cp .env.example .env
-    - docker compose -f docker-compose.ci.backend.yml -f docker-compose.override.yml build --build-arg TARGET=development backend
+
+    - docker compose -f docker-compose.ci.backend.yml -f docker-compose.override.yml build --build-arg TARGET=development backend-test
     - docker compose -f docker-compose.ci.backend.yml up -d postgres
+
     - |
-      echo "Waiting for PostgreSQL to be ready..."
-      for i in {1..30}; do
-        if docker compose -f docker-compose.ci.backend.yml exec -T postgres pg_isready -U postgres; then
-          echo "PostgreSQL is ready"
+      # Wait for postgres with timeout
+      echo "Waiting for postgres to be ready..."
+      max_attempts=30
+      attempt=1
+      
+      while [ $attempt -le $max_attempts ]; do
+        if docker compose -f docker-compose.ci.backend.yml exec -T postgres pg_isready -U postgres 2>/dev/null; then
+          echo "Postgres is ready (attempt $attempt/$max_attempts)"
           break
         fi
-        echo "Waiting for PostgreSQL... (attempt $i/30)"
+        
+        echo "  Waiting for postgres... (attempt $attempt/$max_attempts)"
         sleep 2
+        attempt=$((attempt + 1))
       done
-    - |
-      echo "Checking if database docappoint_test exists..."
-      docker compose -f docker-compose.ci.backend.yml exec -T postgres psql -U postgres -lqt | cut -d \| -f 1 | grep -qw docappoint_test || \
-      docker compose -f docker-compose.ci.backend.yml exec -T postgres psql -U postgres -c "CREATE DATABASE docappoint_test"
-      echo "Database check complete"
-    - docker compose -f docker-compose.ci.backend.yml logs postgres
+      
+      if [ $attempt -gt $max_attempts ]; then
+        echo "ERROR: Postgres failed to become ready after $max_attempts attempts (~$((max_attempts * 2)) seconds)"
+        echo ""
+        echo "Postgres logs:"
+        docker compose -f docker-compose.ci.backend.yml logs postgres
+        exit 1
+      fi
     # - docker-compose exec postgres sh -c "until pg_isready -U postgres; do echo 'Waiting for postgres...'; sleep 2; done"
   script:
     - docker ps -a
