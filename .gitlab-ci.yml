@@ -56,13 +56,12 @@ test-backend:
     - docker info
     - docker compose version
     - cp .env.example .env
-    # - apk add --no-cache docker-compose
-  script:
-    # - docker-compose -f docker-compose.ci.backend.yml build backend-test
-    # - docker-compose -f docker-compose.ci.backend.yml run --rm backend-test
     - docker compose -f docker-compose.ci.backend.yml -f docker-compose.override.yml build --build-arg TARGET=development backend
     - docker compose up -d postgres
     - docker-compose exec postgres sh -c "until pg_isready -U postgres; do echo 'Waiting for postgres...'; sleep 2; done"
+  script:
+    # - docker-compose -f docker-compose.ci.backend.yml build backend-test
+    # - docker-compose -f docker-compose.ci.backend.yml run --rm backend-test
     - docker compose run --rm backend sh -c "
         python manage.py migrate &&
         pytest
