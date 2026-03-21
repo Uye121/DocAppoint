@@ -57,11 +57,25 @@ test-backend:
     - docker compose version
     - cp .env.example .env
     - docker compose -f docker-compose.ci.backend.yml -f docker-compose.override.yml build --build-arg TARGET=development backend
-    - docker compose up -d postgres
-    - docker-compose exec postgres sh -c "until pg_isready -U postgres; do echo 'Waiting for postgres...'; sleep 2; done"
+    - docker compose -f docker-compose.ci.backend.yml up -d postgres
+    - |
+      echo "Waiting for PostgreSQL to be ready..."
+      for i in {1..30}; do
+        if docker compose -f docker-compose.ci.backend.yml exec -T postgres pg_isready -U postgres; then
+          echo "PostgreSQL is ready"
+          break
+        fi
+        echo "Waiting for PostgreSQL... (attempt $i/30)"
+        sleep 2
+      done
+    - |
+      echo "Checking if database docappoint_test exists..."
+      docker compose -f docker-compose.ci.backend.yml exec -T postgres psql -U postgres -lqt | cut -d \| -f 1 | grep -qw docappoint_test || \
+      docker compose -f docker-compose.ci.backend.yml exec -T postgres psql -U postgres -c "CREATE DATABASE docappoint_test"
+      echo "Database check complete"
+    - docker compose -f docker-compose.ci.backend.yml logs postgres
+    # - docker-compose exec postgres sh -c "until pg_isready -U postgres; do echo 'Waiting for postgres...'; sleep 2; done"
   script:
-    # - docker-compose -f docker-compose.ci.backend.yml build backend-test
-    # - docker-compose -f docker-compose.ci.backend.yml run --rm backend-test
     - docker ps -a
     - docker network ls
     - docker compose run --rm backend sh -c "
