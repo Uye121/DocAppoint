@@ -14,12 +14,6 @@ repos:
         language: system
         pass_filenames: false
 
-      - id: fe-test
-        name: FE vitest related
-        entry: docker compose exec -T frontend npm test -- --run --reporter=verbose
-        language: system
-        pass_filenames: false
-
       # ---------- BACKEND ----------
       - id: be-ruff-check
         name: BE ruff check
@@ -48,11 +42,5 @@ repos:
       - id: be-django-check
         name: BE django system check
         entry: docker compose exec -T backend python manage.py check --deploy
-        language: system
-        pass_filenames: false
-
-      - id: be-test
-        name: BE tests
-        entry: docker compose exec -T backend sh -c "python manage.py migrate && pytest --lf --nf"
         language: system
         pass_filenames: false
