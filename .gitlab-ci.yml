@@ -80,7 +80,7 @@ test-backend:
         exit 1
       fi
   script:
-    - docker compose -f docker-compose.ci.backend.yml run --rm backend sh -c "
+    - docker compose -f docker-compose.ci.backend.yml run --rm backend-test sh -c "
         python manage.py makemigrations api --noinput &&
         python manage.py migrate api &&
         python manage.py migrate &&
