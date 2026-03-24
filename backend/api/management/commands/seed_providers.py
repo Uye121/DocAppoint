@@ -1,6 +1,4 @@
 import json
-import os
-import environ
 import mimetypes
 from datetime import time, timedelta
 from pathlib import Path
@@ -17,13 +15,11 @@ from api.serializers import (
     HealthcareProviderCreateSerializer,
     SystemAdminCreateSerializer,
 )
-from ...services.appointment import generate_daily_slots
+from api.services.appointment import generate_daily_slots
+from api.utils.env import get_env
 
-BASE_DIR = Path(__file__).resolve().parents[4]
 
-env = environ.Env()
-environ.Env.read_env(os.path.join(BASE_DIR / ".env"))
-
+env = get_env()
 
 User = get_user_model()
 DOC_FILE = Path(f"{settings.MEDIA_ROOT}/doctor.json")
@@ -61,6 +57,7 @@ class Command(BaseCommand):
 
         admin_username = env.str("ADMIN_USERNAME", default="admin")
         admin_email = env.str("ADMIN_EMAIL", default="admin@docappoint.com")
+        print(f"ADMIN_EMAIL: {admin_email}")
         admin_password = env.str("ADMIN_PASSWORD", default="test@dminpwd1")
         payload = {
             "email": admin_email,

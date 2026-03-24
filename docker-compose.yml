@@ -20,27 +20,12 @@ services:
       context: ./backend
       dockerfile: Dockerfile
       target: production
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health/"]
-      interval: 10s
-      timeout: 5s
-      retries: 20
-      start_period: 30s
-    develop:
-      watch:
-        - action: rebuild
-          path: ./backend
-          target: /app
     command: >
       sh -c "python manage.py makemigrations api &&
              python manage.py migrate &&
              python manage.py seed_providers &&
              python manage.py purge_old_slots &&
              python manage.py runserver 0.0.0.0:8000"
-    deploy:
-      resources:
-        limits:
-          memory: 2G
     volumes:
       - ./backend/media:/app/media
     ports:
@@ -52,27 +37,27 @@ services:
         condition: service_healthy
     environment:
       - POSTGRES_HOST=postgres
+      - REDIS_HOST=redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health/"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 2G
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
       target: production
-    develop:
-      watch:
-        - action: sync
-          path: ./frontend
-          target: /app
     ports:
       - "3000:3000"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
     environment:
-      - NODE_ENV=development
       - VITE_API_URL=http://localhost:8000/api
-    stdin_open: true
-    tty: true
 
   redis:
     image: redis:7-alpine

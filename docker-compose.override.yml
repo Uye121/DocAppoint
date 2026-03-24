@@ -17,3 +17,5 @@ services:
     environment:
       - NODE_ENV=development
     command: npm run dev
+    stdin_open: true
+    tty: true
