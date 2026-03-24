@@ -4,6 +4,11 @@ from .base import *  # noqa: F403
 
 DEBUG = False
 
+# Security settings
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+
 # Force HTTPS
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = True
@@ -14,11 +19,11 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 
 # Email
-# EMAIL_HOST = 'smtp.gmail.com'
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = 'you@gmail.com'
-# EMAIL_HOST_PASSWORD = 'your-app-password'
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = "you@gmail.com"
+EMAIL_HOST_PASSWORD = "your-app-password"
 
 # Auth
 PASSWORD_RESET_TIMEOUT = 60 * 30  # 30 min

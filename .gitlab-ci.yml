@@ -50,8 +50,6 @@ test-backend:
     - docker compose version
     - cp .env.example .env
 
-    # - docker compose -f docker-compose.ci.backend.yml -f docker-compose.override.yml build --build-arg TARGET=development backend
-    # - docker compose -f docker-compose.ci.backend.yml -f docker-compose.override.yml up -d postgres
     - docker compose -f docker-compose.ci.backend.yml build
     - docker compose -f docker-compose.ci.backend.yml up -d postgres
 
@@ -80,8 +78,8 @@ test-backend:
         exit 1
       fi
   script:
+      # python manage.py makemigrations api --noinput &&
     - docker compose -f docker-compose.ci.backend.yml run --rm backend-test sh -c "
-        python manage.py makemigrations api --noinput &&
         python manage.py migrate api &&
         python manage.py migrate &&
         pytest

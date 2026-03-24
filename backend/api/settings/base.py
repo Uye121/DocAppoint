@@ -188,8 +188,9 @@ EMAIL_VERIFY_SECRET = env("EMAIL_VERIFY_SECRET", default="email123secret")
 RATELIMIT_USE_CACHE = "default"
 
 # secure cookies
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+SECURE_SSL_REDIRECT = False
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
 
 CACHES = {
     "default": {

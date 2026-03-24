@@ -57,7 +57,6 @@ class Command(BaseCommand):
 
         admin_username = env.str("ADMIN_USERNAME", default="admin")
         admin_email = env.str("ADMIN_EMAIL", default="admin@docappoint.com")
-        print(f"ADMIN_EMAIL: {admin_email}")
         admin_password = env.str("ADMIN_PASSWORD", default="test@dminpwd1")
         payload = {
             "email": admin_email,
