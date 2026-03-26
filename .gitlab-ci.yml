@@ -48,40 +48,27 @@ test-backend:
   before_script:
     - docker info
     - docker compose version
-    - cp .env.example .env
+    - cp .env.ci .env
 
     - docker compose -f docker-compose.ci.backend.yml build
     - docker compose -f docker-compose.ci.backend.yml up -d postgres
 
     - |
-      # Wait for postgres with timeout
       echo "Waiting for postgres to be ready..."
-      max_attempts=30
-      attempt=1
-      
-      while [ $attempt -le $max_attempts ]; do
-        if docker compose -f docker-compose.ci.backend.yml -f docker-compose.override.yml exec -T postgres pg_isready -U postgres 2>/dev/null; then
-          echo "Postgres is ready (attempt $attempt/$max_attempts)"
+      for i in $(seq 1 30); do
+        if docker compose -f docker-compose.ci.backend.yml exec -T postgres pg_isready -U postgres 2>/dev/null; then
+          echo "Postgres is ready"
           break
         fi
-        
-        echo "  Waiting for postgres... (attempt $attempt/$max_attempts)"
+        echo "Waiting for postgres... ($i/30)"
         sleep 2
-        attempt=$((attempt + 1))
       done
-      
-      if [ $attempt -gt $max_attempts ]; then
-        echo "ERROR: Postgres failed to become ready after $max_attempts attempts (~$((max_attempts * 2)) seconds)"
-        echo ""
-        echo "Postgres logs:"
-        docker compose -f docker-compose.ci.backend.yml logs postgres
-        exit 1
-      fi
   script:
       # python manage.py makemigrations api --noinput &&
     - docker compose -f docker-compose.ci.backend.yml run --rm backend-test sh -c "
         python manage.py migrate api &&
         python manage.py migrate &&
+        python manage.py check --deploy --settings=api.settings.production &&
         pytest
       "
   after_script:

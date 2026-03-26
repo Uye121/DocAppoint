@@ -1,0 +1,27 @@
+[
+  {
+    "id": 1,
+    "name": "General physician",
+    "image": "speciality/General_physician.svg"
+  },
+  {
+    "id": 2,
+    "name": "Gynecologist",
+    "image": "speciality/Gynecologist.svg"
+  },
+  {
+    "id": 3,
+    "name": "Dermatologist",
+    "image": "speciality/Dermatologist.svg"
+  },
+  {
+    "id": 4,
+    "name": "Pediatricians",
+    "image": "speciality/Pediatricians.svg"
+  },
+  {
+    "id": 5,
+    "name": "Neurologist",
+    "image": "speciality/Neurologist.svg"
+  }
+]

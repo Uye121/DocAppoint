@@ -1,0 +1,272 @@
+[
+  {
+    "firstName": "Richard",
+    "lastName": "James",
+    "image": "doctors/doc1.png",
+    "speciality": {
+      "id": 1,
+      "name": "General physician"
+    },
+    "degree": "MD",
+    "experience": "4.00",
+    "about": "Dr. Richard James is a dedicated General Physician with over four years of experience in diagnosing and treating a wide range of adult acute and chronic medical conditions. He employs a patient-centered approach, focusing on preventive care and effective management of illnesses such as hypertension, diabetes mellitus, respiratory infections, and musculoskeletal complaints. Dr. James is proficient in performing routine physical examinations, interpreting diagnostic tests like ECGs and basic lab work, and providing comprehensive follow-up care. He practices evidence-based medicine and is committed to clear communication with his patients to ensure they understand their health plans.",
+    "fees": "150.00",
+    "addressLine1": "3460 Owen Lane",
+    "addressLine2": "Suite 12",
+    "city": "Grand Rapids",
+    "state": "MI",
+    "zipCode": "49503"
+  },
+  {
+    "firstName": "Emily",
+    "lastName": "Larson",
+    "image": "doctors/doc2.png",
+    "speciality": {
+      "id": 2,
+      "name": "Gynecologist"
+    },
+    "degree": "MD",
+    "experience": "3.00",
+    "about": "Dr. Emily Larson is a compassionate Gynecologist with three years of experience providing comprehensive care for women across all stages of life. Her practice is dedicated to offering a wide range of services, including routine well-woman exams, contraceptive management, and preventive health screenings. Dr. Larson is skilled in diagnosing and treating various gynecological conditions and is particularly focused on creating a comfortable and trusting environment for her patients. She is committed to patient education, ensuring individuals are well-informed and active participants in their healthcare decisions. Dr. Larson holds admitting privileges at a leading women's hospital in the area.",
+    "fees": "180.00",
+    "addressLine1": "1680 Green Street",
+    "addressLine2": "Suite 400",
+    "city": "Nashville",
+    "state": "TN",
+    "zipCode": "37214"
+  },
+  {
+    "firstName": "Sarah",
+    "lastName": "Patel",
+    "image": "doctors/doc3.png",
+    "speciality": {
+      "id": 3,
+      "name": "Dermatologist"
+    },
+    "degree": "MD",
+    "experience": "1.00",
+    "about": "Dr. Sarah Patel is a meticulous Dermatologist who has recently completed her first year of practice, bringing a fresh and updated knowledge of dermatological advancements to her patients. She specializes in the diagnosis and medical management of a wide variety of skin, hair, and nail conditions, including acne, eczema, psoriasis, and skin cancer screenings. Dr. Patel is proficient in performing numerous in-office procedures such as biopsies, cryotherapy, and basic excisions. She is deeply committed to patient education, emphasizing sun protection and preventative skin care practices. Dr. Patel is dedicated to providing thorough, evidence-based care in a supportive and informative environment.",
+    "fees": "200.00",
+    "addressLine1": "79 Fieldcrest Road",
+    "addressLine2": "",
+    "city": "Bay Shore",
+    "state": "NY",
+    "zipCode": "11706"
+  },
+  {
+    "firstName": "Christopher",
+    "lastName": "Lee",
+    "image": "doctors/doc4.png",
+    "speciality": {
+      "id": 4,
+      "name": "Pediatricians"
+    },
+    "degree": "DO",
+    "experience": "6.00",
+    "about": "Dr. Christopher Lee is an experienced Pediatrician with six years of dedicated practice caring for patients from infancy through adolescence. He provides comprehensive well-child examinations, administers routine immunizations, and manages the diagnosis and treatment of common childhood illnesses and injuries. Dr. Lee is particularly focused on fostering long-term, trusting relationships with both his young patients and their families, emphasizing preventive care and healthy developmental milestones. His approach is collaborative and compassionate, ensuring parents feel supported and informed in all healthcare decisions. He maintains active admitting privileges at a nearby children's medical center.",
+    "fees": "150.00",
+    "addressLine1": "2010 Cedar Lane",
+    "addressLine2": "Suite 112",
+    "city": "Boston",
+    "state": "MA",
+    "zipCode": "02199"
+  },
+  {
+    "firstName": "Jennifer",
+    "lastName": "Garcia",
+    "image": "doctors/doc5.png",
+    "speciality": {
+      "id": 5,
+      "name": "Neurologist"
+    },
+    "degree": "DO",
+    "experience": "4.00",
+    "about": "Dr. Jennifer Garcia is a skilled Neurologist with four years of experience specializing in the diagnosis and treatment of disorders affecting the brain, spinal cord, and peripheral nerves. Her clinical expertise encompasses the management of conditions such as migraine, epilepsy, neuropathy, and stroke. Dr. Garcia is proficient in interpreting diagnostic studies including EEGs and EMGs, and she takes a holistic, patient-centered approach to developing individualized treatment plans. She is deeply committed to both patient education and collaborative care, ensuring her patients and their families fully understand their conditions and therapeutic options. She holds admitting privileges at a comprehensive neurological institute.",
+    "fees": "240.00",
+    "addressLine1": "2848 Desert Broom Court",
+    "addressLine2": "Suite 180",
+    "city": "Teterboro",
+    "state": "NJ",
+    "zipCode": "07608"
+  },
+  {
+    "firstName": "Andrew",
+    "lastName": "Williams",
+    "image": "doctors/doc6.png",
+    "speciality": {
+      "id": 5,
+      "name": "Neurologist"
+    },
+    "degree": "DO",
+    "experience": "4.00",
+    "about": "Dr. Andrew Williams is a dedicated Neurologist with four years of experience specializing in the diagnosis and treatment of disorders affecting the brain, spinal cord, and peripheral nerves. His clinical expertise encompasses the management of conditions such as migraine, epilepsy, neuropathy, and stroke. Dr. Williams is proficient in interpreting diagnostic studies and takes a holistic, patient-centered approach to developing individualized treatment plans. He is deeply committed to both patient education and collaborative care, ensuring his patients and their families fully understand their conditions and therapeutic options. He holds admitting privileges at a comprehensive neurological institute.",
+    "fees": "240.00",
+    "addressLine1": "4524 Still Pastures Drive",
+    "addressLine2": "",
+    "city": "North Augusta",
+    "state": "SC",
+    "zipCode": "29841"
+  },
+  {
+    "firstName": "Christopher",
+    "lastName": "Davis",
+    "image": "doctors/doc7.png",
+    "speciality": {
+      "id": 1,
+      "name": "General physician"
+    },
+    "degree": "DO",
+    "experience": "4.00",
+    "about": "Dr. Christopher Davis is a dedicated General Physician with four years of experience providing comprehensive primary care to adult patients. He focuses on preventive medicine, chronic disease management, and the diagnosis and treatment of a broad spectrum of acute illnesses. Dr. Davis employs a whole-person approach to care, emphasizing patient education and shared decision-making to develop effective and manageable health strategies. He is skilled in performing routine office procedures and coordinating care with specialists when needed. Dr. Davis maintains active admitting privileges at a local community hospital.",
+    "fees": "200.00",
+    "addressLine1": "2021 Fleming Street",
+    "addressLine2": "Suite 350",
+    "city": "Montgomery",
+    "state": "AL",
+    "zipCode": "36104"
+  },
+  {
+    "firstName": "Timothy",
+    "lastName": "White",
+    "image": "doctors/doc8.png",
+    "speciality": {
+      "id": 2,
+      "name": "Gynecologist"
+    },
+    "degree": "MD",
+    "experience": "3.00",
+    "about": "Dr. Timothy White is a compassionate Gynecologist with three years of experience providing comprehensive and personalized care for women. His practice encompasses a full spectrum of services including annual well-woman exams, contraceptive counseling, prenatal care, and the management of various gynecological conditions. Dr. White is dedicated to creating a respectful and supportive environment where patients feel comfortable discussing their health concerns. He is committed to patient education and shared decision-making, ensuring his patients are active and informed participants in their care. He holds admitting privileges at a leading women's health facility.",
+    "fees": "185.00",
+    "addressLine1": "1800 Robinson Lane",
+    "addressLine2": "Suite 209",
+    "city": "Worthington",
+    "state": "OH",
+    "zipCode": "43085"
+  },
+  {
+    "firstName": "Ava",
+    "lastName": "Mitchell",
+    "image": "doctors/doc9.png",
+    "speciality": {
+      "id": 3,
+      "name": "Dermatologist"
+    },
+    "degree": "MD",
+    "experience": "1.00",
+    "about": "Dr. Ava Mitchell is a meticulous Dermatologist who has recently completed her first year of practice, bringing a contemporary knowledge of medical and cosmetic dermatology to her patients. She specializes in the diagnosis and treatment of various skin conditions, including acne, eczema, psoriasis, and skin cancer, and is proficient in performing skin exams, biopsies, and other minor surgical procedures. Dr. Mitchell is deeply committed to patient education, emphasizing the importance of sun protection and a tailored skincare regimen. She prioritizes creating a comfortable and trusting environment for her patients while delivering evidence-based, compassionate care. She holds privileges at a local dermatological surgery center.",
+    "fees": "175.00",
+    "addressLine1": "3951 Seneca Drive",
+    "addressLine2": "",
+    "city": "Salem",
+    "state": "OR",
+    "zipCode": "97301"
+  },
+  {
+    "firstName": "Jeffrey",
+    "lastName": "King",
+    "image": "doctors/doc10.png",
+    "speciality": {
+      "id": 4,
+      "name": "Pediatricians"
+    },
+    "degree": "MD",
+    "experience": "2.00",
+    "about": "Dr. Jeffrey King is a dedicated Pediatrician with two years of experience providing compassionate and comprehensive medical care to infants, children, and adolescents. His practice focuses on promoting healthy development through routine well-child visits, immunizations, and anticipatory guidance for families. He is skilled in diagnosing and treating common childhood illnesses, from ear infections and respiratory conditions to managing chronic pediatric concerns. Dr. King is known for his calm demeanor and ability to connect with young patients, creating a positive and reassuring clinical environment. He is committed to partnering with parents to support the long-term health and well-being of every child under his care and holds admitting privileges at a children's hospital.",
+    "fees": "175.00",
+    "addressLine1": "2070 Clement Street",
+    "addressLine2": "Suite 112",
+    "city": "Atlanta",
+    "state": "GA",
+    "zipCode": "30303"
+  },
+  {
+    "firstName": "Zoe",
+    "lastName": "Kelly",
+    "image": "doctors/doc11.png",
+    "speciality": {
+      "id": 5,
+      "name": "Neurologist"
+    },
+    "degree": "DO",
+    "experience": "4.50",
+    "about": "Dr. Zoe Kelly is an experienced Neurologist with over four years of specialized practice in diagnosing and managing a wide spectrum of neurological disorders. Her clinical focus includes treating conditions such as migraine, epilepsy, movement disorders, and neuropathy. Dr. Kelly is highly proficient in interpreting complex diagnostic tests, including EEG and EMG, and she utilizes a holistic, patient-focused approach to develop comprehensive and individualized care plans. She is deeply committed to patient and family education, ensuring a clear understanding of conditions and treatment strategies. Dr. Kelly holds active admitting privileges at a specialized neurological care center.",
+    "fees": "175.00",
+    "addressLine1": "3649 Golden Street",
+    "addressLine2": "Suite 3",
+    "city": "Miami",
+    "state": "FL",
+    "zipCode": "33169"
+  },
+  {
+    "firstName": "Patrick",
+    "lastName": "Harris",
+    "image": "doctors/doc12.png",
+    "speciality": {
+      "id": 5,
+      "name": "Neurologist"
+    },
+    "degree": "MD",
+    "experience": "4.00",
+    "about": "Dr. Patrick Harris is a skilled Neurologist with four years of experience specializing in the diagnosis and treatment of a wide range of neurological conditions affecting the brain, spinal cord, and peripheral nerves. His expertise includes the management of disorders such as stroke, epilepsy, multiple sclerosis, and neurodegenerative diseases. Dr. Harris is proficient in interpreting advanced diagnostic studies, including MRI and EEG, and he is dedicated to developing personalized, evidence-based treatment plans for his patients. Known for his thorough and compassionate approach, he prioritizes clear communication and patient education to ensure individuals and their families are fully supported throughout their care. He maintains active admitting privileges at a comprehensive neurological institute.",
+    "fees": "175.00",
+    "addressLine1": "356 Fieldcrest Road",
+    "addressLine2": "Suite 112",
+    "city": "Huntington",
+    "state": "NY",
+    "zipCode": "11743"
+  },
+  {
+    "firstName": "Chloe",
+    "lastName": "Evans",
+    "image": "doctors/doc13.png",
+    "speciality": {
+      "id": 1,
+      "name": "General physician"
+    },
+    "degree": "DO",
+    "experience": "4.00",
+    "about": "Dr. Chloe Evans is a dedicated General Physician with four years of experience providing comprehensive primary care to adult patients. She focuses on preventive health, chronic disease management, and the diagnosis and treatment of acute medical conditions. Dr. Evans employs a holistic and patient-centered approach, emphasizing clear communication and collaborative decision-making to create effective and sustainable health strategies. She is skilled in performing routine office procedures and expertly coordinates care with a network of specialists when needed. Dr. Evans maintains active admitting privileges at a local acute care hospital.",
+    "fees": "175.00",
+    "addressLine1": "3102 Retreat Avenue",
+    "addressLine2": "",
+    "city": "Birmingham",
+    "state": "AL",
+    "zipCode": "35209"
+  },
+  {
+    "firstName": "Ryan",
+    "lastName": "Martinez",
+    "image": "doctors/doc14.png",
+    "speciality": {
+      "id": 2,
+      "name": "Gynecologist"
+    },
+    "degree": "MD",
+    "experience": "3.00",
+    "about": "Dr. Ryan Martinez is a compassionate Gynecologist with three years of experience providing comprehensive and respectful care for women. His practice encompasses a full range of services including annual well-woman exams, family planning and contraceptive management, prenatal care, and the diagnosis and treatment of various gynecological conditions. Dr. Martinez is dedicated to creating a trusting and supportive environment where patients feel heard and empowered in their healthcare decisions. He is committed to patient education and utilizes a collaborative approach to develop personalized treatment plans. He holds admitting privileges at a leading women's health facility.",
+    "fees": "175.00",
+    "addressLine1": "4555 Florence Street",
+    "addressLine2": "Suite 200",
+    "city": "Arlington",
+    "state": "TX",
+    "zipCode": "76011"
+  },
+  {
+    "firstName": "Amelia",
+    "lastName": "Hill",
+    "image": "doctors/doc15.png",
+    "speciality": {
+      "id": 3,
+      "name": "Dermatologist"
+    },
+    "degree": "DO",
+    "experience": "9.00",
+    "about": "Dr. Amelia Hill is a highly experienced Dermatologist with nine years of expertise in medical, surgical, and cosmetic dermatology. She provides comprehensive care for a wide array of skin conditions, including skin cancer, psoriasis, acne, and complex medical dermatoses. Dr. Hill is highly proficient in performing advanced surgical procedures such as Mohs micrographic surgery, as well as cosmetic injections and laser therapies. She is deeply committed to patient education, emphasizing skin cancer prevention and individualized treatment plans tailored to each patient's unique needs. Known for her meticulous and caring approach, she maintains active privileges at a specialized dermatology surgery center.",
+    "fees": "225.00",
+    "addressLine1": "1308 Jadewood Farms",
+    "addressLine2": "",
+    "city": "Newark",
+    "state": "NY",
+    "zipCode": "07102"
+  }
+]

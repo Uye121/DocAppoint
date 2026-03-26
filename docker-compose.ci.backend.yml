@@ -1,6 +1,8 @@
 services:
   postgres:
     image: postgres:14
+    env_file:
+      - .env
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
@@ -21,6 +23,8 @@ services:
       context: ./backend
       dockerfile: Dockerfile
       target: development
+    env_file:
+      - .env
     command: >
       sh -c "python manage.py migrate &&
             pytest"

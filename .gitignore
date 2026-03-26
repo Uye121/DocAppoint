@@ -208,7 +208,7 @@ yarn-error.log*
 next-env.d.ts
 
 # media files
-media
+backend/media/
 
 # backups
 backups

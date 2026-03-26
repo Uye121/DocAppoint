@@ -21,7 +21,7 @@ services:
       dockerfile: Dockerfile
       target: production
     command: >
-      sh -c "python manage.py makemigrations api &&
+      sh -c "echo 'building stuff...' &&
              python manage.py migrate &&
              python manage.py seed_providers &&
              python manage.py purge_old_slots &&
