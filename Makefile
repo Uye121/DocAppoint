@@ -171,9 +171,6 @@ format-be:
 # =============================================================================
 .PHONY: ci ci-fe ci-be
 
-## Run full CI suite locally (for debugging CI issues)
-ci: ci-fe ci-be
-
 ## Frontend CI suite
 ci-fe: ci-fe-lint ci-fe-type-check ci-fe-test
 
@@ -193,15 +190,16 @@ ifneq ($(IS_CI),true)
 endif
 
 ci-fe-test-run-docker:
-	docker run --rm \
+	cd $(FRONTEND_DIR) && docker run --rm \
 		-e CI=true \
-		$(shell echo $(REGISTRY)/$(IMAGE_NAME)-frontend:$(TAG) | tr '[:upper:]' '[:lower:]') \
+		-v $$PWD:/app \
+		-w /app \
+		node:24-alpine \
 		npm run test:run
 
 ci-fe-test-coverage-docker:
 	docker run --rm \
 		-e CI=true \
-		$(shell echo $(REGISTRY)/$(IMAGE_NAME)-frontend:$(TAG) | tr '[:upper:]' '[:lower:]') \
 		npm run test:coverage
 
 ci-fe-test-docker: ci-fe-test-run-docker
@@ -210,8 +208,6 @@ ci-fe-test-docker: ci-fe-test-run-docker
 	fi
 
 ## Backend CI suite
-ci-be: ci-be-lint ci-be-type-check ci-be-migrations-check ci-be-test
-
 ci-be-lint:
 	cd $(BACKEND_DIR) && poetry run ruff check .
 	cd $(BACKEND_DIR) && poetry run ruff format --check .
@@ -226,13 +222,23 @@ ci-be-migrations-check:
 	cd $(BACKEND_DIR) && DJANGO_SETTINGS_MODULE=api.settings.development poetry run python manage.py makemigrations --check --dry-run
 
 ci-be-migrations-check-docker:
-	docker run --rm \
-		--network host \
+	cd $(BACKEND_DIR) && docker run --rm \
 		-e POSTGRES_DB="$(POSTGRES_DB)" \
+		-e POSTGRES_HOST="$(POSTGRES_HOST)" \
 		-e DJANGO_SECRET_KEY="$(DJANGO_SECRET_KEY)" \
 		-e DJANGO_SETTINGS_MODULE="$(DJANGO_SETTINGS_MODULE)" \
-		$(shell echo $(REGISTRY)/$(IMAGE_NAME)/backend:$(TAG) | tr '[:upper:]' '[:lower:]') \
+		backend:test \
 		python manage.py makemigrations --check --dry-run
+
+ci-be-run-migrations:
+	cd $(BACKEND_DIR) && docker run --rm \
+		--network container:postgres \
+		-e POSTGRES_DB="$(POSTGRES_DB)" \
+		-e POSTGRES_HOST="$(POSTGRES_HOST)" \
+		-e DJANGO_SECRET_KEY="$(DJANGO_SECRET_KEY)" \
+		-e DJANGO_SETTINGS_MODULE="$(DJANGO_SETTINGS_MODULE)" \
+		backend:test \
+		python manage.py migrate
 
 ci-be-test:
 	cd $(BACKEND_DIR) && DJANGO_SETTINGS_MODULE=api.settings.development poetry run pytest --cov=api --cov-report=xml --cov-report=html
@@ -245,15 +251,17 @@ ci-db-setup:
 	cd $(BACKEND_DIR) && DJANGO_SETTINGS_MODULE=api.settings.development poetry run python manage.py migrate api
 	cd $(BACKEND_DIR) && DJANGO_SETTINGS_MODULE=api.settings.development poetry run python manage.py migrate
 
+ci-be-dev-build:
+	cd $(BACKEND_DIR) && docker build --target development -t backend:test .
+
 ci-be-test-docker:
-	docker run --rm \
-		--network host \
+	cd $(BACKEND_DIR) && docker run --rm \
 		-e POSTGRES_DB="$(POSTGRES_DB)" \
 		-e REDIS_URL="$(REDIS_URL)" \
 		-e DJANGO_SECRET_KEY="$(DJANGO_SECRET_KEY)" \
 		-e DJANGO_SETTINGS_MODULE="$(DJANGO_SETTINGS_MODULE)" \
-		$(shell echo $(REGISTRY)/$(IMAGE_NAME)-backend:$(TAG) | tr '[:upper:]' '[:lower:]') \
-		sh -c "python manage.py makemigrations api && python manage.py migrate api && python manage.py migrate && pytest"
+		backend:test \
+		pytest
 
 ## Run both container tests
 ci-test-docker: ci-fe-test-docker ci-be-test-docker
@@ -295,11 +303,6 @@ help:
 	@echo "Code Quality:"
 	@echo "  make lint              Run all linting"
 	@echo "  make format            Run all formatting"
-	@echo ""
-	@echo "CI/CD (Local Debugging):"
-	@echo "  make ci                Run full CI suite locally"
-	@echo "  make ci-be             Run backend CI checks"
-	@echo "  make ci-fe             Run frontend CI checks"
 	@echo ""
 	@echo "Utilities:"
 	@echo "  make services-status   Show container status"

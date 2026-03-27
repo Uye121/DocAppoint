@@ -1,6 +1,4 @@
 import json
-import os
-import environ
 import mimetypes
 from datetime import time, timedelta
 from pathlib import Path
@@ -17,17 +15,17 @@ from api.serializers import (
     HealthcareProviderCreateSerializer,
     SystemAdminCreateSerializer,
 )
-from ...services.appointment import generate_daily_slots
+from api.services.appointment import generate_daily_slots
+from api.utils.env import get_env
 
-BASE_DIR = Path(__file__).resolve().parents[4]
 
-env = environ.Env()
-environ.Env.read_env(os.path.join(BASE_DIR / ".env"))
-
+env = get_env()
 
 User = get_user_model()
-DOC_FILE = Path(f"{settings.MEDIA_ROOT}/doctor.json")
-SPEC_FILE = Path(f"{settings.MEDIA_ROOT}/speciality.json")
+DOC_FILE = Path(settings.FIXTURES_DIR) / "doctor.json"
+SPEC_FILE = Path(settings.FIXTURES_DIR) / "speciality.json"
+
+print(f"DOC_FILE: {DOC_FILE}")
 
 
 def create_admin(data: dict):
@@ -58,6 +56,8 @@ class Command(BaseCommand):
 
         doc_data = json.loads(DOC_FILE.read_text())
         spec_data = json.loads(SPEC_FILE.read_text())
+
+        self.stdout.write(self.style.NOTICE("Seeding application..."))
 
         admin_username = env.str("ADMIN_USERNAME", default="admin")
         admin_email = env.str("ADMIN_EMAIL", default="admin@docappoint.com")
@@ -120,13 +120,14 @@ class Command(BaseCommand):
             email = f"{first_name.lower()}.{last_name.lower()}@example.com"
             username = f"{last_name[0].lower()}{first_name.lower()}"
 
+            # Create user if not exist
             if User.objects.filter(email__iexact=email).exists():
                 self.stdout.write(
-                    self.style.WARNING(f"Skipping creating {email} – already exists")
+                    self.style.WARNING(f"Skip creating {email} – already exists")
                 )
                 provider = User.objects.get(email__iexact=email).provider
             else:
-                with open(settings.MEDIA_ROOT / row["image"], "rb") as f:
+                with open(settings.FIXTURES_DIR / row["image"], "rb") as f:
                     image_content = f.read()
 
                 image_name = Path(row["image"]).name

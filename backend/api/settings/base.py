@@ -12,13 +12,11 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from datetime import timedelta
 from pathlib import Path
-import os
-import environ
+from api.utils.env import get_env
 
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
+BASE_DIR = Path(__file__).resolve().parents[2]
 
-env = environ.Env()
-environ.Env.read_env(os.path.join(BASE_DIR, "../../", ".env"))
+env = get_env()
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -139,6 +137,7 @@ STATIC_URL = "/static/"
 STATIC_ROOT = "/app/staticfiles"
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
+FIXTURES_DIR = BASE_DIR / "fixtures"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -190,8 +189,9 @@ EMAIL_VERIFY_SECRET = env("EMAIL_VERIFY_SECRET", default="email123secret")
 RATELIMIT_USE_CACHE = "default"
 
 # secure cookies
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+SECURE_SSL_REDIRECT = False
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
 
 CACHES = {
     "default": {
