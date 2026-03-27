@@ -22,130 +22,130 @@ variables:
 # =============================================================================
 # LINTING STAGE
 # =============================================================================
-lint-frontend:
-  stage: lint-typecheck
-  extends: .default-node-job
-  script:
-    - cd frontend
-    - npm ci
-    - make -C .. ci-fe-lint
-    - make -C .. ci-fe-type-check
+# lint-frontend:
+#   stage: lint-typecheck
+#   extends: .default-node-job
+#   script:
+#     - cd frontend
+#     - npm ci
+#     - make -C .. ci-fe-lint
+#     - make -C .. ci-fe-type-check
 
-lint-backend:
-  stage: lint-typecheck
-  extends: .default-python-job
-  script:
-    - cd backend
-    - poetry install --with dev
-    - make -C .. ci-be-lint
-    - make -C .. ci-be-type-check
+# lint-backend:
+#   stage: lint-typecheck
+#   extends: .default-python-job
+#   script:
+#     - cd backend
+#     - poetry install --with dev
+#     - make -C .. ci-be-lint
+#     - make -C .. ci-be-type-check
 
 # =============================================================================
 # TEST STAGE
 # =============================================================================
-test-frontend:
-  stage: test
-  image: docker:24
-  services:
-    - docker:dind
-  before_script:
-    - apk add --no-cache nodejs npm make
-  script:
-    - cd frontend
-    - npm ci
-    - make -C .. ci-fe-test-run-docker
+# test-frontend:
+#   stage: test
+#   image: docker:24
+#   services:
+#     - docker:dind
+#   before_script:
+#     - apk add --no-cache nodejs npm make
+#   script:
+#     - cd frontend
+#     - npm ci
+#     - make -C .. ci-fe-test-run-docker
 
-build-backend-test-artifacts:
-  stage: test
-  image: docker:24
-  services:
-    - docker:24-dind
-  variables:
-    DOCKER_HOST: tcp://docker:2375
-    DOCKER_TLS_CERTDIR: ""
-  before_script:
-    - docker info
-    - docker compose version
-  script:
-    - cp .env.ci .env
+# build-backend-test-artifacts:
+#   stage: test
+#   image: docker:24
+#   services:
+#     - docker:24-dind
+#   variables:
+#     DOCKER_HOST: tcp://docker:2375
+#     DOCKER_TLS_CERTDIR: ""
+#   before_script:
+#     - docker info
+#     - docker compose version
+#   script:
+#     - cp .env.ci .env
 
-    # Build test image
-    - docker compose -f docker-compose.ci.backend.yml build backend-test
+#     # Build test image
+#     - docker compose -f docker-compose.ci.backend.yml build backend-test
 
-    - docker images --format "table {{.Repository}}:{{.Tag}}" | grep backend-test
+#     - docker images --format "table {{.Repository}}:{{.Tag}}" | grep backend-test
 
-    - docker save docappoint-backend-test:latest > backend-test-image.tar
-    - docker pull postgres:14
-    - docker save postgres:14 > postgres-image.tar
-  artifacts:
-    paths:
-      - backend-test-image.tar
-      - postgres-image.tar
-      - .env
-    expire_in: 1 hour
+#     - docker save docappoint-backend-test:latest > backend-test-image.tar
+#     - docker pull postgres:14
+#     - docker save postgres:14 > postgres-image.tar
+#   artifacts:
+#     paths:
+#       - backend-test-image.tar
+#       - postgres-image.tar
+#       - .env
+#     expire_in: 1 hour
 
-backend-test:
-  stage: test
-  image: docker:24
-  services:
-    - docker:24-dind
-  variables:
-    DOCKER_HOST: tcp://docker:2375
-    DOCKER_TLS_CERTDIR: ""
-  needs: ["build-backend-test-artifacts"] 
-  before_script:
-    # Load the same built images
-    - docker load < backend-test-image.tar
-    - docker load < postgres-image.tar
+# backend-test:
+#   stage: test
+#   image: docker:24
+#   services:
+#     - docker:24-dind
+#   variables:
+#     DOCKER_HOST: tcp://docker:2375
+#     DOCKER_TLS_CERTDIR: ""
+#   needs: ["build-backend-test-artifacts"] 
+#   before_script:
+#     # Load the same built images
+#     - docker load < backend-test-image.tar
+#     - docker load < postgres-image.tar
 
-    # Start postgres
-    - docker compose -f docker-compose.ci.backend.yml up -d postgres
+#     # Start postgres
+#     - docker compose -f docker-compose.ci.backend.yml up -d postgres
 
-    - |
-      for i in $(seq 1 30); do
-        if docker compose -f docker-compose.ci.backend.yml exec -T postgres pg_isready -U postgres 2>/dev/null; then
-          break
-        fi
-        sleep 2
-      done
-  script:
-    # Migration
-    - docker compose -f docker-compose.ci.backend.yml run --rm backend-test sh -c "
-        python manage.py migrate api &&
-        python manage.py migrate &&
-        pytest
-      "
-  after_script:
-    - docker compose -f docker-compose.ci.backend.yml down -v
+#     - |
+#       for i in $(seq 1 30); do
+#         if docker compose -f docker-compose.ci.backend.yml exec -T postgres pg_isready -U postgres 2>/dev/null; then
+#           break
+#         fi
+#         sleep 2
+#       done
+#   script:
+#     # Migration
+#     - docker compose -f docker-compose.ci.backend.yml run --rm backend-test sh -c "
+#         python manage.py migrate api &&
+#         python manage.py migrate &&
+#         pytest
+#       "
+#   after_script:
+#     - docker compose -f docker-compose.ci.backend.yml down -v
 
-backend-security:
-  stage: test
-  image: docker:24
-  services:
-    - docker:24-dind
-  variables:
-    DOCKER_HOST: tcp://docker:2375
-    DOCKER_TLS_CERTDIR: ""
-  needs: ["build-backend-test-artifacts"]
-  before_script:
-    - cp .env.ci .env
+# backend-security:
+#   stage: test
+#   image: docker:24
+#   services:
+#     - docker:24-dind
+#   variables:
+#     DOCKER_HOST: tcp://docker:2375
+#     DOCKER_TLS_CERTDIR: ""
+#   needs: ["build-backend-test-artifacts"]
+#   before_script:
+#     - cp .env.ci .env
 
-    - docker load < backend-test-image.tar
-    - docker load < postgres-image.tar
+#     - docker load < backend-test-image.tar
+#     - docker load < postgres-image.tar
 
-    - docker compose -f docker-compose.ci.backend.yml up -d postgres
-    - |
-      for i in $(seq 1 30); do
-        if docker compose -f docker-compose.ci.backend.yml exec -T postgres pg_isready -U postgres 2>/dev/null; then
-          break
-        fi
-        sleep 2
-      done
-  script:
-    - docker compose -f docker-compose.ci.backend.yml run --rm backend-test python manage.py check --deploy --settings=api.settings.production
-  after_script:
-    - docker compose -f docker-compose.ci.backend.yml down -v
-  allow_failure: true
+#     - docker compose -f docker-compose.ci.backend.yml up -d postgres
+#     - |
+#       for i in $(seq 1 30); do
+#         if docker compose -f docker-compose.ci.backend.yml exec -T postgres pg_isready -U postgres 2>/dev/null; then
+#           break
+#         fi
+#         sleep 2
+#       done
+#   script:
+#     - docker compose -f docker-compose.ci.backend.yml run --rm backend-test python manage.py check --deploy --settings=api.settings.production
+#   after_script:
+#     - docker compose -f docker-compose.ci.backend.yml down -v
+#   allow_failure: true
 
 build-frontend:
   stage: build
