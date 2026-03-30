@@ -29,7 +29,6 @@ EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
 EMAIL_HOST_USER = env("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@docappoint.com")
-SERVER_EMAIL = env("SERVER_EMAIL", default="root@docappoint.com")
 
 # DATABASE
 DATABASES["default"]["CONN_MAX_AGE"] = 60
