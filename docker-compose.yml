@@ -19,7 +19,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-      target: production
+      target: development
     command: >
       sh -c "echo 'building stuff...' &&
              python manage.py migrate &&
@@ -53,7 +53,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      target: production
+      target: development
     ports:
       - "3000:3000"
     environment:
