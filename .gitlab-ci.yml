@@ -155,7 +155,7 @@ build-frontend:
   before_script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
   script:
-    - docker build --target production -t $IMAGE_TAG_FRONTEND ./frontend
+    - docker build -f frontend/Dockerfile --target production -t $IMAGE_TAG_FRONTEND ./frontend
     - docker push $IMAGE_TAG_FRONTEND
 
 build-backend:
@@ -166,7 +166,7 @@ build-backend:
   before_script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
   script:
-    - docker build --target production -t $IMAGE_TAG_BACKEND ./backend
+    - docker build -f backend/Dockerfile --target production -t $IMAGE_TAG_BACKEND ./backend
     - docker push $IMAGE_TAG_BACKEND
 
 push-frontend:
