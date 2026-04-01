@@ -26,6 +26,7 @@ dependencies = [
     "redis (>=7.1.0,<8.0.0)",
     "psutil (>=7.2.1,<8.0.0)",
     "django-cleanup (>=9.0.0,<10.0.0)",
+    "gunicorn (>=23.0,<24.0)"
 ]
 
 [tool.poetry]
@@ -53,4 +54,3 @@ mypy = "^1.19.1"
 types-django-filter = "^25.2.0.20251228"
 django-stubs-ext = "^5.2.2"
 django-stubs = "^5.2.2"
-gunicorn = "^23.0"
