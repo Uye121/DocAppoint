@@ -44,8 +44,6 @@ RUN apt-get update && \
 
 RUN pip install poetry
 
-RUN echo "backend/Dockerfile"
-
 COPY pyproject.toml poetry.lock* ./
 
 RUN poetry config virtualenvs.create false && \
@@ -58,4 +56,4 @@ COPY . .
 
 EXPOSE 8000
 
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["gunicorn", "api.wsgi:application", "--bind", "0.0.0.0:8000"]
