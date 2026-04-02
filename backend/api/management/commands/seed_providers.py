@@ -25,8 +25,6 @@ User = get_user_model()
 DOC_FILE = Path(settings.FIXTURES_DIR) / "doctor.json"
 SPEC_FILE = Path(settings.FIXTURES_DIR) / "speciality.json"
 
-print(f"DOC_FILE: {DOC_FILE}")
-
 
 def create_admin(data: dict):
     serializer = SystemAdminCreateSerializer(data=data)
@@ -40,6 +38,33 @@ def create_provider_from_dict(data: dict):
     serializer.is_valid(raise_exception=True)
     provider = serializer.save()
     return provider, True
+
+
+def get_uploaded_file_from_fixture(fixture_path):
+    """
+    Prepare an image from fixtures as SimpleUploadedFile.
+
+    Args:
+        fixture_path (string): Path to the fixture file
+
+    Returns:
+        SimpleUploadedFile or None: Ready to assign to FileField/ImageField
+    """
+    source = settings.FIXTURES_DIR / fixture_path
+
+    if not source.exists():
+        return None
+
+    with open(source, "rb") as f:
+        file_content = f.read()
+
+    file_name = Path(fixture_path).name
+    content_type, _ = mimetypes.guess_type(file_name)
+    content_type = content_type or "application/octet-stream"
+
+    return SimpleUploadedFile(
+        name=file_name, content=file_content, content_type=content_type
+    )
 
 
 class Command(BaseCommand):
@@ -95,8 +120,20 @@ class Command(BaseCommand):
             )
 
             if created:
-                spec.image = row["image"]
-                spec.save()
+                image_file = get_uploaded_file_from_fixture(row["image"])
+
+                if image_file:
+                    spec.image = image_file
+                    spec.save()
+                    self.stdout.write(
+                        self.style.SUCCESS(f"Created speciality {spec.name} with image")
+                    )
+                else:
+                    self.stdout.write(
+                        self.style.WARNING(
+                            f"Image not found for speciality {spec.name}: {row['image']}"
+                        )
+                    )
 
         hospital, _ = Hospital.objects.get_or_create(
             id=1,
@@ -127,15 +164,14 @@ class Command(BaseCommand):
                 )
                 provider = User.objects.get(email__iexact=email).provider
             else:
-                with open(settings.FIXTURES_DIR / row["image"], "rb") as f:
-                    image_content = f.read()
+                image_file = get_uploaded_file_from_fixture(row["image"])
 
-                image_name = Path(row["image"]).name
-                image_type, _ = mimetypes.guess_type(image_name)
-                image_type = image_type or "image/png"
-                image_file = SimpleUploadedFile(
-                    name=image_name, content=image_content, content_type=image_type
-                )
+                if not image_file:
+                    self.stdout.write(
+                        self.style.WARNING(
+                            f"Image not found for {first_name} {last_name}: {row['image']}"
+                        )
+                    )
 
                 payload = {
                     "email": email,

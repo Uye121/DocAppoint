@@ -1,5 +1,7 @@
+import io
 import os
 import pytest
+from PIL import Image
 from django.utils import timezone
 from django.urls import reverse
 from rest_framework import status
@@ -9,6 +11,14 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from api.models import Speciality, HealthcareProvider
 
 pytestmark = pytest.mark.django_db
+
+
+def _dummy_image(name="1x1.png"):
+    img = Image.new("RGBA", (1, 1), (255, 0, 0, 0))
+    file = io.BytesIO()
+    img.save(file, format="PNG")
+    file.seek(0)
+    return SimpleUploadedFile(name, file.read(), content_type="image/png")
 
 
 class TestSpecialityPublicAccess:
@@ -75,9 +85,7 @@ class TestSpecialityStaffAccess:
         url = reverse("speciality-list")
 
         # Create a simple image file for testing
-        image = SimpleUploadedFile(
-            "cardiology.jpg", b"file_content", content_type="image/jpeg"
-        )
+        image = _dummy_image()
 
         speciality_data = {"name": "Cardiology", "image": image}
 
@@ -325,12 +333,7 @@ class TestSpecialityImageHandling:
         admin_client, _ = authenticated_admin_client()
 
         url = reverse("speciality-list")
-
-        # Create a test image
-        image_content = b"fake_image_content"
-        image = SimpleUploadedFile(
-            "test_speciality.jpg", image_content, content_type="image/jpeg"
-        )
+        image = _dummy_image("test_speciality.jpg")
 
         speciality_data = {"name": "Test Speciality", "image": image}
 
@@ -348,16 +351,12 @@ class TestSpecialityImageHandling:
         admin_client, _ = authenticated_admin_client()
 
         # Create speciality with initial image
-        initial_image = SimpleUploadedFile(
-            "initial.jpg", b"initial_content", content_type="image/jpeg"
-        )
+        initial_image = _dummy_image("initial.jpg")
         speciality = speciality_factory(name="Test", image=initial_image)
 
         # Upload new image
         url = reverse("speciality-detail", args=[speciality.id])
-        new_image = SimpleUploadedFile(
-            "updated.jpg", b"updated_content", content_type="image/jpeg"
-        )
+        new_image = _dummy_image("updated.jpg")
 
         # For multipart form data with file upload
         response = admin_client.patch(url, {"image": new_image}, format="multipart")
