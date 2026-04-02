@@ -152,6 +152,8 @@ build-frontend:
   image: docker:24
   services:
     - docker:dind
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
   before_script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
   script:
@@ -163,6 +165,8 @@ build-backend:
   image: docker:24
   services:
     - docker:dind
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
   before_script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
   script:

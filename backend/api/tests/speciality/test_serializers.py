@@ -1,3 +1,5 @@
+import io
+from PIL import Image
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.contrib.auth import get_user_model
@@ -11,6 +13,14 @@ from ...models import Speciality
 
 User = get_user_model()
 pytestmark = pytest.mark.django_db
+
+
+def _dummy_image(name="1x1.png"):
+    img = Image.new("RGBA", (1, 1), (255, 0, 0, 0))
+    file = io.BytesIO()
+    img.save(file, format="PNG")
+    file.seek(0)
+    return SimpleUploadedFile(name, file.read(), content_type="image/png")
 
 
 class TestSpecialitySerializers:
@@ -47,7 +57,7 @@ class TestSpecialitySerializers:
 
     def test_speciality_create_serializer(self, admin_user):
         user = admin_user.user
-        file = SimpleUploadedFile("n.png", b"dummy", content_type="image/png")
+        file = _dummy_image()
         payload = {"name": "Neurology", "image": file}
         ser = SpecialityCreateSerializer(data=payload)
         assert ser.is_valid(), ser.errors

@@ -39,7 +39,6 @@ class TestUserSerializer:
         assert data["email"] == u.email
         assert "password" not in data
 
-    # ---------- CREATE ----------
     def test_create_minimal(self):
         payload = {
             "username": "neo",
