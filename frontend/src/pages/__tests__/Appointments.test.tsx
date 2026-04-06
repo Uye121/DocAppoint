@@ -34,10 +34,32 @@ vi.mock("../../components/Spinner", () => ({
 }));
 
 vi.mock("../../components/WeekSelector", () => ({
-  default: ({ onSelect }: { onSelect: (isoDay: string) => void }) => (
-    <button onClick={() => onSelect("2024-06-10")} data-testid="week-selector">
-      Select Day
-    </button>
+  default: ({
+    onSelect,
+    goToCurrentWeek,
+    onWeekChange,
+    weekOffset,
+  }: {
+    onSelect: (isoDay: string) => void;
+    goToCurrentWeek: () => void;
+    onWeekChange: (delta: number) => void;
+    weekOffset: number;
+  }) => (
+    <div data-testid="week-selector">
+      <button onClick={() => onSelect("2024-06-10")} data-testid="select-day">
+        Select Day
+      </button>
+      <button onClick={() => onWeekChange(-1)} data-testid="prev-week">
+        Previous Week
+      </button>
+      <button onClick={goToCurrentWeek} data-testid="current-week">
+        Current Week
+      </button>
+      <button onClick={() => onWeekChange(1)} data-testid="next-week">
+        Next Week
+      </button>
+      <span data-testid="week-offset">Offset: {weekOffset}</span>
+    </div>
   ),
 }));
 
@@ -98,6 +120,7 @@ const TestWrapper = ({ children }: { children: React.ReactNode }) => {
 describe("Appointments page", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.setSystemTime(new Date("2024-06-10T12:00:00Z"));
 
     // Default mock implementations
     vi.mocked(useAuth).mockReturnValue({ user: mockUser });
@@ -120,6 +143,14 @@ describe("Appointments page", () => {
           id: "slot-1",
           start: "2024-06-10T09:00:00Z",
           end: "2024-06-10T09:30:00Z",
+          hospitalId: 1,
+        },
+      ],
+      "2024-06-17": [
+        {
+          id: "slot-2",
+          start: "2024-06-17T09:00:00Z",
+          end: "2024-06-17T09:30:00Z",
           hospitalId: 1,
         },
       ],
@@ -200,5 +231,157 @@ describe("Appointments page", () => {
     // But button still disabled because reason is empty
     const bookButton = screen.getByRole("button", { name: /book/i });
     expect(bookButton).toBeDisabled();
+  });
+
+  it("handles next week navigation correctly", async () => {
+    const user = userEvent.setup();
+    render(<Appointments />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("doctor-card")).toBeInTheDocument();
+    });
+
+    // Initially at week 0
+    expect(screen.getByTestId("week-offset")).toHaveTextContent("Offset: 0");
+
+    // Click next week
+    await user.click(screen.getByTestId("next-week"));
+
+    // Week offset should update
+    expect(screen.getByTestId("week-offset")).toHaveTextContent("Offset: 1");
+
+    // Should fetch slots for new week
+    await waitFor(() => {
+      expect(getSlotsByRange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          providerId: "10",
+        }),
+      );
+    });
+  });
+
+  it("handles previous week navigation correctly", async () => {
+    const user = userEvent.setup();
+
+    // Start at week 1 by setting initial state through navigation
+    render(<Appointments />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("doctor-card")).toBeInTheDocument();
+    });
+
+    // First go to next week
+    await user.click(screen.getByTestId("next-week"));
+    expect(screen.getByTestId("week-offset")).toHaveTextContent("Offset: 1");
+
+    // Then go back
+    await user.click(screen.getByTestId("prev-week"));
+    expect(screen.getByTestId("week-offset")).toHaveTextContent("Offset: 0");
+  });
+
+  it("prevents navigating before min offset (0)", async () => {
+    const user = userEvent.setup();
+    render(<Appointments />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("doctor-card")).toBeInTheDocument();
+    });
+
+    // Already at offset 0
+    expect(screen.getByTestId("week-offset")).toHaveTextContent("Offset: 0");
+
+    // Try to go previous
+    await user.click(screen.getByTestId("prev-week"));
+
+    // Should still be at 0
+    expect(screen.getByTestId("week-offset")).toHaveTextContent("Offset: 0");
+  });
+
+  it("prevents navigating beyond max offset (2)", async () => {
+    const user = userEvent.setup();
+    render(<Appointments />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("doctor-card")).toBeInTheDocument();
+    });
+
+    // Navigate to max offset
+    await user.click(screen.getByTestId("next-week")); // offset 1
+    await user.click(screen.getByTestId("next-week")); // offset 2
+    expect(screen.getByTestId("week-offset")).toHaveTextContent("Offset: 2");
+
+    // Try to go beyond max
+    await user.click(screen.getByTestId("next-week"));
+
+    // Should still be at 2
+    expect(screen.getByTestId("week-offset")).toHaveTextContent("Offset: 2");
+  });
+
+  it("goes to current week when Current Week button is clicked", async () => {
+    const user = userEvent.setup();
+    render(<Appointments />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("doctor-card")).toBeInTheDocument();
+    });
+
+    // Navigate to a different week
+    await user.click(screen.getByTestId("next-week"));
+    expect(screen.getByTestId("week-offset")).toHaveTextContent("Offset: 1");
+
+    // Click current week
+    await user.click(screen.getByTestId("current-week"));
+
+    // Should reset to offset 0
+    expect(screen.getByTestId("week-offset")).toHaveTextContent("Offset: 0");
+  });
+
+  it("updates selected day when day is selected", async () => {
+    const user = userEvent.setup();
+    render(<Appointments />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("doctor-card")).toBeInTheDocument();
+    });
+
+    // Click select day button
+    await user.click(screen.getByTestId("select-day"));
+
+    // Should fetch slots for the new day
+    await waitFor(() => {
+      expect(getSlotsByRange).toHaveBeenCalled();
+    });
+  });
+
+  it("resets booked state when week changes", async () => {
+    const user = userEvent.setup();
+    render(<Appointments />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("doctor-card")).toBeInTheDocument();
+    });
+
+    // Complete a booking
+    await user.click(screen.getByTestId("slot-list"));
+    const reasonInput = screen.getByPlaceholderText(/Briefly describe/i);
+    await user.type(reasonInput, "Test reason");
+    await user.click(screen.getByRole("button", { name: /book/i }));
+
+    // Verify booking success message appears
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Appointment requested successfully/i),
+      ).toBeInTheDocument();
+    });
+
+    // Change week (this will reset selectedDay and clear booked state)
+    await user.click(screen.getByTestId("next-week"));
+
+    // Booked message should disappear
+    await waitFor(() => {
+      expect(
+        screen.queryByText(/Appointment requested successfully/i),
+      ).not.toBeInTheDocument();
+    });
   });
 });

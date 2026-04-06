@@ -2,11 +2,29 @@ import os
 from .base import *  # noqa: F403
 from .base import DATABASES
 from api.utils.env import get_env
+import cloudinary  # type: ignore
 
 env = get_env()
 
+cloudinary.config(
+    cloud_name=env("CLOUD_NAME"),
+    api_key=env("CLOUD_API_KEY"),
+    api_secret=env("CLOUD_SECRET_KEY"),
+)
+
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
+
 DEBUG = False
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
+
+CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
 
 # Security settings
 SECURE_SSL_REDIRECT = True

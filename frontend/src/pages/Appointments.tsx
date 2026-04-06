@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { eachDayOfInterval, startOfWeek, endOfWeek, formatISO } from "date-fns";
+import {
+  startOfWeek,
+  endOfWeek,
+  formatISO,
+  addWeeks,
+  eachDayOfInterval,
+} from "date-fns";
 
 import {
   DoctorCard,
@@ -16,10 +22,17 @@ import type { AppointmentPayload, Slot } from "../types/appointment";
 import { useAuth } from "../../hooks/useAuth";
 
 const Appointments = (): React.JSX.Element | null => {
+  const minOffset = 0;
+  const maxOffset = 2;
   const now = new Date();
-  const monday = startOfWeek(new Date(), { weekStartsOn: 1 });
-  const sunday = endOfWeek(new Date(), { weekStartsOn: 1 });
+  const [weekOffset, setWeekOffset] = useState<number>(0);
   const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  const currentWeekStart = addWeeks(
+    startOfWeek(now, { weekStartsOn: 1 }),
+    weekOffset,
+  );
+  const currentWeekEnd = endOfWeek(currentWeekStart, { weekStartsOn: 1 });
 
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -44,18 +57,59 @@ const Appointments = (): React.JSX.Element | null => {
     staleTime: 5 * 60 * 1000, // 5 min cache
   });
 
+  const goToCurrentWeek = () => {
+    setWeekOffset(0);
+    const todayStr = formatISO(now, { representation: "date" });
+    setSelectedDay(todayStr);
+    setSelectedSlot(null);
+    setReason("");
+  };
+
+  const handleWeekChange = (delta: number) => {
+    setWeekOffset((prev: number) => {
+      const newOffset = prev + delta;
+      const clamped = Math.min(maxOffset, Math.max(minOffset, newOffset));
+
+      // Reset selected day to first day of current week when week changes
+      if (clamped !== weekOffset) {
+        const newWeekStart = addWeeks(
+          startOfWeek(now, { weekStartsOn: 1 }),
+          clamped,
+        );
+        const newWeekEnd = endOfWeek(newWeekStart, { weekStartsOn: 1 });
+        const newDays = eachDayOfInterval({
+          start: newWeekStart,
+          end: newWeekEnd,
+        });
+
+        const todayStr = formatISO(now, { representation: "date" });
+        const firstAvailableDay = newDays.find(
+          (day) => formatISO(day, { representation: "date" }) >= todayStr,
+        );
+
+        if (firstAvailableDay) {
+          setSelectedDay(
+            formatISO(firstAvailableDay, { representation: "date" }),
+          );
+        }
+      }
+
+      return clamped;
+    });
+  };
+
+  // Update the useQuery for slots
   const { data: docSlots = {} } = useQuery({
-    queryKey: ["slots-range", docId, monday],
+    queryKey: ["slots-range", docId, currentWeekStart],
     queryFn: () =>
       getSlotsByRange({
         providerId: docId!,
-        startDate: monday.toISOString().split("T")[0],
-        endDate: sunday.toISOString().split("T")[0],
+        startDate: currentWeekStart.toISOString().split("T")[0],
+        endDate: currentWeekEnd.toISOString().split("T")[0],
       }),
     enabled: !!docId,
   });
 
-  const days = eachDayOfInterval({ start: monday, end: sunday });
   const slots = docSlots[selectedDay] || [];
 
   const handleBook = () => {
@@ -73,7 +127,7 @@ const Appointments = (): React.JSX.Element | null => {
     scheduleAppointment(payload)
       .then(() => {
         queryClient.invalidateQueries({
-          queryKey: ["slots-range", docId, monday],
+          queryKey: ["slots-range", docId, currentWeekStart],
         });
         setBooked(true);
       })
@@ -82,8 +136,6 @@ const Appointments = (): React.JSX.Element | null => {
 
   if (isLoading) return <Spinner loadingText="Loading provider data..." />;
   if (!docInfo) return null;
-
-  console.log("sel: ", selectedSlot);
 
   return (
     docInfo && (
@@ -101,9 +153,11 @@ const Appointments = (): React.JSX.Element | null => {
 
         <div className="sm:ml-72 sm:pl-4 mt-4 font-medium text-gray-700">
           <WeekSelector
-            days={days}
             selectedDay={selectedDay}
             onSelect={setSelectedDay}
+            goToCurrentWeek={goToCurrentWeek}
+            weekOffset={weekOffset}
+            onWeekChange={handleWeekChange}
           />
 
           {/* SLOT LIST for selected day */}

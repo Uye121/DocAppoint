@@ -37,6 +37,7 @@ from .views import (
     SlotViewSet,
     MedicalRecordViewSet,
     health_check,
+    trigger_slot_management,
 )
 
 router = DefaultRouter()
@@ -62,6 +63,7 @@ urlpatterns: List[Union[URLPattern, URLResolver]] = [
     path("api/auth/", include(authpatterns)),
     path("api/", include(router.urls)),
     path("api/health/", health_check, name="health_check"),
+    path("api/trigger-slots/", trigger_slot_management, name="trigger_slots"),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

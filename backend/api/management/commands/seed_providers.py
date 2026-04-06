@@ -1,6 +1,5 @@
 import json
 import mimetypes
-from datetime import time, timedelta
 from pathlib import Path
 from decimal import Decimal
 from django.utils import timezone
@@ -12,10 +11,10 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 
 from api.models import Speciality, Hospital, ProviderHospitalAssignment
 from api.serializers import (
+    PatientCreateSerializer,
     HealthcareProviderCreateSerializer,
     SystemAdminCreateSerializer,
 )
-from api.services.appointment import generate_daily_slots
 from api.utils.env import get_env
 
 
@@ -38,6 +37,13 @@ def create_provider_from_dict(data: dict):
     serializer.is_valid(raise_exception=True)
     provider = serializer.save()
     return provider, True
+
+
+def create_patient_from_dict(data: dict):
+    serializer = PatientCreateSerializer(data=data)
+    serializer.is_valid(raise_exception=True)
+    patient = serializer.save()
+    return patient, True
 
 
 def get_uploaded_file_from_fixture(fixture_path):
@@ -86,7 +92,7 @@ class Command(BaseCommand):
 
         admin_username = env.str("ADMIN_USERNAME", default="admin")
         admin_email = env.str("ADMIN_EMAIL", default="admin@docappoint.com")
-        admin_password = env.str("ADMIN_PASSWORD", default="test@dminpwd1")
+        admin_password = env.str("ADMIN_PASSWORD")
         payload = {
             "email": admin_email,
             "username": admin_username,
@@ -107,6 +113,30 @@ class Command(BaseCommand):
         except Exception:
             self.stdout.write(self.style.WARNING("System admin already created"))
             admin_user = User.objects.get(email=admin_email, username=admin_username)
+
+        payload = {
+            "email": "jdoe@abc.com",
+            "username": "jdoe",
+            "password": env.str("TEST_PATIENT_PASSWORD"),
+            "first_name": "John",
+            "last_name": "Doe",
+            "date_of_birth": "1990-01-01",
+            "blood_type": "O+",
+            "allergies": "None",
+            "chronic_conditions": "None",
+            "current_medications": "None",
+            "insurance": "Test Insurance",
+            "weight": 70,
+            "height": 175,
+        }
+
+        try:
+            patient, created = create_patient_from_dict(payload)
+            if created:
+                patient.user.is_active = True
+                patient.user.save()
+        except Exception:
+            self.stdout.write(self.style.WARNING("Patient user already created"))
 
         # create specialities first
         for row in spec_data:
@@ -233,17 +263,5 @@ class Command(BaseCommand):
                             f"{'Created' if created else 'Existed'}: {provider}"
                         )
                     )
-
-            # Populate two weeks of slots
-            today = timezone.now().date()
-            for offset in range(14):
-                generate_daily_slots(
-                    provider=provider,
-                    hospital=hospital,
-                    date=today + timedelta(days=offset),
-                    opening=time(9),
-                    closing=time(17),
-                    duration_min=30,
-                )
 
         self.stdout.write(self.style.SUCCESS("Providers seeded"))
