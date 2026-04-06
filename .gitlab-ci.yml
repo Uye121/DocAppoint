@@ -157,7 +157,10 @@ build-frontend:
   before_script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
   script:
-    - docker build -f frontend/Dockerfile --target production -t $IMAGE_TAG_FRONTEND ./frontend
+    - docker build -f frontend/Dockerfile \
+        --target production \
+        --build-arg VITE_API_URL=$VITE_API_URL \
+        -t $IMAGE_TAG_FRONTEND ./frontend
     - docker push $IMAGE_TAG_FRONTEND
 
 build-backend:
