@@ -7,9 +7,9 @@ import cloudinary  # type: ignore
 env = get_env()
 
 cloudinary.config(
-    cloud_name=env("CLOUD_NAME"),
-    api_key=env("CLOUD_API_KEY"),
-    api_secret=env("CLOUD_SECRET_KEY"),
+    cloud_name=env("CLOUDINARY_CLOUD_NAME"),
+    api_key=env("CLOUDINARY_API_KEY"),
+    api_secret=env("CLOUDINARY_API_SECRET"),
 )
 
 STORAGES = {
