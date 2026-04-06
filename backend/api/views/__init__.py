@@ -11,6 +11,7 @@ from .speciality import SpecialityViewSet
 from .appointment import AppointmentViewSet, SlotViewSet
 from .medical_record import MedicalRecordViewSet
 from .health import health_check
+from .slot import trigger_slot_management
 
 __all__ = [
     "UserViewSet",
@@ -25,4 +26,5 @@ __all__ = [
     "SlotViewSet",
     "MedicalRecordViewSet",
     "health_check",
+    "trigger_slot_management",
 ]
