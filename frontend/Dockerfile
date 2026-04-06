@@ -11,6 +11,10 @@ COPY . .
 # ---- BUILD STAGE ----
 FROM node:24-alpine AS builder
 
+# build argument
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
+
 WORKDIR /app
 
 # Copy package files
@@ -23,10 +27,6 @@ RUN npm run build
 
 # ---- PRODUCTION STAGE ----
 FROM node:24-alpine AS production
-
-# build argument
-ARG VITE_API_URL
-ENV VITE_API_URL=$VITE_API_URL
 
 WORKDIR /app
 
