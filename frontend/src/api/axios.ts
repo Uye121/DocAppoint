@@ -2,7 +2,8 @@ import axios from "axios";
 import type { AxiosInstance, AxiosRequestConfig } from "axios";
 import type { TokenPair } from "../types/auth";
 
-const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000/api";
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+console.log("API URL being used:", import.meta.env.VITE_API_URL);
 
 export const api: AxiosInstance = axios.create({
   baseURL: BASE_URL,

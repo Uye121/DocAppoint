@@ -2,9 +2,9 @@ stages:
   - lint-typecheck
   - test
   - build
+  - deploy
 
 variables:
-  REGISTRY: $CI_REGISTRY
   IMAGE_TAG_BACKEND: $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA
   IMAGE_TAG_FRONTEND: $CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA
 
@@ -202,3 +202,27 @@ push-backend:
     - docker tag $IMAGE_TAG_BACKEND $CI_REGISTRY_IMAGE/backend:latest
     - docker push $CI_REGISTRY_IMAGE/backend:latest
   needs: ["build-backend"]
+
+deploy-render-frontend:
+  stage: deploy
+  image: alpine:latest
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  before_script:
+    - apk add --no-cache curl
+  script:
+    - curl -X POST $RENDER_DEPLOY_FRONTEND_URL
+  needs:
+    - push-frontend
+
+deploy-render-backend:
+  stage: deploy
+  image: alpine:latest
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  before_script:
+    - apk add --no-cache curl
+  script:
+    - curl -X POST $RENDER_DEPLOY_BACKEND_URL
+  needs:
+    - push-backend
