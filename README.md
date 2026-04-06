@@ -110,6 +110,8 @@
 
 ## Demo
 
+Production link: [https://docappoint-frontend.onrender.com](https://docappoint-frontend.onrender.com)
+
 ![signup and verify](./gifs/docappoint1.gif)
 
 ![login and register info](./gifs/docappoint2.gif)
@@ -187,6 +189,7 @@ _For more examples, please refer to the [Documentation](https://example.com)_
 - [ ] Patient features
     - [x] View doctors' schedule
     - [x] Schedule appointment with doctors with custom notes
+    - [x] Navigate doctor's appointment slots across different weeks
     - [x] Filter doctors by speciality
     - [x] Onboarding with medical information
     - [x] Update personal information
@@ -209,7 +212,7 @@ _For more examples, please refer to the [Documentation](https://example.com)_
     - [x] Unit test backend
     - [x] Linting
     - [x] Vitest unit tests
-    - [ ] Integration tests
+    - [x] Integration tests
     - [ ] Security scanner (code + deps + image)
     - [ ] e2e test
     - [ ] Smoke test
@@ -219,7 +222,7 @@ _For more examples, please refer to the [Documentation](https://example.com)_
     - [ ] Observability (alerts & metrics: Grafana + Prometheus)
     - [ ] Backup & restore test
     - [ ] Rate-limit & WAF
-    - [ ] Production deployment
+    - [x] Production deployment
 
 See the [open issues](https://github.com/Uye121/DocAppoint/issues) for a full list of proposed features (and known issues).
 
