@@ -1,10 +1,13 @@
 import os
 from .base import *  # noqa: F403
 from .base import DATABASES
-from api.utils.env import get_env
+from api.utils.env import env
 import cloudinary  # type: ignore
 
-env = get_env()
+
+CLOUDINARY_CLOUD_NAME = env("CLOUDINARY_CLOUD_NAME")
+CLOUDINARY_API_KEY = env("CLOUDINARY_API_KEY")
+CLOUDINARY_API_SECRET = env("CLOUDINARY_API_SECRET")
 
 cloudinary.config(
     cloud_name=env("CLOUDINARY_CLOUD_NAME"),

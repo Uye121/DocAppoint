@@ -5,10 +5,6 @@ from django.utils import timezone
 
 from api.services.appointment import generate_daily_slots
 from api.models import Slot, HealthcareProvider, Hospital
-from api.utils.env import get_env
-
-
-env = get_env()
 
 
 class Command(BaseCommand):

@@ -28,7 +28,8 @@ dependencies = [
     "django-cleanup (>=9.0.0,<10.0.0)",
     "gunicorn (>=23.0,<24.0)",
     "cloudinary (>=1.44.1,<2.0.0)",
-    "django-cloudinary-storage (>=0.3.0,<0.4.0)"
+    "django-cloudinary-storage (>=0.3.0,<0.4.0)",
+    "python-dotenv (>=1.2.2,<2.0.0)"
 ]
 
 [tool.poetry]

@@ -12,11 +12,10 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from datetime import timedelta
 from pathlib import Path
-from api.utils.env import get_env
+from api.utils.env import env
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 
-env = get_env()
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
