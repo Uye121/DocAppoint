@@ -15,10 +15,8 @@ from api.serializers import (
     HealthcareProviderCreateSerializer,
     SystemAdminCreateSerializer,
 )
-from api.utils.env import get_env
+from api.utils.env import env
 
-
-env = get_env()
 
 User = get_user_model()
 DOC_FILE = Path(settings.FIXTURES_DIR) / "doctor.json"
