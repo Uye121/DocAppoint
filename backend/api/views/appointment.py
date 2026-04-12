@@ -17,6 +17,19 @@ from ..serializers import (
     SlotSerializer,
 )
 from ..services.appointment import generate_daily_slots
+from ..metrics import (
+    appointments_created_total,
+    appointments_confirmed_total,
+    appointment_duration_minutes,
+    appointment_lead_time_hours,
+    provider_appointments_total,
+    appointments_cancelled_total,
+    appointments_completed_total,
+    appointments_rescheduled_total,
+    hospital_appointments_total,
+    revenue_generated,
+    cancellation_lead_time_hours,
+)
 
 
 class AppointmentViewSet(viewsets.ModelViewSet):
@@ -65,6 +78,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                     "Only patients or providers can schedule appointments."
                 )
 
+            # Update slot status
             slot = (
                 Slot.objects.select_for_update()
                 .filter(
@@ -82,9 +96,42 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                     {"detail": "No available slot for the requested time."}
                 )
 
-            slot.appointment = appointment
-            slot.status = Slot.Status.BOOKED
-            slot.save(update_fields=["appointment", "status"])
+        slot.appointment = appointment
+        slot.status = Slot.Status.BOOKED
+        slot.save(update_fields=["appointment", "status"])
+
+        # Track appointment creation metrics
+        appointments_created_total.labels(
+            status=appointment.status,
+            speciality_id=str(appointment.healthcare_provider.speciality.id),
+            hospital_id=str(appointment.location.id),
+        ).inc()
+
+        duration_minutes = (
+            appointment.appointment_end_datetime_utc
+            - appointment.appointment_start_datetime_utc
+        ).total_seconds() / 60
+        appointment_duration_minutes.labels(
+            speciality_name=appointment.healthcare_provider.speciality.name
+        ).observe(duration_minutes)
+
+        lead_time = (
+            appointment.appointment_start_datetime_utc - appointment.created_at
+        ).total_seconds() / 3600
+        appointment_lead_time_hours.labels(status=appointment.status).observe(lead_time)
+
+        provider_appointments_total.labels(
+            provider_id=str(appointment.healthcare_provider.user.id),
+            speciality_name=appointment.healthcare_provider.speciality.name,
+            hospital_id=str(appointment.location.id),
+        ).inc()
+
+        hospital_appointments_total.labels(
+            hospital_id=str(appointment.location.id),
+            city=appointment.location.city,
+            state=appointment.location.state,
+        ).inc()
+
         return appointment
 
     @action(detail=True, methods=["post"], url_path="set-status")
@@ -220,9 +267,81 @@ class AppointmentViewSet(viewsets.ModelViewSet):
 
             appointment.save(update_fields=update_fields)
 
+        user = request.user
+        cancelled_by = None
+
+        if hasattr(user, "patient") and user.patient == appointment.patient:
+            cancelled_by = "patient"
+        elif (
+            hasattr(user, "provider")
+            and user.provider == appointment.healthcare_provider
+        ):
+            cancelled_by = "provider"
+        elif user.is_staff:
+            cancelled_by = "staff"
+        else:
+            cancelled_by = "unknown"
+
+        # Track appointment status change data
+        if new_status == Appointment.Status.CANCELLED:
+            appointments_cancelled_total.labels(
+                cancellation_person=cancelled_by,
+                speciality_id=str(appointment.healthcare_provider.speciality.id),
+            ).inc()
+
+            lead_time = (
+                appointment.appointment_start_datetime_utc - timezone.now()
+            ).total_seconds() / 3600
+            cancellation_lead_time_hours.observe(lead_time)
+        elif new_status == Appointment.Status.CONFIRMED:
+            appointments_confirmed_total.labels(
+                speciality_id=str(appointment.healthcare_provider.speciality.id),
+                hospital_id=str(appointment.location.id),
+            ).inc()
+        elif new_status == Appointment.Status.COMPLETED:
+            appointments_completed_total.labels(
+                speciality_id=str(appointment.healthcare_provider.speciality.id),
+                hospital_id=str(appointment.location.id),
+            ).inc()
+
+            revenue_generated.labels(
+                speciality_name=appointment.healthcare_provider.speciality.name,
+                hospital_id=str(appointment.location.id),
+            ).inc(float(appointment.healthcare_provider.fees))
+        elif new_status == Appointment.Status.RESCHEDULED:
+            appointments_rescheduled_total.labels(
+                speciality_id=str(appointment.healthcare_provider.speciality.id)
+            ).inc()
+
         return Response({"detail": f"Appointment {new_status.lower()}."})
 
-    @action(detail=False, methods=["post"], url_path="generate-slots")
+
+class SlotViewSet(viewsets.ModelViewSet):
+    queryset = Slot.objects.select_related(
+        "healthcare_provider__user", "hospital"
+    ).all()
+    serializer_class = SlotSerializer
+
+    def get_queryset(self):
+        """Providers see only their own slots; staff sees all."""
+        user = self.request.user
+        if hasattr(user, "provider"):
+            return self.queryset.filter(healthcare_provider=user.provider)
+        return self.queryset.all()
+
+    def get_permissions(self):
+        return [permissions.IsAuthenticated()]
+
+    def perform_create(self, serializer):
+        """Force the slot to belong to the calling provider (or allow staff to pick)."""
+        user = self.request.user
+        if hasattr(user, "provider"):
+            serializer.save(healthcare_provider=user.provider)
+        else:
+            # staff/admin must supply provider in payload
+            serializer.save()
+
+    @action(detail=False, methods=["post"], url_path="generate")
     def generate_slots(self, request):
         provider_id = request.data.get("provider")
         date_str = request.data.get("date")
@@ -269,33 +388,8 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             opening=opening,
             closing=closing,
         )
+
         return Response({"detail": "Slots generated."}, status=status.HTTP_201_CREATED)
-
-
-class SlotViewSet(viewsets.ModelViewSet):
-    queryset = Slot.objects.select_related(
-        "healthcare_provider__user", "hospital"
-    ).all()
-    serializer_class = SlotSerializer
-
-    def get_queryset(self):
-        """Providers see only their own slots; staff sees all."""
-        user = self.request.user
-        if hasattr(user, "provider"):
-            return self.queryset.filter(healthcare_provider=user.provider)
-        return self.queryset.all()
-
-    def get_permissions(self):
-        return [permissions.IsAuthenticated()]
-
-    def perform_create(self, serializer):
-        """Force the slot to belong to the calling provider (or allow staff to pick)."""
-        user = self.request.user
-        if hasattr(user, "provider"):
-            serializer.save(healthcare_provider=user.provider)
-        else:
-            # staff/admin must supply provider in payload
-            serializer.save()
 
     @action(detail=False, methods=["get"], url_path="range")
     def range(self, request):

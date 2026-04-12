@@ -64,6 +64,7 @@ urlpatterns: List[Union[URLPattern, URLResolver]] = [
     path("api/", include(router.urls)),
     path("api/health/", health_check, name="health_check"),
     path("api/trigger-slots/", trigger_slot_management, name="trigger_slots"),
+    path("", include("django_prometheus.urls")),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -1,5 +1,6 @@
 import pytest
 from pytest_factoryboy import register
+from prometheus_client import REGISTRY
 from rest_framework.test import APIClient
 
 from .factories import (
@@ -89,3 +90,12 @@ def authenticated_system_admin_client(admin_staff_factory):
         return client, admin
 
     return _create_system_admin_client
+
+
+@pytest.fixture(autouse=True)
+def reset_metrics():
+    """Reset Prometheus metrics before each test."""
+    collectors = list(REGISTRY._collector_to_names.keys())
+    for collector in collectors:
+        REGISTRY.unregister(collector)
+    yield
