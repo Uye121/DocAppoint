@@ -42,7 +42,7 @@ class Command(BaseCommand):
         Remove FREE slots older than n days ago.
 
         Args:
-            days: Number of days to look back (default: 14)
+            days (int): Number of days to look back (default: 14)
         """
         table = Slot._meta.db_table
 
@@ -59,7 +59,7 @@ class Command(BaseCommand):
         Generate new FREE slots for all providers for the next n days.
 
         Args:
-            days: Number of days to generate slots for (default: 14)
+            days (int): Number of days to generate slots for (default: 14)
         """
         today = timezone.now().date()
 

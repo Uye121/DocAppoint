@@ -9,6 +9,7 @@ from ..serializers import (
     PatientOnBoardSerializer,
 )
 from ..services.auth import send_verification_email
+from ..metrics import patients_registered_total
 
 
 class PatientViewSet(
@@ -68,6 +69,7 @@ class PatientViewSet(
 
     def perform_create(self, serializer):
         patient = serializer.save()
+        patients_registered_total.inc()
         send_verification_email(patient.user)
 
         return patient

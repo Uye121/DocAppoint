@@ -220,7 +220,7 @@ class TestHealthcareProviderFlow:
             provider.primary_hospital = hospital
             provider.save()
 
-        generate_url = reverse("appointment-generate-slots")
+        generate_url = reverse("slot-generate-slots")
         test_date = (timezone.now().date() + timedelta(days=7)).isoformat()
 
         generate_data = {

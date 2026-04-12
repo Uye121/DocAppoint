@@ -99,10 +99,16 @@
 * [![Django][Django]][Django-url]
 * [![Python][Python]][Python-url]
 
+#### CI/CD
+* [![GitLab][GitLab]][GitLab-url]
+
 #### Misc
 * [![Postgres][Postgres]][Postgres-url]
+* [![Supabase][Supabase]][Supabase-url]
 * [![Docker][Docker]][Docker-url]
 * [![Pytest][Pytest]][Pytest-url]
+* [![Ruff][Ruff]][Ruff-url]
+* [![Render][Render]][Render-url]
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -219,7 +225,7 @@ _For more examples, please refer to the [Documentation](https://example.com)_
     - [x] Build & publish artefacts
     - [ ] DB migration safety & rollback test
     - [ ] Canary / blue-green deployment
-    - [ ] Observability (alerts & metrics: Grafana + Prometheus)
+    - [x] Observability (alerts & metrics: Grafana + Prometheus)
     - [ ] Backup & restore test
     - [ ] Rate-limit & WAF
     - [x] Production deployment
@@ -281,9 +287,17 @@ See the [open issues](https://github.com/Uye121/DocAppoint/issues) for a full li
 [Django-url]: https://www.django-rest-framework.org/
 [Python]: https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=fff
 [Python-url]: https://www.python.org/
+[GitLab]: https://img.shields.io/badge/GitLab%20CI-FC6D26?logo=gitlab&logoColor=fff
+[GitLab-url]: https://about.gitlab.com/
 [Postgres]: https://img.shields.io/badge/Postgres-%23316192.svg?logo=postgresql&logoColor=white
 [Postgres-url]: https://www.postgresql.org/
+[Supabase]: https://img.shields.io/badge/Supabase-3FCF8E?logo=supabase&logoColor=fff
+[Supabase-url]: https://supabase.com/
 [Docker]: https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=fff
 [Docker-url]: https://www.docker.com/
 [Pytest]: https://img.shields.io/badge/Pytest-fff?logo=pytest&logoColor=000
 [Pytest-url]: https://docs.pytest.org/en/stable/
+[Ruff]: https://custom-icon-badges.demolab.com/badge/Ruff-261230.svg?logo=ruff-logo
+[Ruff-url]: https://docs.astral.sh/ruff/
+[Render]: https://img.shields.io/badge/Render-46E3B7?logo=render&logoColor=000
+[Render-url]: https://render.com/
