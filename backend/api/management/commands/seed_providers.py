@@ -1,3 +1,4 @@
+from typing import Optional
 import json
 import mimetypes
 from pathlib import Path
@@ -9,7 +10,14 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 
-from api.models import Speciality, Hospital, ProviderHospitalAssignment
+from api.models import (
+    Speciality,
+    Hospital,
+    Patient,
+    HealthcareProvider,
+    AdminStaff,
+    ProviderHospitalAssignment,
+)
 from api.serializers import (
     PatientCreateSerializer,
     HealthcareProviderCreateSerializer,
@@ -23,28 +31,61 @@ DOC_FILE = Path(settings.FIXTURES_DIR) / "doctor.json"
 SPEC_FILE = Path(settings.FIXTURES_DIR) / "speciality.json"
 
 
-def create_admin(data: dict):
+def create_admin(data: dict) -> tuple[AdminStaff, bool]:
+    """
+    Create a new system administrator user.
+
+    Args:
+        data (dict): Dictionary containing admin creation fields.
+
+    Returns:
+        tuple[AdminStaff, bool]: A tuple containing:
+            - AdminStaff: The newly created admin user instance
+            - bool: True if the admin was newly created
+    """
     serializer = SystemAdminCreateSerializer(data=data)
     serializer.is_valid(raise_exception=True)
-    provider = serializer.save()
-    return provider, True
+    admin = serializer.save()
+    return admin, True
 
 
-def create_provider_from_dict(data: dict):
+def create_provider_from_dict(data: dict) -> tuple[HealthcareProvider, bool]:
+    """
+    Create a new provider user.
+
+    Args:
+        data (dict): Dictionary containing provider creation fields.
+
+    Returns:
+        tuple[HealthcareProvider, bool]: A tuple containing:
+            - HealthcareProvider: The newly created provider user instance
+            - bool: True if the admin was newly created
+    """
     serializer = HealthcareProviderCreateSerializer(data=data)
     serializer.is_valid(raise_exception=True)
     provider = serializer.save()
     return provider, True
 
 
-def create_patient_from_dict(data: dict):
+def create_patient_from_dict(data: dict) -> tuple[Patient, bool]:
+    """
+    Create a new patient user.
+
+    Args:
+        data (dict): Dictionary containing patient creation fields.
+
+    Returns:
+        tuple[Patient, bool]: A tuple containing:
+            - Patient: The newly created patient user instance
+            - bool: True if the admin was newly created
+    """
     serializer = PatientCreateSerializer(data=data)
     serializer.is_valid(raise_exception=True)
     patient = serializer.save()
     return patient, True
 
 
-def get_uploaded_file_from_fixture(fixture_path):
+def get_uploaded_file_from_fixture(fixture_path) -> Optional[SimpleUploadedFile]:
     """
     Prepare an image from fixtures as SimpleUploadedFile.
 
@@ -88,6 +129,7 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.NOTICE("Seeding application..."))
 
+        # Try to create admin user
         admin_username = env.str("ADMIN_USERNAME", default="admin")
         admin_email = env.str("ADMIN_EMAIL", default="admin@docappoint.com")
         admin_password = env.str("ADMIN_PASSWORD")
@@ -112,6 +154,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING("System admin already created"))
             admin_user = User.objects.get(email=admin_email, username=admin_username)
 
+        # Create test patient user
         payload = {
             "email": "jdoe@abc.com",
             "username": "jdoe",
@@ -179,6 +222,7 @@ class Command(BaseCommand):
             },
         )
 
+        # Create providers if they do not exist already
         for row in doc_data:
             first_name = row["firstName"]
             last_name = row["lastName"]
@@ -237,18 +281,16 @@ class Command(BaseCommand):
                     provider.user.is_active = True
                     provider.user.save(update_fields=["is_active"])
 
-                    assigned, created = (
-                        ProviderHospitalAssignment.objects.get_or_create(
-                            healthcare_provider=provider,
-                            hospital=hospital,
-                            defaults={
-                                "is_active": True,
-                                "start_datetime_utc": timezone.now(),
-                                "end_datetime_utc": None,
-                                "created_by": admin_user,
-                                "updated_by": admin_user,
-                            },
-                        )
+                    _, created = ProviderHospitalAssignment.objects.get_or_create(
+                        healthcare_provider=provider,
+                        hospital=hospital,
+                        defaults={
+                            "is_active": True,
+                            "start_datetime_utc": timezone.now(),
+                            "end_datetime_utc": None,
+                            "created_by": admin_user,
+                            "updated_by": admin_user,
+                        },
                     )
 
                     if created:

@@ -19,5 +19,11 @@ class Speciality(AuditMixin, models.Model):
 
 @receiver(post_delete, sender=Speciality)
 def speciality_file_cleanup(sender, instance, **kwargs):
-    if instance.image:
-        instance.image.delete(save=False)
+    """
+    Automatically delete associated image file from storage when a Speciality record is deleted.
+    """
+    if instance.image and instance.image.name:
+        try:
+            instance.image.delete(save=False)
+        except FileNotFoundError:
+            pass
