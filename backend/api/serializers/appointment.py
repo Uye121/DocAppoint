@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from datetime import datetime
 from django.utils import timezone
 from ..models import (
     Appointment,
@@ -158,7 +159,16 @@ class AppointmentCreateSerializer(CamelCaseMixin, serializers.ModelSerializer):
             "reason",
         ]
 
-    def validate_appointment_start_datetime_utc(self, value):
+    def validate_appointment_start_datetime_utc(self, value: datetime) -> datetime:
+        """
+        Validate that appointment is not scheduled in the past.
+
+        Args:
+            value: The proposed appointment start datetime
+
+        Returns:
+            Validated datetime value
+        """
         if value < timezone.now():
             raise serializers.ValidationError(
                 "Cannot schedule an appointment in the past."

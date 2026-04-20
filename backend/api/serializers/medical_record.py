@@ -1,3 +1,6 @@
+from typing import Optional
+from datetime import datetime, date
+from uuid import UUID
 from rest_framework import serializers
 from ..models import (
     HealthcareProvider,
@@ -5,6 +8,7 @@ from ..models import (
     Hospital,
     Appointment,
     Patient,
+    User,
 )
 from ..mixin import CamelCaseMixin
 
@@ -43,13 +47,34 @@ class MedicalRecordSerializer(CamelCaseMixin, serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
 
-    def validate_hospital_active(self, hospital):
+    def validate_hospital_active(self, hospital: Hospital) -> None:
+        """
+        Validate that the hospital is active (not removed).
+
+        Args:
+            hospital: Hospital instance to validate
+
+        Raises:
+            ValidationError: If hospital is marked as removed
+        """
         if hospital and hospital.is_removed:
             raise serializers.ValidationError(
                 {"hospital_id": "Selected hospital is no longer active."}
             )
 
-    def validate_appointment_ownership(self, appointment, user):
+    def validate_appointment_ownership(
+        self, appointment: Appointment, user: User
+    ) -> None:
+        """
+        Validate that the appointment belongs to the authenticated provider.
+
+        Args:
+            appointment: Appointment instance to validate
+            user: Authenticated user making the request
+
+        Raises:
+            ValidationError: If appointment does not belong to the provider
+        """
         if user.is_authenticated and hasattr(user, "provider"):
             if appointment.healthcare_provider != user.provider:
                 raise serializers.ValidationError(
@@ -58,13 +83,34 @@ class MedicalRecordSerializer(CamelCaseMixin, serializers.ModelSerializer):
                     }
                 )
 
-    def validate_provider_active(self, provider):
+    def validate_provider_active(self, provider: HealthcareProvider) -> None:
+        """
+        Validate that the healthcare provider account is active.
+
+        Args:
+            provider: HealthcareProvider instance to validate
+
+        Raises:
+            ValidationError: If provider is marked as removed
+        """
         if provider.is_removed:
             raise serializers.ValidationError(
                 {"detail": "Provider account is no longer active."}
             )
 
-    def validate_provider_hospital_affiliation(self, provider, hospital):
+    def validate_provider_hospital_affiliation(
+        self, provider: HealthcareProvider, hospital: Hospital
+    ) -> None:
+        """
+        Validate that the provider is actively affiliated with the hospital.
+
+        Args:
+            provider: HealthcareProvider instance to validate
+            hospital: Hospital instance to check affiliation with
+
+        Raises:
+            ValidationError: If provider is not affiliated or affiliation is inactive
+        """
         if not provider.providerhospitalassignment_set.filter(
             hospital=hospital, is_active=True
         ).exists():
@@ -317,7 +363,22 @@ class MedicalRecordDetailSerializer(MedicalRecordSerializer):
         ]
         read_only_fields = fields
 
-    def get_patient_details(self, obj):
+    def get_patient_details(
+        self, obj: MedicalRecord
+    ) -> dict[str, Optional[UUID | str | int | datetime | date | None]]:
+        """
+        Get detailed patient information including medical history.
+
+        Args:
+            obj: MedicalRecord instance
+
+        Returns:
+            Dictionary containing patient details:
+                - Personal info (id, full_name, date_of_birth)
+                - Medical info (blood_type, allergies, conditions, medications)
+                - Insurance and physical measurements
+                - Profile image URL
+        """
         patient = obj.patient
         user = patient.user
 
@@ -342,16 +403,39 @@ class MedicalRecordDetailSerializer(MedicalRecordSerializer):
             "image": image_url,
         }
 
-    def get_provider_details(self, obj):
+    def get_provider_details(self, obj: MedicalRecord) -> dict[str, UUID | str | None]:
+        """
+        Get detailed provider information.
+
+        Args:
+            obj: MedicalRecord instance
+
+        Returns:
+            Dictionary containing provider details (id, name, speciality, license)
+        """
         provider = obj.healthcare_provider
+        speciality_name = None
+        if provider.speciality:
+            speciality_name = provider.speciality.name
         return {
             "id": provider.user.id,
-            "speciality_name": provider.speciality.name,
+            "speciality_name": speciality_name,
             "license_number": provider.license_number,
             "full_name": provider.user.get_full_name(),
         }
 
-    def get_hospital_details(self, obj):
+    def get_hospital_details(
+        self, obj: MedicalRecord
+    ) -> Optional[dict[str, str | int]]:
+        """
+        Get hospital information if available.
+
+        Args:
+            obj: MedicalRecord instance
+
+        Returns:
+            Dictionary containing hospital details or None if no hospital assigned
+        """
         if obj.hospital:
             return {
                 "id": obj.hospital.id,
@@ -361,7 +445,19 @@ class MedicalRecordDetailSerializer(MedicalRecordSerializer):
             }
         return None
 
-    def get_appointment_details(self, obj):
+    def get_appointment_details(
+        self, obj: MedicalRecord
+    ) -> Optional[dict[str, datetime | str]]:
+        """
+        Get appointment information if available.
+
+        Args:
+            obj: MedicalRecord instance
+
+        Returns:
+            Dictionary containing appointment details (start, end, reason, status)
+            or None if no appointment linked
+        """
         if obj.appointment:
             appointment = obj.appointment
             return {
@@ -370,3 +466,5 @@ class MedicalRecordDetailSerializer(MedicalRecordSerializer):
                 "reason": appointment.reason,
                 "status": appointment.status,
             }
+
+        return None

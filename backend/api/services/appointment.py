@@ -1,14 +1,19 @@
-from datetime import time, timedelta
+from datetime import time, timedelta, datetime
 from django.utils import timezone
 from zoneinfo import ZoneInfo
 
-from ..models import Slot
+from ..models import Slot, HealthcareProvider, Hospital
 from ..metrics import slots_generated_total
 
 
 def generate_daily_slots(
-    provider, hospital, date, duration_min=30, opening=time(9), closing=time(17)
-):
+    provider: HealthcareProvider,
+    hospital: Hospital,
+    date: datetime,
+    duration_min: int = 30,
+    opening: time = time(9),
+    closing: time = time(17),
+) -> None:
     """
     Generate appointment slots for provider
 
@@ -21,8 +26,8 @@ def generate_daily_slots(
         closing (time): the closing time of the slots for the day
     """
     tz = ZoneInfo(hospital.timezone)
-    start_dt = timezone.make_aware(timezone.datetime.combine(date, opening), tz)
-    end_dt = timezone.make_aware(timezone.datetime.combine(date, closing), tz)
+    start_dt = timezone.make_aware(datetime.combine(date, opening), tz)
+    end_dt = timezone.make_aware(datetime.combine(date, closing), tz)
 
     slot_start = start_dt
     slots = []
